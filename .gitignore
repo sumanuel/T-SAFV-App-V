@@ -2,12 +2,19 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+package-lock.json.bak
 
 # Production
 dist/
 build/
 .expo/
 .expo-shared/
+out/
+.next/
+
+# Cache
+.cache/
+.parcel-cache/
 
 # Misc
 .env
@@ -17,6 +24,8 @@ build/
 *.pem
 *.key
 .vscode/settings.json
+.vscode/launch.json
+*.log
 
 # IDE
 .vscode/
@@ -24,7 +33,20 @@ build/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
 # OS
 Thumbs.db
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+*~

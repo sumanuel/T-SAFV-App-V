@@ -1,68 +1,63 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, BackHandler, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
-import ClientFormScreen from "./src/screens/ClientFormScreen";
-import ClientsScreen from "./src/screens/ClientsScreen";
-import DiagnosticFormScreen from "./src/screens/DiagnosticFormScreen";
-import DiagnosticsScreen from "./src/screens/DiagnosticsScreen";
-import SparePartFormScreen from "./src/screens/SparePartFormScreen";
-import SparePartsScreen from "./src/screens/SparePartsScreen";
-import StockMovementFormScreen from "./src/screens/StockMovementFormScreen";
-import StockItemFormScreen from "./src/screens/StockItemFormScreen";
-import StockItemsScreen from "./src/screens/StockItemsScreen";
-import TeamAccessScreen from "./src/screens/TeamAccessScreen";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
+
+// Pantallas de autenticacion y navegacion
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
 import AuthScreen from "./src/screens/AuthScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
-import OnboardingScreen, {
-  ONBOARDING_STORAGE_KEY,
-} from "./src/screens/OnboardingScreen";
-import WorkOrderFormScreen from "./src/screens/WorkOrderFormScreen";
-import WorkOrdersScreen from "./src/screens/WorkOrdersScreen";
+import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from "./src/screens/OnboardingScreen";
+
+// Pantallas principales
 import WorkshopHomeScreen from "./src/screens/WorkshopHomeScreen";
 import WorkshopMoreScreen from "./src/screens/WorkshopMoreScreen";
-import VehicleFormScreen from "./src/screens/VehicleFormScreen";
-import VehicleHistoryScreen from "./src/screens/VehicleHistoryScreen";
-import VehiclesDirectoryScreen from "./src/screens/VehiclesDirectoryScreen";
-import WorkOrderHistoryTimelineScreen from "./src/screens/WorkOrderHistoryTimelineScreen";
-import WorkshopManagementScreen from "./src/screens/WorkshopManagementScreen";
 import WorkshopTabBar from "./src/components/common/WorkshopTabBar";
-import { isMechanicRole } from "./src/constants/accessControl";
-import { findActiveDiagnosticByVehicleId } from "./src/services/diagnostics/diagnosticService";
+
+// Propietarios
+import PropietariosScreen from "./src/screens/PropietariosScreen";
+import PropietarioFormScreen from "./src/screens/PropietarioFormScreen";
+
+// Unidades / Vehiculos
+import VehicleFormScreen from "./src/screens/VehicleFormScreen";
+
+// Fiscales
+import FiscalesScreen from "./src/screens/FiscalesScreen";
+import FiscalFormScreen from "./src/screens/FiscalFormScreen";
+
+// Traza
+import TrazaScreen from "./src/screens/TrazaScreen";
+
+// Stock (disponible desde Mas)
+import StockItemsScreen from "./src/screens/StockItemsScreen";
+import StockItemFormScreen from "./src/screens/StockItemFormScreen";
+import StockMovementFormScreen from "./src/screens/StockMovementFormScreen";
+import TeamAccessScreen from "./src/screens/TeamAccessScreen";
 
 const APP_SCREENS = {
   HOME: "home",
-  CLIENTS: "clients",
-  VEHICLES: "vehicles",
-  VEHICLE_HISTORY: "vehicle-history",
-  WORK_ORDER_HISTORY_TIMELINE: "work-order-history-timeline",
-  CLIENT_FORM: "client-form",
+  PROPIETARIOS: "propietarios",
+  PROPIETARIO_FORM: "propietario-form",
   VEHICLE_FORM: "vehicle-form",
-  DIAGNOSTICS: "diagnostics",
-  DIAGNOSTIC_FORM: "diagnostic-form",
-  WORK_ORDERS: "work-orders",
-  WORK_ORDER_FORM: "work-order-form",
-  SPARE_PARTS: "spare-parts",
-  SPARE_PART_FORM: "spare-part-form",
+  FISCALES: "fiscales",
+  FISCAL_FORM: "fiscal-form",
+  TRAZA: "traza",
   STOCK_ITEMS: "stock-items",
   STOCK_ITEM_FORM: "stock-item-form",
   STOCK_MOVEMENT_FORM: "stock-movement-form",
   WORKSHOP_SETTINGS: "workshop-settings",
   COLLABORATORS: "collaborators",
   MORE: "more",
-  WORKSHOP_MANAGEMENT: "workshop-management",
-  WORKSHOP_SETUP: "workshop-setup",
 };
 
 const ROOT_TABS = new Set([
   APP_SCREENS.HOME,
-  APP_SCREENS.CLIENTS,
-  APP_SCREENS.DIAGNOSTICS,
-  APP_SCREENS.WORK_ORDERS,
+  APP_SCREENS.PROPIETARIOS,
+  APP_SCREENS.FISCALES,
+  APP_SCREENS.TRAZA,
   APP_SCREENS.MORE,
 ]);
 
@@ -70,7 +65,6 @@ function AppContent() {
   const { isDarkMode, toggleTheme } = useTheme();
   const {
     acceptPendingInvitation,
-    activeWorkshop,
     activeWorkshopId,
     authUser,
     authReady,
@@ -79,74 +73,22 @@ function AppContent() {
     signOutUser,
     userProfile,
   } = useAuth();
+
   const [activeScreen, setActiveScreen] = useState(APP_SCREENS.HOME);
-  const [clientFormContext, setClientFormContext] = useState({
-    client: null,
-    returnTo: "list",
-  });
-  const [vehicleFormContext, setVehicleFormContext] = useState({
-    client: null,
-    vehicle: null,
-  });
-  const [vehicleHistoryContext, setVehicleHistoryContext] = useState({
-    vehicle: null,
-  });
-  const [workOrderHistoryTimelineContext, setWorkOrderHistoryTimelineContext] =
-    useState({
-      workOrderId: null,
-    });
-  const [clientsViewState, setClientsViewState] = useState({
-    selectedClientId: null,
-    screenMode: "list",
-    returnTo: APP_SCREENS.HOME,
-  });
-  const [diagnosticFormContext, setDiagnosticFormContext] = useState({
-    diagnostic: null,
-    draft: null,
-    returnTo: APP_SCREENS.DIAGNOSTICS,
-    clientId: null,
-  });
-  const [diagnosticsViewState, setDiagnosticsViewState] = useState({
-    selectedDiagnosticId: null,
-    searchQuery: "",
-    returnTo: APP_SCREENS.HOME,
-    detailEntry: false,
-  });
-  const [workOrderFormContext, setWorkOrderFormContext] = useState({
-    workOrder: null,
-    draft: null,
-    returnTo: APP_SCREENS.WORK_ORDERS,
-  });
-  const [workOrdersViewState, setWorkOrdersViewState] = useState({
-    selectedWorkOrderId: null,
-    returnTo: APP_SCREENS.HOME,
-    detailEntry: false,
-  });
-  const [sparePartFormContext, setSparePartFormContext] = useState({
-    sparePart: null,
-    draft: null,
-  });
-  const [sparePartsViewState, setSparePartsViewState] = useState({
-    selectedSparePartId: null,
-    selectedWorkOrderId: null,
-    returnTo: APP_SCREENS.MORE,
-  });
-  const [stockItemFormContext, setStockItemFormContext] = useState({
-    stockItem: null,
-    draft: null,
-  });
-  const [stockMovementFormContext, setStockMovementFormContext] = useState({
-    stockItem: null,
-    movementType: "in",
-  });
-  const [stockItemsViewState, setStockItemsViewState] = useState({
-    selectedStockItemId: null,
-  });
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Contextos de formularios
+  const [propietarioFormContext, setPropietarioFormContext] = useState({ propietario: null });
+  const [propietariosViewState, setPropietariosViewState] = useState({ selectedClientId: null, screenMode: "list" });
+  const [vehicleFormContext, setVehicleFormContext] = useState({ propietario: null, vehicle: null });
+  const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
+  const [stockItemFormContext, setStockItemFormContext] = useState({ stockItem: null, draft: null });
+  const [stockMovementFormContext, setStockMovementFormContext] = useState({ stockItem: null, movementType: "in" });
+  const [stockItemsViewState, setStockItemsViewState] = useState({ selectedStockItemId: null });
+
   useEffect(() => {
-    const loadOnboardingState = async () => {
+    const load = async () => {
       try {
         const completed = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
         setShowOnboarding(!completed);
@@ -154,313 +96,75 @@ function AppContent() {
         setOnboardingReady(true);
       }
     };
-
-    loadOnboardingState();
+    load();
   }, []);
 
+  // Limpiar estado al cambiar de usuario
+  useEffect(() => {
+    setActiveScreen(APP_SCREENS.HOME);
+    setPropietarioFormContext({ propietario: null });
+    setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
+    setVehicleFormContext({ propietario: null, vehicle: null });
+    setFiscalFormContext({ fiscal: null });
+    setStockItemFormContext({ stockItem: null, draft: null });
+    setStockMovementFormContext({ stockItem: null, movementType: "in" });
+    setStockItemsViewState({ selectedStockItemId: null });
+  }, [authUser?.id]);
+
   const activeTab = useMemo(() => {
-    if (ROOT_TABS.has(activeScreen)) {
-      return activeScreen;
-    }
-
-    if (
-      activeScreen === APP_SCREENS.CLIENT_FORM ||
-      activeScreen === APP_SCREENS.VEHICLE_FORM ||
-      activeScreen === APP_SCREENS.VEHICLE_HISTORY ||
-      activeScreen === APP_SCREENS.WORK_ORDER_HISTORY_TIMELINE ||
-      activeScreen === APP_SCREENS.VEHICLES
-    ) {
-      return APP_SCREENS.CLIENTS;
-    }
-
-    if (activeScreen === APP_SCREENS.DIAGNOSTIC_FORM) {
-      return APP_SCREENS.DIAGNOSTICS;
-    }
-
-    if (activeScreen === APP_SCREENS.WORK_ORDER_FORM) {
-      return APP_SCREENS.WORK_ORDERS;
-    }
-
-    if (activeScreen === APP_SCREENS.STOCK_ITEM_FORM) {
-      return APP_SCREENS.MORE;
-    }
-
-    if (activeScreen === APP_SCREENS.STOCK_MOVEMENT_FORM) {
-      return APP_SCREENS.MORE;
-    }
-
-    return APP_SCREENS.MORE;
+    if (ROOT_TABS.has(activeScreen)) return activeScreen;
+    if ([APP_SCREENS.PROPIETARIO_FORM, APP_SCREENS.VEHICLE_FORM].includes(activeScreen)) return APP_SCREENS.PROPIETARIOS;
+    if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
+    if ([APP_SCREENS.STOCK_ITEMS, APP_SCREENS.STOCK_ITEM_FORM, APP_SCREENS.STOCK_MOVEMENT_FORM, APP_SCREENS.WORKSHOP_SETTINGS, APP_SCREENS.COLLABORATORS].includes(activeScreen)) return APP_SCREENS.MORE;
+    return APP_SCREENS.HOME;
   }, [activeScreen]);
 
   const profileStatus = userProfile?.status;
-  const activeMembership = memberships.find(
-    (membership) => membership.workshopId === activeWorkshopId,
-  );
+  const activeMembership = memberships.find((m) => m.workshopId === activeWorkshopId);
   const currentRole = activeMembership?.role || userProfile?.role || "";
-  const isMechanicUser = isMechanicRole(currentRole);
 
+  // Hardware back button handler
   useEffect(() => {
-    setActiveScreen(APP_SCREENS.HOME);
-    setClientFormContext({
-      client: null,
-      returnTo: "list",
+    if (!authReady || !authUser || !userProfile || profileStatus !== "active") return undefined;
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (activeScreen === APP_SCREENS.PROPIETARIO_FORM) {
+        setActiveScreen(APP_SCREENS.PROPIETARIOS);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
+        setActiveScreen(APP_SCREENS.PROPIETARIOS);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.FISCAL_FORM) {
+        setActiveScreen(APP_SCREENS.FISCALES);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.TRAZA) {
+        setActiveScreen(APP_SCREENS.HOME);
+        return true;
+      }
+      if ([APP_SCREENS.STOCK_ITEMS, APP_SCREENS.STOCK_ITEM_FORM, APP_SCREENS.STOCK_MOVEMENT_FORM, APP_SCREENS.WORKSHOP_SETTINGS, APP_SCREENS.COLLABORATORS].includes(activeScreen)) {
+        setActiveScreen(APP_SCREENS.MORE);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.MORE) {
+        setActiveScreen(APP_SCREENS.HOME);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.PROPIETARIOS) {
+        setActiveScreen(APP_SCREENS.HOME);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.FISCALES) {
+        setActiveScreen(APP_SCREENS.HOME);
+        return true;
+      }
+      return false;
     });
-    setVehicleFormContext({
-      client: null,
-      vehicle: null,
-    });
-    setVehicleHistoryContext({
-      vehicle: null,
-    });
-    setWorkOrderHistoryTimelineContext({
-      workOrderId: null,
-    });
-    setClientsViewState({
-      selectedClientId: null,
-      screenMode: "list",
-      returnTo: APP_SCREENS.HOME,
-    });
-    setDiagnosticFormContext({
-      diagnostic: null,
-      draft: null,
-      returnTo: APP_SCREENS.DIAGNOSTICS,
-      clientId: null,
-    });
-    setDiagnosticsViewState({
-      selectedDiagnosticId: null,
-      searchQuery: "",
-      returnTo: APP_SCREENS.HOME,
-      detailEntry: false,
-    });
-    setWorkOrderFormContext({
-      workOrder: null,
-      draft: null,
-      returnTo: APP_SCREENS.WORK_ORDERS,
-    });
-    setWorkOrdersViewState({
-      selectedWorkOrderId: null,
-      returnTo: APP_SCREENS.HOME,
-      detailEntry: false,
-    });
-    setSparePartFormContext({
-      sparePart: null,
-      draft: null,
-    });
-    setSparePartsViewState({
-      selectedSparePartId: null,
-      selectedWorkOrderId: null,
-      returnTo: APP_SCREENS.MORE,
-    });
-    setStockItemFormContext({
-      stockItem: null,
-      draft: null,
-    });
-    setStockMovementFormContext({
-      stockItem: null,
-      movementType: "in",
-    });
-    setStockItemsViewState({
-      selectedStockItemId: null,
-    });
-  }, [authUser?.uid]);
-
-  useEffect(() => {
-    if (!isMechanicUser) {
-      return;
-    }
-
-    if (
-      [
-        APP_SCREENS.CLIENTS,
-        APP_SCREENS.CLIENT_FORM,
-        APP_SCREENS.VEHICLES,
-        APP_SCREENS.VEHICLE_FORM,
-        APP_SCREENS.WORKSHOP_SETTINGS,
-        APP_SCREENS.COLLABORATORS,
-      ].includes(activeScreen)
-    ) {
-      setActiveScreen(APP_SCREENS.HOME);
-      return;
-    }
-
-    if (activeScreen === APP_SCREENS.WORK_ORDER_FORM) {
-      setActiveScreen(APP_SCREENS.WORK_ORDERS);
-    }
-  }, [activeScreen, isMechanicUser]);
-
-  function navigateBackFromDiagnostics() {
-    setDiagnosticsViewState((current) => ({
-      ...current,
-      selectedDiagnosticId: null,
-      searchQuery: "",
-      detailEntry: false,
-    }));
-    setActiveScreen(diagnosticsViewState.returnTo || APP_SCREENS.HOME);
-  }
-
-  function navigateBackFromWorkOrders() {
-    setWorkOrdersViewState((current) => ({
-      ...current,
-      selectedWorkOrderId: null,
-      detailEntry: false,
-    }));
-    setActiveScreen(workOrdersViewState.returnTo || APP_SCREENS.HOME);
-  }
-
-  useEffect(() => {
-    if (!authReady || !authUser || !userProfile || profileStatus !== "active") {
-      return undefined;
-    }
-
-    const subscription = BackHandler.addEventListener(
-      "hardwareBackPress",
-      () => {
-        if (activeScreen === APP_SCREENS.CLIENT_FORM) {
-          setClientsViewState((current) => ({
-            ...current,
-            selectedClientId: null,
-            screenMode: "list",
-          }));
-          setActiveScreen(APP_SCREENS.CLIENTS);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
-          setClientsViewState({
-            selectedClientId:
-              vehicleFormContext.client?.id ||
-              vehicleFormContext.client?.refId ||
-              null,
-            screenMode: "detail",
-          });
-          setActiveScreen(APP_SCREENS.CLIENTS);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.VEHICLE_HISTORY) {
-          setActiveScreen(APP_SCREENS.VEHICLES);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.WORK_ORDER_HISTORY_TIMELINE) {
-          setActiveScreen(APP_SCREENS.VEHICLE_HISTORY);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.DIAGNOSTIC_FORM) {
-          if (diagnosticFormContext.returnTo === APP_SCREENS.CLIENTS) {
-            setClientsViewState({
-              selectedClientId: diagnosticFormContext.clientId,
-              screenMode: "detail",
-            });
-            setActiveScreen(APP_SCREENS.CLIENTS);
-            return true;
-          }
-
-          if (diagnosticFormContext.returnTo === APP_SCREENS.VEHICLES) {
-            setActiveScreen(APP_SCREENS.VEHICLES);
-            return true;
-          }
-
-          setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.WORK_ORDER_FORM) {
-          setActiveScreen(
-            workOrderFormContext.returnTo || APP_SCREENS.WORK_ORDERS,
-          );
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.SPARE_PART_FORM) {
-          setActiveScreen(APP_SCREENS.SPARE_PARTS);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.STOCK_ITEM_FORM) {
-          setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.STOCK_MOVEMENT_FORM) {
-          setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          return true;
-        }
-
-        if (
-          activeScreen === APP_SCREENS.WORKSHOP_SETTINGS ||
-          activeScreen === APP_SCREENS.COLLABORATORS
-        ) {
-          setActiveScreen(APP_SCREENS.MORE);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.SPARE_PARTS) {
-          setActiveScreen(sparePartsViewState.returnTo || APP_SCREENS.MORE);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.STOCK_ITEMS) {
-          setActiveScreen(APP_SCREENS.MORE);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.CLIENTS) {
-          setClientsViewState((current) => ({
-            ...current,
-            selectedClientId: null,
-            screenMode: "list",
-          }));
-          setActiveScreen(clientsViewState.returnTo || APP_SCREENS.HOME);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.VEHICLES) {
-          setActiveScreen(APP_SCREENS.HOME);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.DIAGNOSTICS) {
-          navigateBackFromDiagnostics();
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.WORK_ORDERS) {
-          navigateBackFromWorkOrders();
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.WORKSHOP_MANAGEMENT) {
-          setActiveScreen(APP_SCREENS.MORE);
-          return true;
-        }
-
-        if (activeScreen === APP_SCREENS.MORE) {
-          setActiveScreen(APP_SCREENS.HOME);
-          return true;
-        }
-
-        return false;
-      },
-    );
 
     return () => subscription.remove();
-  }, [
-    activeScreen,
-    authReady,
-    authUser,
-    profileStatus,
-    userProfile,
-    diagnosticFormContext.clientId,
-    diagnosticFormContext.returnTo,
-    diagnosticsViewState.returnTo,
-    sparePartsViewState.returnTo,
-    vehicleFormContext.client,
-    clientsViewState.returnTo,
-    workOrderFormContext.returnTo,
-    workOrdersViewState.returnTo,
-  ]);
+  }, [activeScreen, authReady, authUser, profileStatus, userProfile]);
 
   if (!authReady || !onboardingReady) {
     return (
@@ -505,277 +209,63 @@ function AppContent() {
   }
 
   const handleTabChange = (nextTab) => {
-    if (isMechanicUser && nextTab === APP_SCREENS.CLIENTS) {
-      setActiveScreen(APP_SCREENS.HOME);
+    if (nextTab === APP_SCREENS.HOME) { setActiveScreen(APP_SCREENS.HOME); return; }
+    if (nextTab === APP_SCREENS.PROPIETARIOS) {
+      setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
+      setActiveScreen(APP_SCREENS.PROPIETARIOS);
       return;
     }
-
-    if (nextTab === APP_SCREENS.HOME) {
-      setActiveScreen(APP_SCREENS.HOME);
-      return;
-    }
-
-    if (nextTab === APP_SCREENS.CLIENTS) {
-      setClientsViewState({
-        selectedClientId: null,
-        screenMode: "list",
-        returnTo: APP_SCREENS.HOME,
-      });
-      setActiveScreen(APP_SCREENS.CLIENTS);
-      return;
-    }
-
-    if (nextTab === APP_SCREENS.DIAGNOSTICS) {
-      setDiagnosticsViewState({
-        selectedDiagnosticId: null,
-        searchQuery: "",
-        returnTo: APP_SCREENS.HOME,
-        detailEntry: false,
-      });
-      setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-      return;
-    }
-
-    if (nextTab === APP_SCREENS.WORK_ORDERS) {
-      setWorkOrdersViewState({
-        selectedWorkOrderId: null,
-        returnTo: APP_SCREENS.HOME,
-        detailEntry: false,
-      });
-      setActiveScreen(APP_SCREENS.WORK_ORDERS);
-      return;
-    }
-
-    setSparePartsViewState({
-      selectedSparePartId: null,
-      selectedWorkOrderId: null,
-      returnTo: APP_SCREENS.MORE,
-    });
+    if (nextTab === APP_SCREENS.FISCALES) { setActiveScreen(APP_SCREENS.FISCALES); return; }
+    if (nextTab === APP_SCREENS.TRAZA) { setActiveScreen(APP_SCREENS.TRAZA); return; }
     setActiveScreen(APP_SCREENS.MORE);
   };
 
-  const renderAuthenticatedScreen = () => {
-    if (activeScreen === APP_SCREENS.CLIENTS) {
+  const renderScreen = () => {
+    if (activeScreen === APP_SCREENS.HOME) {
       return (
-        <ClientsScreen
-          onBack={() =>
-            setActiveScreen(clientsViewState.returnTo || APP_SCREENS.HOME)
-          }
-          onOpenClientForm={(client, options = {}) => {
-            setClientFormContext({
-              client: client || null,
-              returnTo: options.returnTo || "list",
-            });
-            setActiveScreen(APP_SCREENS.CLIENT_FORM);
-          }}
-          onOpenVehicleForm={(client, vehicle) => {
-            setVehicleFormContext({
-              client: client || null,
-              vehicle: vehicle || null,
-            });
+        <WorkshopHomeScreen
+          onOpenPropietarios={() => { setPropietariosViewState({ selectedClientId: null, screenMode: "list" }); setActiveScreen(APP_SCREENS.PROPIETARIOS); }}
+          onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
+          onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
+          onOpenVehicleDetail={(vehicle) => {
+            setVehicleFormContext({ propietario: null, vehicle });
             setActiveScreen(APP_SCREENS.VEHICLE_FORM);
           }}
-          onOpenDiagnosticForm={async (diagnostic, options = {}) => {
-            try {
-              const seedData = options.seedData || null;
+          onSignOut={signOutUser}
+          currentRole={currentRole}
+          userProfile={userProfile}
+        />
+      );
+    }
 
-              if (!diagnostic && seedData?.vehicleId) {
-                const activeDiagnostic = await findActiveDiagnosticByVehicleId(
-                  seedData.vehicleId,
-                );
-
-                if (activeDiagnostic) {
-                  Alert.alert(
-                    "Diagnosticos",
-                    "Esta unidad ya tiene un diagnostico abierto. Se abrira ese mismo registro para editarlo.",
-                  );
-
-                  setDiagnosticFormContext({
-                    diagnostic: activeDiagnostic,
-                    draft: seedData,
-                    returnTo: APP_SCREENS.CLIENTS,
-                    clientId:
-                      seedData.clientId || activeDiagnostic.clientId || null,
-                  });
-                  setActiveScreen(APP_SCREENS.DIAGNOSTIC_FORM);
-                  return;
-                }
-                userProfile = { userProfile };
-              }
-
-              setDiagnosticFormContext({
-                diagnostic: diagnostic || null,
-                draft: seedData,
-                returnTo: APP_SCREENS.CLIENTS,
-                clientId: seedData?.clientId || diagnostic?.clientId || null,
-              });
-              setActiveScreen(APP_SCREENS.DIAGNOSTIC_FORM);
-            } catch (error) {
-              Alert.alert(
-                "Diagnosticos",
-                error?.message ||
-                  "No se pudo preparar el diagnostico para esta unidad.",
-              );
-            }
+    if (activeScreen === APP_SCREENS.PROPIETARIOS) {
+      return (
+        <PropietariosScreen
+          onBack={() => setActiveScreen(APP_SCREENS.HOME)}
+          onOpenPropietarioForm={(propietario, options = {}) => {
+            setPropietarioFormContext({ propietario: propietario || null });
+            setActiveScreen(APP_SCREENS.PROPIETARIO_FORM);
+          }}
+          onOpenVehicleForm={(propietario, vehicle) => {
+            setVehicleFormContext({ propietario: propietario || null, vehicle: vehicle || null });
+            setActiveScreen(APP_SCREENS.VEHICLE_FORM);
           }}
           currentRole={currentRole}
           userProfile={userProfile}
-          viewState={clientsViewState}
+          viewState={propietariosViewState}
         />
       );
     }
 
-    if (activeScreen === APP_SCREENS.VEHICLES) {
+    if (activeScreen === APP_SCREENS.PROPIETARIO_FORM) {
       return (
-        <VehiclesDirectoryScreen
-          onBack={() => setActiveScreen(APP_SCREENS.HOME)}
-          onOpenClientDetail={(clientId) => {
-            setClientsViewState({
-              selectedClientId: clientId || null,
-              screenMode: "detail",
-              returnTo: APP_SCREENS.VEHICLES,
-            });
-            setActiveScreen(APP_SCREENS.CLIENTS);
-          }}
-          onOpenDiagnosticDetail={(diagnosticId) => {
-            setDiagnosticsViewState({
-              selectedDiagnosticId: diagnosticId || null,
-              searchQuery: "",
-              returnTo: APP_SCREENS.VEHICLES,
-              detailEntry: true,
-            });
-            setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-          }}
-          onOpenDiagnosticForm={async (vehicle, client) => {
-            try {
-              const vehicleId = vehicle?.id || vehicle?.refId || null;
-              const clientId =
-                client?.id || client?.refId || vehicle?.clientId || null;
-
-              if (!vehicleId) {
-                Alert.alert(
-                  "Diagnosticos",
-                  "No se pudo identificar la unidad para abrir el diagnostico.",
-                );
-                return;
-              }
-
-              const activeDiagnostic =
-                await findActiveDiagnosticByVehicleId(vehicleId);
-
-              if (activeDiagnostic) {
-                Alert.alert(
-                  "Diagnosticos",
-                  "Esta unidad ya tiene un diagnostico abierto. Se abrira ese mismo registro para editarlo.",
-                );
-
-                setDiagnosticFormContext({
-                  diagnostic: activeDiagnostic,
-                  draft: {
-                    clientId,
-                    vehicleId,
-                  },
-                  returnTo: APP_SCREENS.VEHICLES,
-                  clientId,
-                });
-                setActiveScreen(APP_SCREENS.DIAGNOSTIC_FORM);
-                return;
-              }
-
-              setDiagnosticFormContext({
-                diagnostic: null,
-                draft: {
-                  clientId,
-                  vehicleId,
-                },
-                returnTo: APP_SCREENS.VEHICLES,
-                clientId,
-              });
-              setActiveScreen(APP_SCREENS.DIAGNOSTIC_FORM);
-            } catch (error) {
-              Alert.alert(
-                "Diagnosticos",
-                error?.message ||
-                  "No se pudo preparar el diagnostico para esta unidad.",
-              );
-            }
-          }}
-          onOpenWorkOrderDetail={(workOrderId) => {
-            setWorkOrdersViewState({
-              selectedWorkOrderId: workOrderId || null,
-              returnTo: APP_SCREENS.VEHICLES,
-              detailEntry: true,
-            });
-            setActiveScreen(APP_SCREENS.WORK_ORDERS);
-          }}
-          onOpenVehicleHistory={(vehicle) => {
-            setVehicleHistoryContext({
-              vehicle: vehicle || null,
-            });
-            setWorkOrderHistoryTimelineContext({
-              workOrderId: null,
-            });
-            setActiveScreen(APP_SCREENS.VEHICLE_HISTORY);
-          }}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.VEHICLE_HISTORY) {
-      return (
-        <VehicleHistoryScreen
-          onBack={() => setActiveScreen(APP_SCREENS.VEHICLES)}
-          onOpenDiagnosticDetail={(diagnosticId) => {
-            setDiagnosticsViewState({
-              selectedDiagnosticId: diagnosticId || null,
-              searchQuery: "",
-              returnTo: APP_SCREENS.VEHICLE_HISTORY,
-              detailEntry: true,
-            });
-            setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-          }}
-          onOpenWorkOrderTimeline={(workOrderId) => {
-            setWorkOrderHistoryTimelineContext({
-              workOrderId: workOrderId || null,
-            });
-            setActiveScreen(APP_SCREENS.WORK_ORDER_HISTORY_TIMELINE);
-          }}
-          vehicleContext={vehicleHistoryContext.vehicle}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.WORK_ORDER_HISTORY_TIMELINE) {
-      return (
-        <WorkOrderHistoryTimelineScreen
-          onBack={() => setActiveScreen(APP_SCREENS.VEHICLE_HISTORY)}
-          workOrderId={workOrderHistoryTimelineContext.workOrderId}
-          vehicleContext={vehicleHistoryContext.vehicle}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.CLIENT_FORM) {
-      return (
-        <ClientFormScreen
-          initialClient={clientFormContext.client}
-          onBack={() => {
-            setClientsViewState((current) => ({
-              ...current,
-              selectedClientId: null,
-              screenMode: "list",
-            }));
-            setActiveScreen(APP_SCREENS.CLIENTS);
-          }}
+        <PropietarioFormScreen
+          initialPropietario={propietarioFormContext.propietario}
+          onBack={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
           onSaved={() => {
-            setClientsViewState((current) => ({
-              ...current,
-              selectedClientId: null,
-              screenMode: "list",
-            }));
-            setActiveScreen(APP_SCREENS.CLIENTS);
+            setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
+            setActiveScreen(APP_SCREENS.PROPIETARIOS);
           }}
-          userProfile={userProfile}
         />
       );
     }
@@ -783,105 +273,41 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
       return (
         <VehicleFormScreen
-          initialClient={vehicleFormContext.client}
+          initialPropietario={vehicleFormContext.propietario}
           initialVehicle={vehicleFormContext.vehicle}
           onBack={() => {
-            setClientsViewState({
-              selectedClientId:
-                vehicleFormContext.client?.id ||
-                vehicleFormContext.client?.refId ||
-                null,
-              screenMode: "detail",
-              returnTo: clientsViewState.returnTo,
-            });
-            setActiveScreen(APP_SCREENS.CLIENTS);
+            if (vehicleFormContext.propietario) {
+              setPropietariosViewState({
+                selectedClientId: vehicleFormContext.propietario?.id || vehicleFormContext.propietario?.membresia_id || null,
+                screenMode: "detail",
+              });
+              setActiveScreen(APP_SCREENS.PROPIETARIOS);
+            } else {
+              setActiveScreen(APP_SCREENS.HOME);
+            }
           }}
           onSaved={() => {
-            setClientsViewState({
-              selectedClientId:
-                vehicleFormContext.client?.id ||
-                vehicleFormContext.client?.refId,
-              screenMode: "detail",
-              returnTo: clientsViewState.returnTo,
-            });
-            setActiveScreen(APP_SCREENS.CLIENTS);
-          }}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.DIAGNOSTICS) {
-      return (
-        <DiagnosticsScreen
-          onBack={navigateBackFromDiagnostics}
-          onOpenDiagnosticForm={(diagnostic, options = {}) => {
-            setDiagnosticFormContext({
-              diagnostic: diagnostic || null,
-              draft: options.seedData || null,
-              returnTo: APP_SCREENS.DIAGNOSTICS,
-              clientId:
-                options.seedData?.clientId || diagnostic?.clientId || null,
-            });
-            setActiveScreen(APP_SCREENS.DIAGNOSTIC_FORM);
-          }}
-          onOpenWorkOrderForm={(workOrder, options = {}) => {
-            setWorkOrderFormContext({
-              workOrder: workOrder || null,
-              draft: options.seedData || null,
-              returnTo: APP_SCREENS.DIAGNOSTICS,
-            });
-            setActiveScreen(APP_SCREENS.WORK_ORDER_FORM);
-          }}
-          currentRole={currentRole}
-          userProfile={userProfile}
-          viewState={diagnosticsViewState}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.DIAGNOSTIC_FORM) {
-      return (
-        <DiagnosticFormScreen
-          initialDiagnostic={diagnosticFormContext.diagnostic}
-          initialDraft={diagnosticFormContext.draft}
-          onBack={() => {
-            if (diagnosticFormContext.returnTo === APP_SCREENS.CLIENTS) {
-              setClientsViewState({
-                selectedClientId: diagnosticFormContext.clientId,
+            if (vehicleFormContext.propietario) {
+              setPropietariosViewState({
+                selectedClientId: vehicleFormContext.propietario?.id || vehicleFormContext.propietario?.membresia_id || null,
                 screenMode: "detail",
               });
-              setActiveScreen(APP_SCREENS.CLIENTS);
-              return;
+              setActiveScreen(APP_SCREENS.PROPIETARIOS);
+            } else {
+              setActiveScreen(APP_SCREENS.HOME);
             }
-
-            if (diagnosticFormContext.returnTo === APP_SCREENS.VEHICLES) {
-              setActiveScreen(APP_SCREENS.VEHICLES);
-              return;
-            }
-
-            setActiveScreen(APP_SCREENS.DIAGNOSTICS);
           }}
-          onSaved={(savedDiagnosticId) => {
-            if (diagnosticFormContext.returnTo === APP_SCREENS.CLIENTS) {
-              setClientsViewState({
-                selectedClientId: diagnosticFormContext.clientId,
-                screenMode: "detail",
-              });
-              setActiveScreen(APP_SCREENS.CLIENTS);
-              return;
-            }
+        />
+      );
+    }
 
-            if (diagnosticFormContext.returnTo === APP_SCREENS.VEHICLES) {
-              setActiveScreen(APP_SCREENS.VEHICLES);
-              return;
-            }
-
-            setDiagnosticsViewState({
-              ...diagnosticsViewState,
-              selectedDiagnosticId: savedDiagnosticId,
-              detailEntry: true,
-            });
-            setActiveScreen(APP_SCREENS.DIAGNOSTICS);
+    if (activeScreen === APP_SCREENS.FISCALES) {
+      return (
+        <FiscalesScreen
+          onBack={() => setActiveScreen(APP_SCREENS.HOME)}
+          onOpenFiscalForm={(fiscal) => {
+            setFiscalFormContext({ fiscal: fiscal || null });
+            setActiveScreen(APP_SCREENS.FISCAL_FORM);
           }}
           currentRole={currentRole}
           userProfile={userProfile}
@@ -889,104 +315,22 @@ function AppContent() {
       );
     }
 
-    if (activeScreen === APP_SCREENS.WORK_ORDERS) {
+    if (activeScreen === APP_SCREENS.FISCAL_FORM) {
       return (
-        <WorkOrdersScreen
-          onBack={navigateBackFromWorkOrders}
-          onOpenSpareParts={(workOrder) => {
-            setWorkOrdersViewState((current) => ({
-              ...current,
-              selectedWorkOrderId: workOrder?.id || null,
-            }));
-            setSparePartsViewState({
-              selectedSparePartId: null,
-              selectedWorkOrderId: workOrder?.id || null,
-              returnTo: APP_SCREENS.WORK_ORDERS,
-            });
-            setActiveScreen(APP_SCREENS.SPARE_PARTS);
-          }}
-          onOpenSparePartForm={(sparePart, options = {}) => {
-            setSparePartFormContext({
-              sparePart: sparePart || null,
-              draft: options.seedData || null,
-            });
-            setActiveScreen(APP_SCREENS.SPARE_PART_FORM);
-          }}
-          onOpenWorkOrderForm={(workOrder, options = {}) => {
-            setWorkOrderFormContext({
-              workOrder: workOrder || null,
-              draft: options.seedData || null,
-              returnTo: APP_SCREENS.WORK_ORDERS,
-            });
-            setActiveScreen(APP_SCREENS.WORK_ORDER_FORM);
-          }}
+        <FiscalFormScreen
+          initialFiscal={fiscalFormContext.fiscal}
+          onBack={() => setActiveScreen(APP_SCREENS.FISCALES)}
+          onSaved={() => setActiveScreen(APP_SCREENS.FISCALES)}
+        />
+      );
+    }
+
+    if (activeScreen === APP_SCREENS.TRAZA) {
+      return (
+        <TrazaScreen
+          onBack={() => setActiveScreen(APP_SCREENS.HOME)}
           currentRole={currentRole}
           userProfile={userProfile}
-          viewState={workOrdersViewState}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.WORK_ORDER_FORM) {
-      return (
-        <WorkOrderFormScreen
-          initialDraft={workOrderFormContext.draft}
-          initialWorkOrder={workOrderFormContext.workOrder}
-          onBack={() =>
-            setActiveScreen(
-              workOrderFormContext.returnTo || APP_SCREENS.WORK_ORDERS,
-            )
-          }
-          onSaved={(savedWorkOrderId) => {
-            if (workOrderFormContext.returnTo === APP_SCREENS.DIAGNOSTICS) {
-              setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-              return;
-            }
-
-            setWorkOrdersViewState({
-              selectedWorkOrderId: savedWorkOrderId,
-              returnTo: workOrdersViewState.returnTo,
-              detailEntry: true,
-            });
-            setActiveScreen(APP_SCREENS.WORK_ORDERS);
-          }}
-          userProfile={userProfile}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.SPARE_PARTS) {
-      return (
-        <SparePartsScreen
-          onBack={() =>
-            setActiveScreen(sparePartsViewState.returnTo || APP_SCREENS.MORE)
-          }
-          onOpenSparePartForm={(sparePart, options = {}) => {
-            setSparePartFormContext({
-              sparePart: sparePart || null,
-              draft: options.seedData || null,
-            });
-            setActiveScreen(APP_SCREENS.SPARE_PART_FORM);
-          }}
-          userProfile={userProfile}
-          viewState={sparePartsViewState}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.SPARE_PART_FORM) {
-      return (
-        <SparePartFormScreen
-          initialDraft={sparePartFormContext.draft}
-          initialSparePart={sparePartFormContext.sparePart}
-          onBack={() => setActiveScreen(APP_SCREENS.SPARE_PARTS)}
-          onSaved={(savedSparePartId) => {
-            setSparePartsViewState((current) => ({
-              ...current,
-              selectedSparePartId: savedSparePartId,
-            }));
-            setActiveScreen(APP_SCREENS.SPARE_PARTS);
-          }}
         />
       );
     }
@@ -996,17 +340,11 @@ function AppContent() {
         <StockItemsScreen
           onBack={() => setActiveScreen(APP_SCREENS.MORE)}
           onOpenStockItemForm={(stockItem, options = {}) => {
-            setStockItemFormContext({
-              stockItem: stockItem || null,
-              draft: options.seedData || null,
-            });
+            setStockItemFormContext({ stockItem: stockItem || null, draft: options.seedData || null });
             setActiveScreen(APP_SCREENS.STOCK_ITEM_FORM);
           }}
           onOpenStockMovementForm={(stockItem, options = {}) => {
-            setStockMovementFormContext({
-              stockItem: stockItem || null,
-              movementType: options.movementType || "in",
-            });
+            setStockMovementFormContext({ stockItem: stockItem || null, movementType: options.movementType || "in" });
             setActiveScreen(APP_SCREENS.STOCK_MOVEMENT_FORM);
           }}
           userProfile={userProfile}
@@ -1021,12 +359,7 @@ function AppContent() {
           initialDraft={stockItemFormContext.draft}
           initialStockItem={stockItemFormContext.stockItem}
           onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedStockItemId) => {
-            setStockItemsViewState({
-              selectedStockItemId: savedStockItemId,
-            });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
+          onSaved={(savedId) => { setStockItemsViewState({ selectedStockItemId: savedId }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
         />
       );
     }
@@ -1037,45 +370,17 @@ function AppContent() {
           initialMovementType={stockMovementFormContext.movementType}
           initialStockItem={stockMovementFormContext.stockItem}
           onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedStockItemId) => {
-            setStockItemsViewState({
-              selectedStockItemId: savedStockItemId,
-            });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.WORKSHOP_MANAGEMENT) {
-      return (
-        <WorkshopManagementScreen
-          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          onSwitchWorkshop={() => setActiveScreen(APP_SCREENS.HOME)}
-          currentRole={currentRole}
-          userProfile={userProfile}
+          onSaved={(savedId) => { setStockItemsViewState({ selectedStockItemId: savedId }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
         />
       );
     }
 
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
-      return (
-        <TeamAccessScreen
-          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          screenMode="workshop"
-          userProfile={userProfile}
-        />
-      );
+      return <TeamAccessScreen onBack={() => setActiveScreen(APP_SCREENS.MORE)} screenMode="workshop" userProfile={userProfile} />;
     }
 
     if (activeScreen === APP_SCREENS.COLLABORATORS) {
-      return (
-        <TeamAccessScreen
-          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          screenMode="collaborators"
-          userProfile={userProfile}
-        />
-      );
+      return <TeamAccessScreen onBack={() => setActiveScreen(APP_SCREENS.MORE)} screenMode="collaborators" userProfile={userProfile} />;
     }
 
     if (activeScreen === APP_SCREENS.MORE) {
@@ -1084,81 +389,23 @@ function AppContent() {
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
           onOpenCollaborators={() => setActiveScreen(APP_SCREENS.COLLABORATORS)}
           onOpenOnboarding={() => setShowOnboarding(true)}
-          onOpenStockItems={() => {
-            setStockItemsViewState({
-              selectedStockItemId: null,
-            });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
-          onOpenWorkshopManagement={() =>
-            setActiveScreen(APP_SCREENS.WORKSHOP_MANAGEMENT)
-          }
-          onOpenWorkshopSettings={() =>
-            setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)
-          }
+          onOpenStockItems={() => { setStockItemsViewState({ selectedStockItemId: null }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
+          onOpenWorkshopManagement={() => setActiveScreen(APP_SCREENS.MORE)}
+          onOpenWorkshopSettings={() => setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)}
           onSignOut={signOutUser}
           onToggleTheme={toggleTheme}
-          themeLabel={
-            isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"
-          }
+          themeLabel={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
         />
       );
     }
 
+    // default: HOME
     return (
       <WorkshopHomeScreen
-        onOpenDiagnosticDetail={(diagnosticId) => {
-          setDiagnosticsViewState({
-            selectedDiagnosticId: diagnosticId || null,
-            searchQuery: "",
-            returnTo: APP_SCREENS.HOME,
-            detailEntry: true,
-          });
-          setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-        }}
-        onOpenClients={() => {
-          setClientsViewState({
-            selectedClientId: null,
-            screenMode: "list",
-            returnTo: APP_SCREENS.HOME,
-          });
-          setActiveScreen(APP_SCREENS.CLIENTS);
-        }}
-        onOpenDiagnostics={() => {
-          setDiagnosticsViewState({
-            selectedDiagnosticId: null,
-            searchQuery: "",
-            returnTo: APP_SCREENS.HOME,
-            detailEntry: false,
-          });
-          setActiveScreen(APP_SCREENS.DIAGNOSTICS);
-        }}
-        onOpenVehicles={() => setActiveScreen(APP_SCREENS.VEHICLES)}
-        onOpenSpareParts={() => {
-          setSparePartsViewState({
-            selectedSparePartId: null,
-            selectedWorkOrderId: null,
-            returnTo: APP_SCREENS.MORE,
-          });
-          setActiveScreen(APP_SCREENS.SPARE_PARTS);
-        }}
-        onOpenTeamAccess={() => setActiveScreen(APP_SCREENS.COLLABORATORS)}
-        onOpenWorkOrderDetail={(workOrderId) => {
-          setWorkOrdersViewState({
-            selectedWorkOrderId: workOrderId || null,
-            returnTo: APP_SCREENS.HOME,
-            detailEntry: true,
-          });
-          setActiveScreen(APP_SCREENS.WORK_ORDERS);
-        }}
-        onOpenWorkOrders={() => {
-          setWorkOrdersViewState({
-            selectedWorkOrderId: null,
-            returnTo: APP_SCREENS.HOME,
-            detailEntry: false,
-          });
-          setActiveScreen(APP_SCREENS.WORK_ORDERS);
-        }}
+        onOpenPropietarios={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
+        onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
+        onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
+        onOpenVehicleDetail={(vehicle) => { setVehicleFormContext({ propietario: null, vehicle }); setActiveScreen(APP_SCREENS.VEHICLE_FORM); }}
         onSignOut={signOutUser}
         currentRole={currentRole}
         userProfile={userProfile}
@@ -1170,20 +417,11 @@ function AppContent() {
     <>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View style={styles.shell}>
-        <View style={styles.content}>{renderAuthenticatedScreen()}</View>
+        <View style={styles.content}>{renderScreen()}</View>
         <WorkshopTabBar
           activeTab={activeTab}
           onChange={handleTabChange}
-          visibleTabs={
-            isMechanicUser
-              ? [
-                  APP_SCREENS.HOME,
-                  APP_SCREENS.DIAGNOSTICS,
-                  APP_SCREENS.WORK_ORDERS,
-                  APP_SCREENS.MORE,
-                ]
-              : undefined
-          }
+          visibleTabs={[APP_SCREENS.HOME, APP_SCREENS.PROPIETARIOS, APP_SCREENS.FISCALES, APP_SCREENS.TRAZA, APP_SCREENS.MORE]}
         />
       </View>
     </>
@@ -1203,10 +441,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
+  shell: { flex: 1 },
+  content: { flex: 1 },
 });

@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
+﻿import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,455 +14,220 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
+import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import {
-  createEmptyVehicleForm,
-  createVehicle,
-  updateVehicle,
-} from "../services/vehicles/vehicleService";
+import { listPropietarios } from "../services/propietarios/propietarioService";
+import { createVehicle, updateVehicle } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 function getVehicleId(vehicle) {
-  return vehicle?.refId || vehicle?.id || null;
+  return vehicle?.id || "";
 }
 
-function buildVehicleForm(vehicle, clientId = "") {
-  if (!vehicle) {
-    return createEmptyVehicleForm(clientId);
-  }
-
-  return {
-    clientId: vehicle.clientId || clientId,
-    plate: vehicle.plate || "",
-    brand: vehicle.brand || "",
-    model: vehicle.model || "",
-    year: vehicle.year || "",
-    color: vehicle.color || "",
-    vin: vehicle.vin || "",
-    mileage:
-      vehicle.mileage === null || vehicle.mileage === undefined
-        ? ""
-        : String(vehicle.mileage),
-    notes: vehicle.notes || "",
-  };
-}
-
-export default function VehicleFormScreen({
-  initialClient,
-  initialVehicle,
-  onBack,
-  onSaved,
-}) {
+export default function VehicleFormScreen({ initialPropietario, initialVehicle, onBack, onSaved }) {
   const { colors } = useTheme();
-  const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState(
-    buildVehicleForm(
-      initialVehicle,
-      initialClient?.id || initialClient?.refId || "",
-    ),
-  );
+  const { token, activeAssociation } = useAuth();
+  const asociacionId = activeAssociation?.id;
+  const isEditing = Boolean(getVehicleId(initialVehicle));
 
-  const editingVehicleId = getVehicleId(initialVehicle);
-  const clientLabel = initialClient?.fullName || initialClient?.id || "Cliente";
+  const [propietarios, setPropietarios] = useState([]);
+  const [selectedPropietarioId, setSelectedPropietarioId] = useState(
+    initialVehicle?.propietario_id || initialPropietario?.id || initialPropietario?.membresia_id || null,
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [placa, setPlaca] = useState(initialVehicle?.placa || "");
+  const [marca, setMarca] = useState(initialVehicle?.marca || "");
+  const [modelo, setModelo] = useState(initialVehicle?.modelo || "");
+  const [ano, setAno] = useState(initialVehicle?.ano ? String(initialVehicle.ano) : "");
+  const [color, setColor] = useState(initialVehicle?.color || "");
+  const [numeroCilindros, setNumeroCilindros] = useState(initialVehicle?.numero_cilindros ? String(initialVehicle.numero_cilindros) : "");
+  const [peso, setPeso] = useState(initialVehicle?.peso || "");
+  const [serialCarroceria, setSerialCarroceria] = useState(initialVehicle?.serial_carroceria || "");
+  const [serialMotor, setSerialMotor] = useState(initialVehicle?.serial_motor || "");
+  const [capacidad, setCapacidad] = useState(initialVehicle?.capacidad || "");
+  const [fechaEmision, setFechaEmision] = useState(initialVehicle?.fecha_emision ? String(initialVehicle.fecha_emision).slice(0, 10) : "");
+  const [numeroPolizaRcv, setNumeroPolizaRcv] = useState(initialVehicle?.numero_poliza_rcv || "");
+  const [chofer, setChofer] = useState(initialVehicle?.chofer || "");
+  const [numeroUnidad, setNumeroUnidad] = useState(initialVehicle?.numero_unidad ? String(initialVehicle.numero_unidad) : "");
+  const [numeroPuestos, setNumeroPuestos] = useState(initialVehicle?.numero_puestos ? String(initialVehicle.numero_puestos) : "");
 
   useEffect(() => {
-    setForm(
-      buildVehicleForm(
-        initialVehicle,
-        initialClient?.id || initialClient?.refId || "",
-      ),
-    );
-  }, [initialClient, initialVehicle]);
+    if (!asociacionId) { setLoading(false); return; }
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await listPropietarios(token, asociacionId);
+        setPropietarios(data);
+        setSelectedPropietarioId((current) => {
+          if (current) return current;
+          if (initialPropietario?.id) return initialPropietario.id;
+          if (initialPropietario?.membresia_id) return initialPropietario.membresia_id;
+          return data[0]?.id || data[0]?.membresia_id || null;
+        });
+      } catch { } finally { setLoading(false); }
+    };
+    load();
+  }, [asociacionId]);
 
   const handleSubmit = async () => {
-    if (!form.clientId) {
-      Alert.alert("Vehiculos", "Debes entrar desde la ficha de un cliente.");
+    if (!placa.trim() || !numeroUnidad.trim()) {
+      Alert.alert("Datos incompletos", "Placa y numero de unidad son obligatorios.");
       return;
     }
-
-    if (!form.plate.trim()) {
-      Alert.alert("Vehiculos", "Ingresa al menos la placa del vehiculo.");
+    if (!selectedPropietarioId) {
+      Alert.alert("Sin propietario", "Asigna un propietario a la unidad.");
       return;
     }
-
+    if (!asociacionId) {
+      Alert.alert("Sin asociacion", "Selecciona una asociacion activa.");
+      return;
+    }
     setSubmitting(true);
-
     try {
-      let savedVehicleId = editingVehicleId;
-
-      if (editingVehicleId) {
-        await updateVehicle(editingVehicleId, form);
+      const payload = {
+        propietario_id: Number(selectedPropietarioId),
+        placa: placa.trim().toUpperCase(),
+        marca: marca.trim(),
+        modelo: modelo.trim(),
+        ano: ano ? Number(ano) : undefined,
+        color: color.trim(),
+        numero_cilindros: numeroCilindros ? Number(numeroCilindros) : undefined,
+        peso: peso.trim(),
+        serial_carroceria: serialCarroceria.trim(),
+        serial_motor: serialMotor.trim(),
+        capacidad: capacidad.trim(),
+        fecha_emision: fechaEmision.trim() || undefined,
+        numero_poliza_rcv: numeroPolizaRcv.trim(),
+        chofer: chofer.trim(),
+        numero_unidad: numeroUnidad.trim(),
+        numero_puestos: numeroPuestos ? Number(numeroPuestos) : undefined,
+      };
+      if (isEditing) {
+        await updateVehicle(token, asociacionId, getVehicleId(initialVehicle), payload);
       } else {
-        const createdVehicle = await createVehicle(form);
-        savedVehicleId = createdVehicle.id;
+        await createVehicle(token, asociacionId, payload);
       }
-
-      onSaved?.(savedVehicleId);
+      onSaved?.();
     } catch (error) {
-      Alert.alert(
-        "Vehiculos",
-        error?.message || "No se pudo guardar el vehiculo.",
-      );
+      Alert.alert(isEditing ? "Error al actualizar" : "Error al crear", error?.message || "No se pudo completar la operacion.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView
-      edges={["left", "right", "bottom"]}
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <WorkshopScreenHeader
-          onBack={onBack}
-          section="Vehiculos"
-          subtitle="Registro operativo separado de la ficha del cliente para mantener una sola accion por pantalla."
-          title={editingVehicleId ? "Editar vehiculo" : "Asociar vehiculo"}
-        />
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <WorkshopScreenHeader
+            onBack={onBack}
+            section="Costos y Repuestos"
+            title={isEditing ? "Editar unidad" : "Nueva unidad"}
+            subtitle={activeAssociation ? activeAssociation.nombre : "Sin asociacion activa"}
+          />
 
-        <View
-          style={[
-            styles.clientBadge,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.clientLabel, { color: colors.textSecondary }]}>
-            Cliente
-          </Text>
-          <Text style={[styles.clientValue, { color: colors.text }]}>
-            {clientLabel}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.formCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View
-            style={[styles.cardHeader, { borderBottomColor: colors.border }]}
-          >
-            <View style={styles.cardHeaderCopy}>
-              <Text style={[styles.cardEyebrow, { color: colors.accent }]}>
-                Taller
-              </Text>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>
-                Identificacion del vehiculo
-              </Text>
-            </View>
-            <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
-              {editingVehicleId ? "Edicion" : "Asociacion"}
-            </Text>
+          <View style={[styles.sectionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Propietario *</Text>
+            {loading ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : propietarios.length ? (
+              propietarios.map((p) => {
+                const pid = p.id || p.membresia_id;
+                const selected = String(pid) === String(selectedPropietarioId);
+                const fullName = [p.nombre, p.apellido].filter(Boolean).join(" ");
+                return (
+                  <Pressable
+                    key={pid}
+                    onPress={() => { if (!initialPropietario) setSelectedPropietarioId(pid); }}
+                    style={[styles.ownerOption, { backgroundColor: selected ? colors.primary : colors.cardMuted, borderColor: selected ? colors.primary : colors.border }]}
+                  >
+                    <Text style={[styles.ownerText, { color: selected ? colors.white : colors.text }]}>{fullName}</Text>
+                    {p.rif_cedula ? <Text style={[styles.ownerMeta, { color: selected ? "rgba(255,255,255,0.8)" : colors.textTertiary }]}>{p.rif_cedula}</Text> : null}
+                  </Pressable>
+                );
+              })
+            ) : (
+              <Text style={[styles.noOwnersText, { color: colors.textSecondary }]}>No hay propietarios. Registra uno primero.</Text>
+            )}
           </View>
 
-          <View style={styles.formGrid}>
-            <View style={[styles.formGroup, styles.fullWidth]}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Placa
-              </Text>
-              <TextInput
-                autoCapitalize="characters"
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, plate: value }))
-                }
-                placeholder="AB123CD"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.plate}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Marca
-              </Text>
-              <TextInput
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, brand: value }))
-                }
-                placeholder="Toyota"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.brand}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Modelo
-              </Text>
-              <TextInput
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, model: value }))
-                }
-                placeholder="Hilux"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.model}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Ano
-              </Text>
-              <TextInput
-                keyboardType="number-pad"
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, year: value }))
-                }
-                placeholder="2019"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.year}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Color
-              </Text>
-              <TextInput
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, color: value }))
-                }
-                placeholder="Blanco"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.color}
-              />
-            </View>
-
-            <View style={[styles.formGroup, styles.fullWidth]}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                VIN
-              </Text>
-              <TextInput
-                autoCapitalize="characters"
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, vin: value }))
-                }
-                placeholder="8X1ABC12345678901"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.vin}
-              />
-            </View>
-
-            <View style={[styles.formGroup, styles.fullWidth]}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Kilometraje
-              </Text>
-              <TextInput
-                keyboardType="number-pad"
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, mileage: value }))
-                }
-                placeholder="120000"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                value={form.mileage}
-              />
-            </View>
-
-            <View style={[styles.formGroup, styles.fullWidth]}>
-              <Text
-                style={[styles.fieldLabel, { color: colors.textSecondary }]}
-              >
-                Notas del vehiculo
-              </Text>
-              <TextInput
-                multiline
-                numberOfLines={4}
-                onChangeText={(value) =>
-                  setForm((current) => ({ ...current, notes: value }))
-                }
-                placeholder="Observaciones, accesorios y condicion general"
-                placeholderTextColor={colors.textTertiary}
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
-                ]}
-                textAlignVertical="top"
-                value={form.notes}
-              />
-            </View>
+          <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos de identificacion</Text>
+            {[
+              { label: "Placa *", value: placa, onChange: setPlaca, placeholder: "ABC-123", autoCapitalize: "characters" },
+              { label: "Numero de unidad *", value: numeroUnidad, onChange: setNumeroUnidad, placeholder: "001" },
+              { label: "N Puestos / Asientos", value: numeroPuestos, onChange: setNumeroPuestos, placeholder: "0", keyboardType: "numeric" },
+              { label: "Marca", value: marca, onChange: setMarca, placeholder: "Toyota", autoCapitalize: "words" },
+              { label: "Modelo", value: modelo, onChange: setModelo, placeholder: "Corolla", autoCapitalize: "words" },
+              { label: "Ano", value: ano, onChange: setAno, placeholder: "2020", keyboardType: "numeric" },
+              { label: "Color", value: color, onChange: setColor, placeholder: "Blanco", autoCapitalize: "words" },
+            ].map(({ label, value, onChange, ...props }) => (
+              <View key={label} style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+                <TextInput value={value} onChangeText={onChange} placeholderTextColor={colors.textTertiary} style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]} {...props} />
+              </View>
+            ))}
           </View>
 
-          <Pressable
-            onPress={handleSubmit}
-            style={[styles.primaryAction, { backgroundColor: colors.primary }]}
-          >
-            <Text style={[styles.primaryActionText, { color: colors.white }]}>
-              {submitting
-                ? "Guardando vehiculo..."
-                : editingVehicleId
-                  ? "Guardar vehiculo"
-                  : "Asociar vehiculo"}
-            </Text>
+          <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos tecnicos</Text>
+            {[
+              { label: "N Cilindros", value: numeroCilindros, onChange: setNumeroCilindros, placeholder: "4", keyboardType: "numeric" },
+              { label: "Peso", value: peso, onChange: setPeso, placeholder: "1200 kg" },
+              { label: "Serial de carroceria", value: serialCarroceria, onChange: setSerialCarroceria, placeholder: "1HGCM826...", autoCapitalize: "characters" },
+              { label: "Serial de motor", value: serialMotor, onChange: setSerialMotor, placeholder: "B20B...", autoCapitalize: "characters" },
+              { label: "Capacidad", value: capacidad, onChange: setCapacidad, placeholder: "Capacidad" },
+            ].map(({ label, value, onChange, ...props }) => (
+              <View key={label} style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+                <TextInput value={value} onChangeText={onChange} placeholderTextColor={colors.textTertiary} style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]} {...props} />
+              </View>
+            ))}
+          </View>
+
+          <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Documentos y responsable</Text>
+            {[
+              { label: "Fecha de emision (AAAA-MM-DD)", value: fechaEmision, onChange: setFechaEmision, placeholder: "2024-01-15", keyboardType: "numeric" },
+              { label: "N Poliza RCV", value: numeroPolizaRcv, onChange: setNumeroPolizaRcv, placeholder: "RCV-000000", autoCapitalize: "characters" },
+              { label: "Chofer habitual", value: chofer, onChange: setChofer, placeholder: "Nombre del chofer", autoCapitalize: "words" },
+            ].map(({ label, value, onChange, ...props }) => (
+              <View key={label} style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+                <TextInput value={value} onChangeText={onChange} placeholderTextColor={colors.textTertiary} style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]} {...props} />
+              </View>
+            ))}
+          </View>
+
+          <Pressable onPress={handleSubmit} disabled={submitting} style={[styles.submitBtn, { backgroundColor: submitting ? colors.border : colors.primary }]}>
+            {submitting ? <ActivityIndicator color={colors.white} size="small" /> : (
+              <>
+                <Ionicons name={isEditing ? "save-outline" : "car-outline"} size={rf(18)} color={colors.white} />
+                <Text style={[styles.submitText, { color: colors.white }]}>{isEditing ? "Guardar cambios" : "Crear unidad"}</Text>
+              </>
+            )}
           </Pressable>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  scrollContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    gap: spacing.lg,
-  },
-  formCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
-  },
-  cardHeaderCopy: { flex: 1, gap: 2 },
-  cardEyebrow: {
-    fontSize: rf(10),
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  cardTitle: { fontSize: rf(17), fontWeight: "800" },
-  cardMeta: { fontSize: rf(12), fontWeight: "700" },
-  clientBadge: {
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    padding: spacing.sm,
-    gap: spacing.xs,
-  },
-  clientLabel: {
-    fontSize: rf(10),
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  clientValue: { fontSize: rf(17), fontWeight: "800" },
-  formGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  formGroup: { width: "47%", gap: spacing.sm },
-  fullWidth: { width: "100%" },
-  fieldLabel: {
-    fontSize: rf(12),
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: rf(15),
-  },
-  textArea: {
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontSize: rf(15),
-    minHeight: rf(92),
-  },
-  primaryAction: {
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    alignItems: "center",
-  },
-  primaryActionText: {
-    fontSize: rf(15),
-    fontWeight: "800",
-  },
+  safe: { flex: 1 },
+  container: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl * 2 },
+  sectionCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.lg, gap: spacing.sm },
+  formCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.lg, gap: spacing.md },
+  sectionLabel: { fontSize: rf(11), fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: spacing.xs },
+  ownerOption: { borderWidth: 1, borderRadius: borderRadius.lg, padding: spacing.md, gap: spacing.xs / 2 },
+  ownerText: { fontSize: rf(14), fontWeight: "700" },
+  ownerMeta: { fontSize: rf(12) },
+  noOwnersText: { fontSize: rf(13), lineHeight: rf(19) },
+  fieldWrap: { gap: spacing.xs },
+  label: { fontSize: rf(12), fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
+  input: { borderWidth: 1, borderRadius: borderRadius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: rf(14), minHeight: rf(44) },
+  submitBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, borderRadius: borderRadius.xl, minHeight: rf(52), paddingHorizontal: spacing.lg },
+  submitText: { fontSize: rf(15), fontWeight: "800" },
 });

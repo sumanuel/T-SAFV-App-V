@@ -1,11 +1,12 @@
-/**
+﻿/**
  * AuthContext.js
- * JWT-based auth using T-SAFV-API for login/register.
- * All other user data (role, workshop) is resolved from mock data.
+ * JWT-based auth usando T-SAFV-API para login/registro.
+ * Expone token, asociaciones y asociacion activa para los modulos del dominio.
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useMemo, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
 import { apiLogin, apiRegister } from "../services/auth/authService";
+import { getMyAssociations } from "../services/associations/associationService";
 import { getWorkshop } from "../services/mock/mockStore";
 
 const AuthContext = createContext();
@@ -15,10 +16,8 @@ const MOCK_WORKSHOP_ID = WORKSHOP.id;
 
 const AUTH_TOKEN_KEY = "@auth_token";
 const AUTH_USER_KEY = "@auth_user";
+const ACTIVE_ASSOC_KEY = "@active_association_id";
 
-/**
- * Maps the API user object to the profile shape used by screens.
- */
 function mapApiUserToProfile(user) {
   const rawRol = String(user.rol || "ADMIN").toLowerCase();
   let role = "administrator";
@@ -56,31 +55,65 @@ function buildMembership(profile) {
 
 export function AuthProvider({ children }) {
   const [authReady, setAuthReady] = useState(false);
-  const [authUser, setAuthUser] = useState(null); // raw API user
-  const [userProfile, setUserProfile] = useState(null); // mapped profile
+  const [authUser, setAuthUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const [token, setToken] = useState(null);
+  const [associations, setAssociations] = useState([]);
+  const [activeAssociationId, setActiveAssociationIdState] = useState(null);
   const [activeWorkshop] = useState(WORKSHOP);
-  const [activeWorkshopId] = useState(MOCK_WORKSHOP_ID);
 
-  // Memberships derived from userProfile
+  const activeAssociation = useMemo(
+    () => associations.find((a) => String(a.id) === String(activeAssociationId)) || associations[0] || null,
+    [associations, activeAssociationId],
+  );
+
   const memberships = useMemo(() => {
     if (!userProfile) return [];
     return [buildMembership(userProfile)];
   }, [userProfile]);
 
-  // On mount: restore session from AsyncStorage
+  const loadAssociations = useCallback(async (authToken) => {
+    if (!authToken) return;
+    try {
+      const data = await getMyAssociations(authToken);
+      setAssociations(data || []);
+      if (data && data.length > 0) {
+        const savedId = await AsyncStorage.getItem(ACTIVE_ASSOC_KEY);
+        const match = data.find((a) => String(a.id) === String(savedId));
+        setActiveAssociationIdState(match ? match.id : data[0].id);
+      }
+    } catch (error) {
+      console.error("Error loading associations:", error);
+    }
+  }, []);
+
+  const setActiveAssociationId = useCallback(async (id) => {
+    setActiveAssociationIdState(id);
+    if (id) {
+      await AsyncStorage.setItem(ACTIVE_ASSOC_KEY, String(id));
+    }
+  }, []);
+
+  const refreshAssociations = useCallback(async () => {
+    if (token) await loadAssociations(token);
+  }, [token, loadAssociations]);
+
+  // Restaurar sesion desde AsyncStorage
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const [token, userJson] = await Promise.all([
+        const [storedToken, userJson] = await Promise.all([
           AsyncStorage.getItem(AUTH_TOKEN_KEY),
           AsyncStorage.getItem(AUTH_USER_KEY),
         ]);
 
-        if (token && userJson) {
+        if (storedToken && userJson) {
           const user = JSON.parse(userJson);
+          setToken(storedToken);
           setAuthUser(user);
           setUserProfile(mapApiUserToProfile(user));
+          await loadAssociations(storedToken);
         }
       } catch (error) {
         console.error("Error restoring session:", error);
@@ -90,18 +123,20 @@ export function AuthProvider({ children }) {
     };
 
     restoreSession();
-  }, []);
+  }, [loadAssociations]);
 
   const signIn = async ({ email, password }) => {
     setAuthBusy(true);
     try {
-      const { token, user } = await apiLogin({ email, password });
+      const { token: jwt, user } = await apiLogin({ email, password });
       await Promise.all([
-        AsyncStorage.setItem(AUTH_TOKEN_KEY, token),
+        AsyncStorage.setItem(AUTH_TOKEN_KEY, jwt),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
+      setToken(jwt);
       setAuthUser(user);
       setUserProfile(mapApiUserToProfile(user));
+      await loadAssociations(jwt);
     } finally {
       setAuthBusy(false);
     }
@@ -110,38 +145,30 @@ export function AuthProvider({ children }) {
   const signUp = async ({ fullName, phone, email, password }) => {
     setAuthBusy(true);
     try {
-      // Parse fullName → nombre + apellido
       const parts = (fullName || "").trim().split(/\s+/);
       const nombre = parts[0] || "";
       const apellido = parts.slice(1).join(" ");
 
-      await apiRegister({
-        nombre,
-        apellido,
-        email,
-        password,
-        telefono: phone || "",
-      });
+      await apiRegister({ nombre, apellido, email, password, telefono: phone || "" });
 
-      // Auto-login after successful registration
-      const { token, user } = await apiLogin({ email, password });
+      const { token: jwt, user } = await apiLogin({ email, password });
       await Promise.all([
-        AsyncStorage.setItem(AUTH_TOKEN_KEY, token),
+        AsyncStorage.setItem(AUTH_TOKEN_KEY, jwt),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
+      setToken(jwt);
       setAuthUser(user);
       setUserProfile(mapApiUserToProfile(user));
+      await loadAssociations(jwt);
     } finally {
       setAuthBusy(false);
     }
   };
 
   const recoverPassword = async (email) => {
-    // Password recovery not yet available in T-SAFV-API
     setAuthBusy(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 600));
-      // Simulate success silently; screens handle the feedback message
     } finally {
       setAuthBusy(false);
     }
@@ -153,62 +180,82 @@ export function AuthProvider({ children }) {
       await Promise.all([
         AsyncStorage.removeItem(AUTH_TOKEN_KEY),
         AsyncStorage.removeItem(AUTH_USER_KEY),
+        AsyncStorage.removeItem(ACTIVE_ASSOC_KEY),
       ]);
+      setToken(null);
       setAuthUser(null);
       setUserProfile(null);
+      setAssociations([]);
+      setActiveAssociationIdState(null);
     } finally {
       setAuthBusy(false);
     }
   };
 
-  // Stub methods retained for API compatibility with screens
   const activateInvitation = async () => {
-    throw new Error("Activación por invitación no disponible en esta versión.");
+    throw new Error("Activacion por invitacion no disponible en esta version.");
   };
 
   const acceptPendingInvitation = async () => {
-    throw new Error("Invitaciones no disponibles en esta versión.");
+    throw new Error("Invitaciones no disponibles en esta version.");
   };
 
   const switchWorkshop = async () => {};
 
   const renameActiveWorkshop = async (name) => {
-    const { updateWorkshop } =
-      await import("../services/workshops/workshopService");
+    const { updateWorkshop } = await import("../services/workshops/workshopService");
     return updateWorkshop(MOCK_WORKSHOP_ID, { name });
   };
 
   const updateActiveWorkshop = async (data) => {
-    const { updateWorkshop } =
-      await import("../services/workshops/workshopService");
+    const { updateWorkshop } = await import("../services/workshops/workshopService");
     return updateWorkshop(MOCK_WORKSHOP_ID, data);
   };
 
   const refreshWorkshopContext = async () => {};
 
+  const activeWorkshopId = MOCK_WORKSHOP_ID;
+
   const value = useMemo(
     () => ({
       activateInvitation,
       acceptPendingInvitation,
+      activeAssociation,
+      activeAssociationId: activeAssociation?.id ?? null,
       activeWorkshop,
       activeWorkshopId,
+      associations,
       authBusy,
       authReady,
       authUser,
       memberships,
       pendingInvitation: null,
       recoverPassword,
+      refreshAssociations,
       refreshWorkshopContext,
       renameActiveWorkshop,
       requiresWorkshopSetup: false,
+      setActiveAssociationId,
       signIn,
       signOutUser,
       signUp,
       switchWorkshop,
+      token,
       updateActiveWorkshop,
       userProfile,
     }),
-    [authBusy, authReady, authUser, userProfile, memberships],
+    [
+      activeAssociation,
+      associations,
+      authBusy,
+      authReady,
+      authUser,
+      memberships,
+      refreshAssociations,
+      setActiveAssociationId,
+      token,
+      userProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

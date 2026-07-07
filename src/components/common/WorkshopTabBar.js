@@ -7,22 +7,22 @@ import { borderRadius, rf, spacing } from "../../utils/responsive";
 const tabConfig = [
   { key: "home", label: "Inicio", icon: "home-outline", activeIcon: "home" },
   {
-    key: "clients",
-    label: "Clientes",
+    key: "propietarios",
+    label: "Propietarios",
     icon: "people-outline",
     activeIcon: "people",
   },
   {
-    key: "diagnostics",
-    label: "Diag.",
-    icon: "pulse-outline",
-    activeIcon: "pulse",
+    key: "fiscales",
+    label: "Fiscales",
+    icon: "shield-checkmark-outline",
+    activeIcon: "shield-checkmark",
   },
   {
-    key: "work-orders",
-    label: "Ordenes",
-    icon: "clipboard-outline",
-    activeIcon: "clipboard",
+    key: "traza",
+    label: "Traza",
+    icon: "git-merge-outline",
+    activeIcon: "git-merge",
   },
   {
     key: "more",

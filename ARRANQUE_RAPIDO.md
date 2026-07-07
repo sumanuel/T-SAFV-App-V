@@ -22,7 +22,7 @@ Editar `src/services/api/apiClient.js`:
 export const API_BASE_URL = "http://10.0.2.2:3000";
 
 // Dispositivo físico (misma red WiFi)
-export const API_BASE_URL = "http://192.168.X.X:3000";
+export const API_BASE_URL = "http://192.168.1.6:3000";
 
 // iOS Simulator
 export const API_BASE_URL = "http://localhost:3000";

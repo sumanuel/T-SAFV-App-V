@@ -1,0 +1,495 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useTheme } from "../../context/ThemeContext";
+import { borderRadius, rf, spacing } from "../../utils/responsive";
+import {
+  createCurrentMonthRange,
+  createCurrentWeekRange,
+  createLastDaysRange,
+  createTodayRange,
+  formatDateRangeLabel,
+  normalizeDateRange,
+} from "../../utils/dateRange";
+
+const quickRanges = [
+  { key: "today", label: "Hoy", buildRange: () => createTodayRange() },
+  {
+    key: "week",
+    label: "Esta semana",
+    buildRange: () => createCurrentWeekRange(),
+  },
+  {
+    key: "month",
+    label: "Este mes",
+    buildRange: () => createCurrentMonthRange(),
+  },
+  {
+    key: "30days",
+    label: "Ultimos 30 dias",
+    buildRange: () => createLastDaysRange(30),
+  },
+];
+
+export default function DateRangeFilterModal({
+  visible,
+  initialRange,
+  onApply,
+  onClose,
+  title = "Filtrar por fecha",
+}) {
+  const { colors } = useTheme();
+  const [draftRange, setDraftRange] = useState(createLastDaysRange(30));
+  const [activeField, setActiveField] = useState("start");
+  const [displayMonth, setDisplayMonth] = useState(() => new Date());
+
+  useEffect(() => {
+    if (!visible) return;
+    const normalizedRange = normalizeDateRange(initialRange);
+    setDraftRange(normalizedRange);
+    setActiveField("start");
+    setDisplayMonth(normalizedRange.start || new Date());
+  }, [initialRange?.end, initialRange?.start, visible]);
+
+  const selectedPresetKey = useMemo(() => {
+    const normalizedDraft = normalizeDateRange(draftRange);
+    return (
+      quickRanges.find((preset) => {
+        const presetRange = normalizeDateRange(preset.buildRange());
+        return (
+          presetRange.start?.getTime() === normalizedDraft.start?.getTime() &&
+          presetRange.end?.getTime() === normalizedDraft.end?.getTime()
+        );
+      })?.key || null
+    );
+  }, [draftRange]);
+
+  const monthLabel = useMemo(
+    () =>
+      displayMonth.toLocaleDateString("es-VE", {
+        month: "long",
+        year: "numeric",
+      }),
+    [displayMonth],
+  );
+
+  const calendarDays = useMemo(() => {
+    const monthStart = new Date(
+      displayMonth.getFullYear(),
+      displayMonth.getMonth(),
+      1,
+    );
+    const monthEnd = new Date(
+      displayMonth.getFullYear(),
+      displayMonth.getMonth() + 1,
+      0,
+    );
+    const firstWeekday = (monthStart.getDay() + 6) % 7;
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push(null);
+    for (let day = 1; day <= monthEnd.getDate(); day++) {
+      cells.push(
+        new Date(displayMonth.getFullYear(), displayMonth.getMonth(), day),
+      );
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [displayMonth]);
+
+  const sameDay = (a, b) => {
+    if (!(a instanceof Date) || !(b instanceof Date)) return false;
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  };
+
+  const isBetweenRange = (candidate) => {
+    const r = normalizeDateRange(draftRange);
+    if (!r.start || !r.end || !(candidate instanceof Date)) return false;
+    return (
+      candidate.getTime() >= r.start.getTime() &&
+      candidate.getTime() <= r.end.getTime()
+    );
+  };
+
+  const applyPreset = (buildRange) => {
+    const range = normalizeDateRange(buildRange());
+    setDraftRange(range);
+    setDisplayMonth(range.start || new Date());
+  };
+
+  const handleSelectDate = (selectedDate) => {
+    setDraftRange((current) => {
+      const nextRange =
+        activeField === "start"
+          ? { ...current, start: selectedDate }
+          : { ...current, end: selectedDate };
+      return normalizeDateRange(nextRange);
+    });
+  };
+
+  const handleApply = () => {
+    const normalizedRange = normalizeDateRange(draftRange);
+    if (!normalizedRange.start || !normalizedRange.end) {
+      Alert.alert(
+        "Filtro por fecha",
+        "Selecciona una fecha desde y una fecha hasta antes de aplicar.",
+      );
+      return;
+    }
+    onApply?.(normalizedRange);
+    onClose?.();
+  };
+
+  return (
+    <Modal
+      animationType="fade"
+      onRequestClose={onClose}
+      transparent
+      visible={visible}
+    >
+      <View style={styles.overlay}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Define desde y hasta que fecha quieres revisar la operacion.
+          </Text>
+
+          <View style={styles.quickRow}>
+            {quickRanges.map((preset) => (
+              <Pressable
+                key={preset.key}
+                onPress={() => applyPreset(preset.buildRange)}
+                style={[
+                  styles.quickChip,
+                  {
+                    backgroundColor:
+                      selectedPresetKey === preset.key
+                        ? colors.primary
+                        : colors.cardMuted,
+                    borderColor:
+                      selectedPresetKey === preset.key
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.quickChipText,
+                    {
+                      color:
+                        selectedPresetKey === preset.key
+                          ? colors.white
+                          : colors.text,
+                    },
+                  ]}
+                >
+                  {preset.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.dateFieldRow}>
+            {["start", "end"].map((field) => {
+              const dateVal = normalizeDateRange(draftRange)[field];
+              const label = field === "start" ? "Fecha desde" : "Fecha hasta";
+              const iconColor =
+                field === "start" ? colors.primary : colors.success;
+              return (
+                <Pressable
+                  key={field}
+                  onPress={() => setActiveField(field)}
+                  style={[
+                    styles.dateField,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor:
+                        activeField === field
+                          ? field === "start"
+                            ? colors.primary
+                            : colors.success
+                          : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    {label}
+                  </Text>
+                  <View style={styles.dateFieldValueRow}>
+                    <Ionicons
+                      color={iconColor}
+                      name="calendar-outline"
+                      size={rf(15)}
+                    />
+                    <Text
+                      style={[styles.dateFieldValue, { color: colors.text }]}
+                    >
+                      {dateVal
+                        ? formatDateRangeLabel({ start: dateVal, end: dateVal })
+                        : "Selecciona fecha"}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View
+            style={[
+              styles.calendarCard,
+              {
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.calendarHeader}>
+              <Pressable
+                onPress={() =>
+                  setDisplayMonth(
+                    (c) => new Date(c.getFullYear(), c.getMonth() - 1, 1),
+                  )
+                }
+                style={styles.calendarNav}
+              >
+                <Ionicons
+                  color={colors.textSecondary}
+                  name="chevron-back-outline"
+                  size={rf(18)}
+                />
+              </Pressable>
+              <Text style={[styles.calendarTitle, { color: colors.text }]}>
+                {monthLabel}
+              </Text>
+              <Pressable
+                onPress={() =>
+                  setDisplayMonth(
+                    (c) => new Date(c.getFullYear(), c.getMonth() + 1, 1),
+                  )
+                }
+                style={styles.calendarNav}
+              >
+                <Ionicons
+                  color={colors.textSecondary}
+                  name="chevron-forward-outline"
+                  size={rf(18)}
+                />
+              </Pressable>
+            </View>
+
+            <View style={styles.weekdayRow}>
+              {["L", "M", "M", "J", "V", "S", "D"].map((day, i) => (
+                <Text
+                  key={`wd-${i}`}
+                  style={[styles.weekdayLabel, { color: colors.textTertiary }]}
+                >
+                  {day}
+                </Text>
+              ))}
+            </View>
+
+            <ScrollView style={styles.calendarScroll} nestedScrollEnabled>
+              <View style={styles.daysGrid}>
+                {calendarDays.map((day, i) => {
+                  if (!day)
+                    return <View key={`empty-${i}`} style={styles.dayCell} />;
+                  const r = normalizeDateRange(draftRange);
+                  const isStart = sameDay(day, r.start);
+                  const isEnd = sameDay(day, r.end);
+                  const isActive = isStart || isEnd;
+                  const isInRange = isBetweenRange(day);
+                  const activeBg = isStart ? colors.primary : colors.success;
+                  return (
+                    <Pressable
+                      key={day.toISOString()}
+                      onPress={() => handleSelectDate(day)}
+                      style={[
+                        styles.dayCell,
+                        styles.dayButton,
+                        {
+                          backgroundColor: isActive
+                            ? activeBg
+                            : isInRange
+                              ? colors.cardMuted
+                              : "transparent",
+                          borderColor: isActive
+                            ? activeBg
+                            : isInRange
+                              ? colors.border
+                              : "transparent",
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.dayText,
+                          { color: isActive ? colors.white : colors.text },
+                        ]}
+                      >
+                        {day.getDate()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View style={styles.actionsRow}>
+            <Pressable
+              onPress={onClose}
+              style={[
+                styles.secondaryButton,
+                {
+                  backgroundColor: colors.cardMuted,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.secondaryButtonText, { color: colors.text }]}
+              >
+                Cancelar
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleApply}
+              style={[
+                styles.primaryButton,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.primaryButtonText, { color: colors.white }]}>
+                Aplicar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.42)",
+    padding: spacing.lg,
+    justifyContent: "center",
+  },
+  card: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  title: { fontSize: rf(18), fontWeight: "900" },
+  subtitle: { fontSize: rf(13), lineHeight: rf(19) },
+  quickRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  quickChip: {
+    borderWidth: 1,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  quickChipText: { fontSize: rf(12), fontWeight: "700" },
+  dateFieldRow: { flexDirection: "row", gap: spacing.sm },
+  dateField: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  label: { fontSize: rf(12), fontWeight: "700" },
+  dateFieldValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  dateFieldValue: { fontSize: rf(13), fontWeight: "800", lineHeight: rf(18) },
+  calendarCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    gap: spacing.sm,
+    maxHeight: rf(340),
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  calendarNav: {
+    width: rf(34),
+    height: rf(34),
+    borderRadius: borderRadius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  calendarTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: rf(15),
+    fontWeight: "900",
+    textTransform: "capitalize",
+  },
+  weekdayRow: { flexDirection: "row" },
+  weekdayLabel: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: rf(11),
+    fontWeight: "800",
+  },
+  calendarScroll: { flexGrow: 0 },
+  daysGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
+  dayCell: {
+    width: "13.5%",
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayButton: { borderWidth: 1, borderRadius: borderRadius.pill },
+  dayText: { fontSize: rf(12), fontWeight: "800" },
+  actionsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs },
+  secondaryButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    minHeight: rf(44),
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+  },
+  secondaryButtonText: { fontSize: rf(13), fontWeight: "800" },
+  primaryButton: {
+    flex: 1,
+    borderRadius: borderRadius.lg,
+    minHeight: rf(44),
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+  },
+  primaryButtonText: { fontSize: rf(13), fontWeight: "800", color: "#fff" },
+});

@@ -37,7 +37,8 @@ function mergeLinkedUnits(propietario, allVehicles) {
     ? propietario.linked_units
     : [];
   const ownerVehicles = (allVehicles || []).filter(
-    (vehicle) => String(vehicle.propietario_id) === String(getUserId(propietario)),
+    (vehicle) =>
+      String(vehicle.propietario_id) === String(getUserId(propietario)),
   );
   const map = new Map();
 
@@ -121,7 +122,8 @@ export default function PropietariosScreen({
 
       if (selectedMembershipId) {
         const refreshed = nextOwners.find(
-          (propietario) => getMembershipId(propietario) === selectedMembershipId,
+          (propietario) =>
+            getMembershipId(propietario) === selectedMembershipId,
         );
         if (!refreshed) {
           setSelectedPropietario(null);
@@ -151,7 +153,8 @@ export default function PropietariosScreen({
     const match = propietarios.find(
       (propietario) =>
         String(getUserId(propietario)) === String(viewState.selectedClientId) ||
-        String(getMembershipId(propietario)) === String(viewState.selectedClientId),
+        String(getMembershipId(propietario)) ===
+          String(viewState.selectedClientId),
     );
     if (!match) return;
     setSelectedPropietario(match);
@@ -193,7 +196,11 @@ export default function PropietariosScreen({
           style: "destructive",
           onPress: async () => {
             try {
-              await deletePropietario(token, asociacionId, getMembershipId(propietario));
+              await deletePropietario(
+                token,
+                asociacionId,
+                getMembershipId(propietario),
+              );
               if (selectedMembershipId === getMembershipId(propietario)) {
                 setSelectedPropietario(null);
                 setScreenMode(SCREEN_MODES.LIST);
@@ -210,7 +217,9 @@ export default function PropietariosScreen({
 
   if (!asociacionId) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: colors.background }]}
+      >
         <ScrollView contentContainerStyle={styles.container}>
           <WorkshopScreenHeader
             onBack={onBack}
@@ -218,10 +227,27 @@ export default function PropietariosScreen({
             title="Propietarios"
             subtitle="Directorio operativo de propietarios de la asociación activa."
           />
-          <View style={[styles.emptyBlock, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Ionicons name="business-outline" size={rf(32)} color={colors.textTertiary} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin asociación activa</Text>
-            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>Crea o selecciona una asociación desde Inicio para gestionar propietarios.</Text>
+          <View
+            style={[
+              styles.emptyBlock,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Ionicons
+              name="business-outline"
+              size={rf(32)}
+              color={colors.textTertiary}
+            />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              Sin asociación activa
+            </Text>
+            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
+              Crea o selecciona una asociación desde Inicio para gestionar
+              propietarios.
+            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -234,7 +260,9 @@ export default function PropietariosScreen({
       .join(" ");
 
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: colors.background }]}
+      >
         <ScrollView contentContainerStyle={styles.container}>
           <WorkshopScreenHeader
             onBack={() => {
@@ -246,68 +274,165 @@ export default function PropietariosScreen({
             subtitle="Gestiona la ficha y asocia sus unidades desde esta vista."
             rightAction={{
               icon: "create-outline",
-              onPress: () => onOpenPropietarioForm?.(selectedPropietario, { returnTo: "detail" }),
+              onPress: () =>
+                onOpenPropietarioForm?.(selectedPropietario, {
+                  returnTo: "detail",
+                }),
             }}
           />
 
-          <View style={[styles.detailCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.detailCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <View style={styles.detailCardHeader}>
               <View style={styles.detailCardHeaderCopy}>
-                <Text style={[styles.detailEyebrow, { color: colors.primary }]}>Fiscalización</Text>
-                <Text style={[styles.detailTitle, { color: colors.text }]}>Resumen del propietario</Text>
+                <Text style={[styles.detailEyebrow, { color: colors.primary }]}>
+                  Fiscalización
+                </Text>
+                <Text style={[styles.detailTitle, { color: colors.text }]}>
+                  Resumen del propietario
+                </Text>
               </View>
-              <Text style={[styles.detailCode, { color: colors.primary }]}>PRO-{String(getUserId(selectedPropietario)).padStart(6, "0")}</Text>
+              <Text style={[styles.detailCode, { color: colors.primary }]}>
+                PRO-{String(getUserId(selectedPropietario)).padStart(6, "0")}
+              </Text>
             </View>
 
             <View style={styles.detailFieldsWrap}>
-              <Text style={[styles.fieldValue, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Nombre:</Text> {fullName || "Sin nombre"}</Text>
-              <Text style={[styles.fieldValue, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Identificación:</Text> {selectedPropietario.rif_cedula || "Sin identificación"}</Text>
-              <Text style={[styles.fieldValue, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Teléfono:</Text> {selectedPropietario.telefono || "Sin teléfono"}</Text>
-              <Text style={[styles.fieldValue, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Correo:</Text> {selectedPropietario.email || "Sin correo"}</Text>
-              <Text style={[styles.fieldValue, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Dirección:</Text> {selectedPropietario.direccion || "Sin dirección"}</Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Nombre:</Text>{" "}
+                {fullName || "Sin nombre"}
+              </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Identificación:</Text>{" "}
+                {selectedPropietario.rif_cedula || "Sin identificación"}
+              </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Teléfono:</Text>{" "}
+                {selectedPropietario.telefono || "Sin teléfono"}
+              </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Correo:</Text>{" "}
+                {selectedPropietario.email || "Sin correo"}
+              </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Dirección:</Text>{" "}
+                {selectedPropietario.direccion || "Sin dirección"}
+              </Text>
             </View>
 
             <View style={styles.detailActionsRow}>
-              <Pressable onPress={() => onOpenVehicleForm?.(selectedPropietario, null)} style={[styles.linkAction, { borderColor: colors.accent }]}>
-                <Text style={[styles.linkActionText, { color: colors.accent }]}>Asociar unidad</Text>
+              <Pressable
+                onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
+                style={[styles.linkAction, { borderColor: colors.accent }]}
+              >
+                <Text style={[styles.linkActionText, { color: colors.accent }]}>
+                  Asociar unidad
+                </Text>
               </Pressable>
-              <Pressable onPress={() => handleDelete(selectedPropietario)} style={[styles.linkAction, { borderColor: colors.danger }]}>
-                <Text style={[styles.linkActionText, { color: colors.danger }]}>Eliminar propietario</Text>
+              <Pressable
+                onPress={() => handleDelete(selectedPropietario)}
+                style={[styles.linkAction, { borderColor: colors.danger }]}
+              >
+                <Text style={[styles.linkActionText, { color: colors.danger }]}>
+                  Eliminar propietario
+                </Text>
               </Pressable>
             </View>
           </View>
 
           <View style={styles.sectionRow}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Unidades asociadas</Text>
-            <Pressable onPress={() => onOpenVehicleForm?.(selectedPropietario, null)} style={[styles.addBtn, { backgroundColor: colors.primary }]}> 
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Unidades asociadas
+            </Text>
+            <Pressable
+              onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
+              style={[styles.addBtn, { backgroundColor: colors.primary }]}
+            >
               <Ionicons name="add" size={rf(16)} color={colors.white} />
-              <Text style={[styles.addBtnText, { color: colors.white }]}>Asociar unidad</Text>
+              <Text style={[styles.addBtnText, { color: colors.white }]}>
+                Asociar unidad
+              </Text>
             </Pressable>
           </View>
 
           {vehicleLoading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />
+            <ActivityIndicator
+              color={colors.primary}
+              style={{ marginTop: spacing.md }}
+            />
           ) : vehicles.length ? (
             vehicles.map((vehicle) => (
               <Pressable
                 key={vehicle.id}
-                onPress={() => onOpenVehicleForm?.(selectedPropietario, vehicle)}
-                style={[styles.vehicleCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+                onPress={() =>
+                  onOpenVehicleForm?.(selectedPropietario, vehicle)
+                }
+                style={[
+                  styles.vehicleCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
                 <View style={styles.vehicleCardHeader}>
-                  <Text style={[styles.vehicleEyebrow, { color: colors.accent }]}>Unidad</Text>
-                  <Ionicons name="create-outline" size={rf(18)} color={colors.text} />
+                  <Text
+                    style={[styles.vehicleEyebrow, { color: colors.accent }]}
+                  >
+                    Unidad
+                  </Text>
+                  <Ionicons
+                    name="create-outline"
+                    size={rf(18)}
+                    color={colors.text}
+                  />
                 </View>
-                <Text style={[styles.vehicleTitle, { color: colors.text }]}>{[vehicle.marca, vehicle.modelo, vehicle.ano].filter(Boolean).join(" ") || "Unidad sin descripción"}</Text>
-                <View style={[styles.vehicleDivider, { backgroundColor: colors.border }]} />
-                <Text style={[styles.vehicleAccent, { color: colors.accent }]}>Placa: {vehicle.placa || "Sin placa"}</Text>
-                <Text style={[styles.vehicleUnitNumber, { color: colors.text }]}>Unidad N° {vehicle.numero_unidad || "Sin número"}</Text>
-                <Text style={[styles.vehicleMeta, { color: colors.textSecondary }]}>Kilometraje: {vehicle.kilometraje || "Sin kilometraje"}</Text>
+                <Text style={[styles.vehicleTitle, { color: colors.text }]}>
+                  {[vehicle.marca, vehicle.modelo, vehicle.ano]
+                    .filter(Boolean)
+                    .join(" ") || "Unidad sin descripción"}
+                </Text>
+                <View
+                  style={[
+                    styles.vehicleDivider,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+                <Text style={[styles.vehicleAccent, { color: colors.accent }]}>
+                  Placa: {vehicle.placa || "Sin placa"}
+                </Text>
+                <Text
+                  style={[styles.vehicleUnitNumber, { color: colors.text }]}
+                >
+                  Unidad N° {vehicle.numero_unidad || "Sin número"}
+                </Text>
+                <Text
+                  style={[styles.vehicleMeta, { color: colors.textSecondary }]}
+                >
+                  Kilometraje: {vehicle.kilometraje || "Sin kilometraje"}
+                </Text>
               </Pressable>
             ))
           ) : (
-            <View style={[styles.emptyBlock, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-              <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>Sin unidades registradas para este propietario.</Text>
+            <View
+              style={[
+                styles.emptyBlock,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
+                Sin unidades registradas para este propietario.
+              </Text>
             </View>
           )}
         </ScrollView>
@@ -316,7 +441,7 @@ export default function PropietariosScreen({
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <WorkshopScreenHeader
           onBack={onBack}
@@ -325,22 +450,42 @@ export default function PropietariosScreen({
           subtitle="Lista operativa más limpia, con unidades asociadas visibles por propietario."
         />
 
-        <View style={[styles.controlsPanel, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+        <View
+          style={[
+            styles.controlsPanel,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <TextInput
             autoCapitalize="none"
             onChangeText={setSearchQuery}
             placeholder="Buscar por identificación o nombre"
             placeholderTextColor={colors.textTertiary}
-            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             value={searchQuery}
           />
         </View>
 
         {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          <ActivityIndicator
+            color={colors.primary}
+            style={{ marginTop: spacing.lg }}
+          />
         ) : filtered.length ? (
           filtered.map((propietario) => {
-            const fullName = [propietario.nombre, propietario.apellido].filter(Boolean).join(" ");
+            const fullName = [propietario.nombre, propietario.apellido]
+              .filter(Boolean)
+              .join(" ");
             return (
               <Pressable
                 key={getMembershipId(propietario) || getUserId(propietario)}
@@ -348,58 +493,182 @@ export default function PropietariosScreen({
                   setSelectedPropietario(propietario);
                   setScreenMode(SCREEN_MODES.DETAIL);
                 }}
-                style={[styles.ownerCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+                style={[
+                  styles.ownerCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
                 <View style={styles.ownerCardHeader}>
                   <View style={styles.itemInfo}>
-                    <Text style={[styles.ownerEyebrow, { color: colors.primary }]}>Recepción</Text>
-                    <Text style={[styles.itemName, { color: colors.text }]}>{fullName || "Sin nombre"}</Text>
+                    <Text
+                      style={[styles.ownerEyebrow, { color: colors.primary }]}
+                    >
+                      Recepción
+                    </Text>
+                    <Text style={[styles.itemName, { color: colors.text }]}>
+                      {fullName || "Sin nombre"}
+                    </Text>
                   </View>
                   <View style={styles.ownerActions}>
-                    <Pressable onPress={() => onOpenPropietarioForm?.(propietario, {})} style={[styles.iconAction, { backgroundColor: colors.cardMuted, borderColor: colors.border }]}>
-                      <Ionicons name="create-outline" size={rf(18)} color={colors.text} />
+                    <Pressable
+                      onPress={() => onOpenPropietarioForm?.(propietario, {})}
+                      style={[
+                        styles.iconAction,
+                        {
+                          backgroundColor: colors.cardMuted,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={rf(18)}
+                        color={colors.text}
+                      />
                     </Pressable>
-                    <Pressable onPress={() => handleDelete(propietario)} style={[styles.iconAction, { backgroundColor: colors.cardMuted, borderColor: colors.border }]}>
-                      <Ionicons name="trash-outline" size={rf(18)} color={colors.danger} />
+                    <Pressable
+                      onPress={() => handleDelete(propietario)}
+                      style={[
+                        styles.iconAction,
+                        {
+                          backgroundColor: colors.cardMuted,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={rf(18)}
+                        color={colors.danger}
+                      />
                     </Pressable>
                   </View>
                 </View>
 
-                <View style={[styles.ownerDivider, { backgroundColor: colors.border }]} />
-                <Text style={[styles.itemMeta, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Identificación:</Text> {propietario.rif_cedula || "Sin identificación"}</Text>
-                <Text style={[styles.itemMeta, { color: colors.text }]}><Text style={styles.fieldValueStrong}>Teléfono:</Text> {propietario.telefono || "Sin teléfono"}</Text>
-                <Text style={[styles.ownerUnitsTitle, { color: colors.accent }]}>Unidades asociadas:</Text>
-                <Text style={[styles.ownerUnitsHint, { color: colors.textSecondary }]}>Presione sobre una unidad para ver detalles.</Text>
+                <View
+                  style={[
+                    styles.ownerDivider,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
+                <Text style={[styles.itemMeta, { color: colors.text }]}>
+                  <Text style={styles.fieldValueStrong}>Identificación:</Text>{" "}
+                  {propietario.rif_cedula || "Sin identificación"}
+                </Text>
+                <Text style={[styles.itemMeta, { color: colors.text }]}>
+                  <Text style={styles.fieldValueStrong}>Teléfono:</Text>{" "}
+                  {propietario.telefono || "Sin teléfono"}
+                </Text>
+                <Text
+                  style={[styles.ownerUnitsTitle, { color: colors.accent }]}
+                >
+                  Unidades asociadas:
+                </Text>
+                <Text
+                  style={[
+                    styles.ownerUnitsHint,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Presione sobre una unidad para ver detalles.
+                </Text>
 
                 {(propietario.linked_units || []).length ? (
                   propietario.linked_units.map((vehicle) => (
                     <Pressable
                       key={vehicle.id || vehicle.numero_unidad}
                       onPress={() => onOpenVehicleForm?.(propietario, vehicle)}
-                      style={[styles.ownerVehicleCard, { backgroundColor: colors.cardMuted, borderColor: colors.border }]}
+                      style={[
+                        styles.ownerVehicleCard,
+                        {
+                          backgroundColor: colors.cardMuted,
+                          borderColor: colors.border,
+                        },
+                      ]}
                     >
-                      <Text style={[styles.ownerVehicleTitle, { color: colors.text }]}>{[vehicle.marca, vehicle.modelo, vehicle.ano].filter(Boolean).join(" ") || "Unidad sin descripción"}</Text>
-                      <View style={[styles.ownerVehicleDivider, { backgroundColor: colors.border }]} />
-                      <Text style={[styles.ownerVehicleAccent, { color: colors.accent }]}>Placa: {vehicle.placa || "Sin placa"}</Text>
-                      <Text style={[styles.ownerVehicleUnit, { color: colors.text }]}>Unidad N° {vehicle.numero_unidad || "Sin número"}</Text>
-                      <Text style={[styles.ownerVehicleMeta, { color: colors.textSecondary }]}>Kilometraje: {vehicle.kilometraje || "Sin kilometraje"}</Text>
+                      <Text
+                        style={[
+                          styles.ownerVehicleTitle,
+                          { color: colors.text },
+                        ]}
+                      >
+                        {[vehicle.marca, vehicle.modelo, vehicle.ano]
+                          .filter(Boolean)
+                          .join(" ") || "Unidad sin descripción"}
+                      </Text>
+                      <View
+                        style={[
+                          styles.ownerVehicleDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.ownerVehicleAccent,
+                          { color: colors.accent },
+                        ]}
+                      >
+                        Placa: {vehicle.placa || "Sin placa"}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.ownerVehicleUnit,
+                          { color: colors.text },
+                        ]}
+                      >
+                        Unidad N° {vehicle.numero_unidad || "Sin número"}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.ownerVehicleMeta,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Kilometraje: {vehicle.kilometraje || "Sin kilometraje"}
+                      </Text>
                     </Pressable>
                   ))
                 ) : (
-                  <Text style={[styles.ownerUnitsHint, { color: colors.textSecondary }]}>Sin unidades asociadas.</Text>
+                  <Text
+                    style={[
+                      styles.ownerUnitsHint,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    Sin unidades asociadas.
+                  </Text>
                 )}
               </Pressable>
             );
           })
         ) : (
-          <View style={[styles.emptyBlock, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin propietarios</Text>
-            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>Registra el primer propietario de la asociación usando el botón inferior.</Text>
+          <View
+            style={[
+              styles.emptyBlock,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              Sin propietarios
+            </Text>
+            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
+              Registra el primer propietario de la asociación usando el botón
+              inferior.
+            </Text>
           </View>
         )}
       </ScrollView>
 
-      <Pressable onPress={() => onOpenPropietarioForm?.(null, {})} style={[styles.fab, { backgroundColor: colors.primary }]}>
+      <Pressable
+        onPress={() => onOpenPropietarioForm?.(null, {})}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+      >
         <Ionicons name="add" size={rf(22)} color={colors.white} />
       </Pressable>
     </SafeAreaView>
@@ -408,13 +677,34 @@ export default function PropietariosScreen({
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  container: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl * 2 },
-  controlsPanel: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md },
-  input: { borderWidth: 1, borderRadius: borderRadius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: rf(14), minHeight: rf(44) },
+  container: {
+    padding: spacing.md,
+    gap: spacing.md,
+    paddingBottom: spacing.xxl * 2,
+  },
+  controlsPanel: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: rf(14),
+    minHeight: rf(44),
+  },
   itemInfo: { flex: 1, gap: spacing.xs / 2 },
   itemName: { fontSize: rf(15), fontWeight: "700" },
   itemMeta: { fontSize: rf(13), lineHeight: rf(20) },
-  emptyBlock: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.xl, alignItems: "center", gap: spacing.md },
+  emptyBlock: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    alignItems: "center",
+    gap: spacing.md,
+  },
   emptyTitle: { fontSize: rf(16), fontWeight: "800" },
   emptyMsg: { fontSize: rf(13), textAlign: "center", lineHeight: rf(19) },
   fab: {
@@ -432,39 +722,120 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
-  detailCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.lg, gap: spacing.sm },
-  detailCardHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.md, paddingBottom: spacing.sm },
+  detailCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  detailCardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    paddingBottom: spacing.sm,
+  },
   detailCardHeaderCopy: { flex: 1, gap: spacing.xs / 2 },
-  detailEyebrow: { fontSize: rf(11), fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.7 },
+  detailEyebrow: {
+    fontSize: rf(11),
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
   detailTitle: { fontSize: rf(18), fontWeight: "800" },
   detailCode: { fontSize: rf(14), fontWeight: "800" },
   detailFieldsWrap: { gap: spacing.xs },
   fieldValue: { fontSize: rf(14), lineHeight: rf(20) },
   fieldValueStrong: { fontWeight: "800" },
-  detailActionsRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm },
-  linkAction: { borderWidth: 1, borderRadius: borderRadius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  detailActionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  linkAction: {
+    borderWidth: 1,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
   linkActionText: { fontSize: rf(14), fontWeight: "800" },
-  sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md, paddingHorizontal: spacing.xs },
+  sectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
   sectionTitle: { fontSize: rf(15), fontWeight: "800" },
-  addBtn: { flexDirection: "row", alignItems: "center", gap: spacing.xs, borderRadius: borderRadius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
   addBtnText: { fontSize: rf(12), fontWeight: "700" },
-  vehicleCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md, gap: spacing.sm },
-  vehicleCardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
-  vehicleEyebrow: { fontSize: rf(11), fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.7 },
+  vehicleCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  vehicleCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  vehicleEyebrow: {
+    fontSize: rf(11),
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
   vehicleTitle: { fontSize: rf(16), fontWeight: "800" },
   vehicleDivider: { height: 1 },
   vehicleAccent: { fontSize: rf(16), fontWeight: "900" },
   vehicleUnitNumber: { fontSize: rf(13), fontWeight: "800" },
   vehicleMeta: { fontSize: rf(12), lineHeight: rf(18) },
-  ownerCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md, gap: spacing.sm },
-  ownerCardHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.md },
-  ownerEyebrow: { fontSize: rf(11), fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.7 },
+  ownerCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  ownerCardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  ownerEyebrow: {
+    fontSize: rf(11),
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
   ownerActions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  iconAction: { width: rf(42), height: rf(42), borderWidth: 1, borderRadius: borderRadius.lg, alignItems: "center", justifyContent: "center" },
+  iconAction: {
+    width: rf(42),
+    height: rf(42),
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   ownerDivider: { height: 1 },
   ownerUnitsTitle: { fontSize: rf(14), fontWeight: "800" },
   ownerUnitsHint: { fontSize: rf(12), lineHeight: rf(18) },
-  ownerVehicleCard: { borderWidth: 1, borderRadius: borderRadius.lg, padding: spacing.md, gap: spacing.xs },
+  ownerVehicleCard: {
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
   ownerVehicleTitle: { fontSize: rf(14), fontWeight: "800" },
   ownerVehicleDivider: { height: 1 },
   ownerVehicleAccent: { fontSize: rf(15), fontWeight: "900" },

@@ -10,7 +10,9 @@ import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
 import AuthScreen from "./src/screens/AuthScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
-import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from "./src/screens/OnboardingScreen";
+import OnboardingScreen, {
+  ONBOARDING_STORAGE_KEY,
+} from "./src/screens/OnboardingScreen";
 
 // Pantallas principales
 import WorkshopHomeScreen from "./src/screens/WorkshopHomeScreen";
@@ -81,14 +83,32 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Contextos de formularios
-  const [propietarioFormContext, setPropietarioFormContext] = useState({ propietario: null });
-  const [propietariosViewState, setPropietariosViewState] = useState({ selectedClientId: null, screenMode: "list" });
-  const [vehicleFormContext, setVehicleFormContext] = useState({ propietario: null, vehicle: null });
-  const [fiscalRecordContext, setFiscalRecordContext] = useState({ unit: null });
+  const [propietarioFormContext, setPropietarioFormContext] = useState({
+    propietario: null,
+  });
+  const [propietariosViewState, setPropietariosViewState] = useState({
+    selectedClientId: null,
+    screenMode: "list",
+  });
+  const [vehicleFormContext, setVehicleFormContext] = useState({
+    propietario: null,
+    vehicle: null,
+  });
+  const [fiscalRecordContext, setFiscalRecordContext] = useState({
+    unit: null,
+  });
   const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
-  const [stockItemFormContext, setStockItemFormContext] = useState({ stockItem: null, draft: null });
-  const [stockMovementFormContext, setStockMovementFormContext] = useState({ stockItem: null, movementType: "in" });
-  const [stockItemsViewState, setStockItemsViewState] = useState({ selectedStockItemId: null });
+  const [stockItemFormContext, setStockItemFormContext] = useState({
+    stockItem: null,
+    draft: null,
+  });
+  const [stockMovementFormContext, setStockMovementFormContext] = useState({
+    stockItem: null,
+    movementType: "in",
+  });
+  const [stockItemsViewState, setStockItemsViewState] = useState({
+    selectedStockItemId: null,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -117,60 +137,89 @@ function AppContent() {
 
   const activeTab = useMemo(() => {
     if (ROOT_TABS.has(activeScreen)) return activeScreen;
-    if ([APP_SCREENS.PROPIETARIO_FORM, APP_SCREENS.VEHICLE_FORM].includes(activeScreen)) return APP_SCREENS.PROPIETARIOS;
-    if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) return APP_SCREENS.HOME;
+    if (
+      [APP_SCREENS.PROPIETARIO_FORM, APP_SCREENS.VEHICLE_FORM].includes(
+        activeScreen,
+      )
+    )
+      return APP_SCREENS.PROPIETARIOS;
+    if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM)
+      return APP_SCREENS.HOME;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
-    if ([APP_SCREENS.STOCK_ITEMS, APP_SCREENS.STOCK_ITEM_FORM, APP_SCREENS.STOCK_MOVEMENT_FORM, APP_SCREENS.WORKSHOP_SETTINGS, APP_SCREENS.COLLABORATORS].includes(activeScreen)) return APP_SCREENS.MORE;
+    if (
+      [
+        APP_SCREENS.STOCK_ITEMS,
+        APP_SCREENS.STOCK_ITEM_FORM,
+        APP_SCREENS.STOCK_MOVEMENT_FORM,
+        APP_SCREENS.WORKSHOP_SETTINGS,
+        APP_SCREENS.COLLABORATORS,
+      ].includes(activeScreen)
+    )
+      return APP_SCREENS.MORE;
     return APP_SCREENS.HOME;
   }, [activeScreen]);
 
   const profileStatus = userProfile?.status;
-  const activeMembership = memberships.find((m) => m.workshopId === activeWorkshopId);
+  const activeMembership = memberships.find(
+    (m) => m.workshopId === activeWorkshopId,
+  );
   const currentRole = activeMembership?.role || userProfile?.role || "";
 
   // Hardware back button handler
   useEffect(() => {
-    if (!authReady || !authUser || !userProfile || profileStatus !== "active") return undefined;
+    if (!authReady || !authUser || !userProfile || profileStatus !== "active")
+      return undefined;
 
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (activeScreen === APP_SCREENS.PROPIETARIO_FORM) {
-        setActiveScreen(APP_SCREENS.PROPIETARIOS);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
-        setActiveScreen(APP_SCREENS.PROPIETARIOS);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) {
-        setActiveScreen(APP_SCREENS.HOME);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.FISCAL_FORM) {
-        setActiveScreen(APP_SCREENS.FISCALES);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.TRAZA) {
-        setActiveScreen(APP_SCREENS.HOME);
-        return true;
-      }
-      if ([APP_SCREENS.STOCK_ITEMS, APP_SCREENS.STOCK_ITEM_FORM, APP_SCREENS.STOCK_MOVEMENT_FORM, APP_SCREENS.WORKSHOP_SETTINGS, APP_SCREENS.COLLABORATORS].includes(activeScreen)) {
-        setActiveScreen(APP_SCREENS.MORE);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.MORE) {
-        setActiveScreen(APP_SCREENS.HOME);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.PROPIETARIOS) {
-        setActiveScreen(APP_SCREENS.HOME);
-        return true;
-      }
-      if (activeScreen === APP_SCREENS.FISCALES) {
-        setActiveScreen(APP_SCREENS.HOME);
-        return true;
-      }
-      return false;
-    });
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (activeScreen === APP_SCREENS.PROPIETARIO_FORM) {
+          setActiveScreen(APP_SCREENS.PROPIETARIOS);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
+          setActiveScreen(APP_SCREENS.PROPIETARIOS);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.FISCAL_FORM) {
+          setActiveScreen(APP_SCREENS.FISCALES);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.TRAZA) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (
+          [
+            APP_SCREENS.STOCK_ITEMS,
+            APP_SCREENS.STOCK_ITEM_FORM,
+            APP_SCREENS.STOCK_MOVEMENT_FORM,
+            APP_SCREENS.WORKSHOP_SETTINGS,
+            APP_SCREENS.COLLABORATORS,
+          ].includes(activeScreen)
+        ) {
+          setActiveScreen(APP_SCREENS.MORE);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.MORE) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.PROPIETARIOS) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.FISCALES) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        return false;
+      },
+    );
 
     return () => subscription.remove();
   }, [activeScreen, authReady, authUser, profileStatus, userProfile]);
@@ -218,14 +267,23 @@ function AppContent() {
   }
 
   const handleTabChange = (nextTab) => {
-    if (nextTab === APP_SCREENS.HOME) { setActiveScreen(APP_SCREENS.HOME); return; }
+    if (nextTab === APP_SCREENS.HOME) {
+      setActiveScreen(APP_SCREENS.HOME);
+      return;
+    }
     if (nextTab === APP_SCREENS.PROPIETARIOS) {
       setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
       setActiveScreen(APP_SCREENS.PROPIETARIOS);
       return;
     }
-    if (nextTab === APP_SCREENS.FISCALES) { setActiveScreen(APP_SCREENS.FISCALES); return; }
-    if (nextTab === APP_SCREENS.TRAZA) { setActiveScreen(APP_SCREENS.TRAZA); return; }
+    if (nextTab === APP_SCREENS.FISCALES) {
+      setActiveScreen(APP_SCREENS.FISCALES);
+      return;
+    }
+    if (nextTab === APP_SCREENS.TRAZA) {
+      setActiveScreen(APP_SCREENS.TRAZA);
+      return;
+    }
     setActiveScreen(APP_SCREENS.MORE);
   };
 
@@ -233,7 +291,13 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.HOME) {
       return (
         <WorkshopHomeScreen
-          onOpenPropietarios={() => { setPropietariosViewState({ selectedClientId: null, screenMode: "list" }); setActiveScreen(APP_SCREENS.PROPIETARIOS); }}
+          onOpenPropietarios={() => {
+            setPropietariosViewState({
+              selectedClientId: null,
+              screenMode: "list",
+            });
+            setActiveScreen(APP_SCREENS.PROPIETARIOS);
+          }}
           onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
           onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
           onOpenFiscalRecord={(vehicle) => {
@@ -256,7 +320,10 @@ function AppContent() {
             setActiveScreen(APP_SCREENS.PROPIETARIO_FORM);
           }}
           onOpenVehicleForm={(propietario, vehicle) => {
-            setVehicleFormContext({ propietario: propietario || null, vehicle: vehicle || null });
+            setVehicleFormContext({
+              propietario: propietario || null,
+              vehicle: vehicle || null,
+            });
             setActiveScreen(APP_SCREENS.VEHICLE_FORM);
           }}
           currentRole={currentRole}
@@ -272,7 +339,10 @@ function AppContent() {
           initialPropietario={propietarioFormContext.propietario}
           onBack={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
           onSaved={() => {
-            setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
+            setPropietariosViewState({
+              selectedClientId: null,
+              screenMode: "list",
+            });
             setActiveScreen(APP_SCREENS.PROPIETARIOS);
           }}
         />
@@ -287,7 +357,10 @@ function AppContent() {
           onBack={() => {
             if (vehicleFormContext.propietario) {
               setPropietariosViewState({
-                selectedClientId: vehicleFormContext.propietario?.id || vehicleFormContext.propietario?.membresia_id || null,
+                selectedClientId:
+                  vehicleFormContext.propietario?.id ||
+                  vehicleFormContext.propietario?.membresia_id ||
+                  null,
                 screenMode: "detail",
               });
               setActiveScreen(APP_SCREENS.PROPIETARIOS);
@@ -298,7 +371,10 @@ function AppContent() {
           onSaved={() => {
             if (vehicleFormContext.propietario) {
               setPropietariosViewState({
-                selectedClientId: vehicleFormContext.propietario?.id || vehicleFormContext.propietario?.membresia_id || null,
+                selectedClientId:
+                  vehicleFormContext.propietario?.id ||
+                  vehicleFormContext.propietario?.membresia_id ||
+                  null,
                 screenMode: "detail",
               });
               setActiveScreen(APP_SCREENS.PROPIETARIOS);
@@ -359,11 +435,17 @@ function AppContent() {
         <StockItemsScreen
           onBack={() => setActiveScreen(APP_SCREENS.MORE)}
           onOpenStockItemForm={(stockItem, options = {}) => {
-            setStockItemFormContext({ stockItem: stockItem || null, draft: options.seedData || null });
+            setStockItemFormContext({
+              stockItem: stockItem || null,
+              draft: options.seedData || null,
+            });
             setActiveScreen(APP_SCREENS.STOCK_ITEM_FORM);
           }}
           onOpenStockMovementForm={(stockItem, options = {}) => {
-            setStockMovementFormContext({ stockItem: stockItem || null, movementType: options.movementType || "in" });
+            setStockMovementFormContext({
+              stockItem: stockItem || null,
+              movementType: options.movementType || "in",
+            });
             setActiveScreen(APP_SCREENS.STOCK_MOVEMENT_FORM);
           }}
           userProfile={userProfile}
@@ -378,7 +460,10 @@ function AppContent() {
           initialDraft={stockItemFormContext.draft}
           initialStockItem={stockItemFormContext.stockItem}
           onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedId) => { setStockItemsViewState({ selectedStockItemId: savedId }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
+          onSaved={(savedId) => {
+            setStockItemsViewState({ selectedStockItemId: savedId });
+            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
+          }}
         />
       );
     }
@@ -389,17 +474,32 @@ function AppContent() {
           initialMovementType={stockMovementFormContext.movementType}
           initialStockItem={stockMovementFormContext.stockItem}
           onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedId) => { setStockItemsViewState({ selectedStockItemId: savedId }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
+          onSaved={(savedId) => {
+            setStockItemsViewState({ selectedStockItemId: savedId });
+            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
+          }}
         />
       );
     }
 
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
-      return <TeamAccessScreen onBack={() => setActiveScreen(APP_SCREENS.MORE)} screenMode="workshop" userProfile={userProfile} />;
+      return (
+        <TeamAccessScreen
+          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
+          screenMode="workshop"
+          userProfile={userProfile}
+        />
+      );
     }
 
     if (activeScreen === APP_SCREENS.COLLABORATORS) {
-      return <TeamAccessScreen onBack={() => setActiveScreen(APP_SCREENS.MORE)} screenMode="collaborators" userProfile={userProfile} />;
+      return (
+        <TeamAccessScreen
+          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
+          screenMode="collaborators"
+          userProfile={userProfile}
+        />
+      );
     }
 
     if (activeScreen === APP_SCREENS.MORE) {
@@ -408,12 +508,19 @@ function AppContent() {
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
           onOpenCollaborators={() => setActiveScreen(APP_SCREENS.COLLABORATORS)}
           onOpenOnboarding={() => setShowOnboarding(true)}
-          onOpenStockItems={() => { setStockItemsViewState({ selectedStockItemId: null }); setActiveScreen(APP_SCREENS.STOCK_ITEMS); }}
+          onOpenStockItems={() => {
+            setStockItemsViewState({ selectedStockItemId: null });
+            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
+          }}
           onOpenWorkshopManagement={() => setActiveScreen(APP_SCREENS.MORE)}
-          onOpenWorkshopSettings={() => setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)}
+          onOpenWorkshopSettings={() =>
+            setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)
+          }
           onSignOut={signOutUser}
           onToggleTheme={toggleTheme}
-          themeLabel={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          themeLabel={
+            isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"
+          }
         />
       );
     }
@@ -424,7 +531,10 @@ function AppContent() {
         onOpenPropietarios={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
         onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
         onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
-        onOpenFiscalRecord={(vehicle) => { setFiscalRecordContext({ unit: vehicle || null }); setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM); }}
+        onOpenFiscalRecord={(vehicle) => {
+          setFiscalRecordContext({ unit: vehicle || null });
+          setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
+        }}
         onSignOut={signOutUser}
         currentRole={currentRole}
         userProfile={userProfile}
@@ -440,7 +550,13 @@ function AppContent() {
         <WorkshopTabBar
           activeTab={activeTab}
           onChange={handleTabChange}
-          visibleTabs={[APP_SCREENS.HOME, APP_SCREENS.PROPIETARIOS, APP_SCREENS.FISCALES, APP_SCREENS.TRAZA, APP_SCREENS.MORE]}
+          visibleTabs={[
+            APP_SCREENS.HOME,
+            APP_SCREENS.PROPIETARIOS,
+            APP_SCREENS.FISCALES,
+            APP_SCREENS.TRAZA,
+            APP_SCREENS.MORE,
+          ]}
         />
       </View>
     </>

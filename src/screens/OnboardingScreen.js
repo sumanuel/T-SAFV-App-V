@@ -23,7 +23,7 @@ const slides = [
     eyebrow: "Centro operativo",
     title: "Control claro desde el primer acceso",
     description:
-      "Revisa agenda, diagnosticos y ordenes recientes en una sola vista pensada para decisiones rapidas del taller.",
+      "Revisa la operación de la asociación y las unidades recientes en una sola vista pensada para decisiones rápidas.",
     icon: "speedometer-outline",
     highlights: ["Agenda compacta", "Filtros por fecha", "Prioridad operativa"],
   },
@@ -32,7 +32,7 @@ const slides = [
     eyebrow: "Flujo tecnico",
     title: "Del diagnostico a la entrega sin perder contexto",
     description:
-      "Abre diagnosticos, convierte a orden, registra avances y conserva una trazabilidad limpia por unidad.",
+      "Registra fiscalizaciones, consulta trazas y conserva una bitácora limpia por unidad.",
     icon: "git-merge-outline",
     highlights: ["Diagnostico", "Orden", "Cronologia historica"],
   },
@@ -41,7 +41,7 @@ const slides = [
     eyebrow: "Equipo y control",
     title: "Asignacion y responsabilidad visibles",
     description:
-      "Cada orden puede tener responsables definidos antes de iniciar, evitando trabajo sin trazabilidad operativa.",
+      "Cada propietario y fiscal puede quedar identificado con responsabilidades claras y activación oficial por invitación.",
     icon: "people-outline",
     highlights: ["Responsables", "Estados claros", "Reglas de inicio"],
   },
@@ -50,7 +50,7 @@ const slides = [
     eyebrow: "Historial confiable",
     title: "Historial por unidad pensado para consulta real",
     description:
-      "Mantiene diagnosticos cerrados, ordenes entregadas y cronologias separadas para consultar sin ruido operativo.",
+      "Mantiene trazas, responsables y movimientos por unidad para consultar sin ruido operativo.",
     icon: "shield-checkmark-outline",
     highlights: ["Vehiculos", "Historial operativo", "Entrega final"],
   },

@@ -82,7 +82,7 @@ export default function AuthScreen() {
         kicker: "Recuperacion segura",
         title: "Recuperar acceso",
         subtitle:
-          "Enviaremos el enlace de recuperacion al correo operativo asociado al taller.",
+          "Enviaremos el enlace de recuperación al correo operativo asociado a tu acceso en la asociación.",
         pills: ["Correo seguro", "Acceso validado"],
       };
     }
@@ -92,7 +92,7 @@ export default function AuthScreen() {
         kicker: "Registro operativo",
         title: "Crear cuenta",
         subtitle:
-          "Registra tu acceso para entrar al panel del taller y sincronizar tu informacion desde el primer inicio.",
+          "Registra tu acceso para entrar al panel de fiscalización y sincronizar tu información desde el primer inicio.",
         pills: ["Cuenta nueva", "Perfil", "Sincronizacion"],
       };
     }
@@ -101,7 +101,7 @@ export default function AuthScreen() {
       kicker: "Acceso seguro",
       title: "T-SAFV",
       subtitle:
-        "Inicia sesion para cargar tu espacio de trabajo y sincronizar tus datos del taller.",
+        "Inicia sesión para cargar tu espacio de trabajo y sincronizar tus datos de asociación.",
       pills: ["Seguridad", "JWT", "Tu sistema"],
     };
   }, [mode]);

@@ -106,6 +106,7 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
       "Unidad",
       "Placa",
       "Fiscal",
+      "Punto de control",
       "Chofer",
       "Origen",
       "Destino",
@@ -116,6 +117,7 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
       item.numero_unidad || item.unidad_id || "",
       item.placa || "",
       item.fiscal_nombre || item.fiscal_id || "",
+      item.punto_control || "",
       item.chofer || "",
       item.origen || "",
       item.destino || "",
@@ -398,6 +400,19 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
                   >
                     <Text style={{ fontWeight: "700" }}>Fiscal: </Text>
                     {item.fiscal_nombre}
+                  </Text>
+                ) : null}
+                {item.punto_control ? (
+                  <Text
+                    style={[
+                      styles.traceMetaText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    <Text style={{ fontWeight: "700" }}>
+                      Punto de control:{" "}
+                    </Text>
+                    {item.punto_control}
                   </Text>
                 ) : null}
                 {item.chofer ? (

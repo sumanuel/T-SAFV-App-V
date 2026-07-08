@@ -18,13 +18,13 @@ const statusContent = {
   missing: {
     title: "Perfil no disponible",
     description:
-      "La cuenta existe en autenticacion, pero no tiene un perfil operativo en el taller.",
+      "La cuenta existe en autenticación, pero no tiene un perfil operativo dentro de una asociación.",
     label: "Requiere revision",
   },
   [USER_STATUSES.PENDING_APPROVAL]: {
     title: "Cuenta en revision",
     description:
-      "Tu acceso ya fue creado, pero aun falta la aprobacion interna del taller para habilitar la operacion.",
+      "Tu acceso ya fue creado, pero aún falta la aprobación interna de la asociación para habilitar la operación.",
     label: "Pendiente",
   },
   [USER_STATUSES.SUSPENDED]: {
@@ -164,7 +164,7 @@ export default function AccessStatusScreen({
                 Invitacion detectada
               </Text>
               <Text style={[styles.invitationTitle, { color: colors.text }]}>
-                Ya puedes unirte al taller
+                Ya puedes unirte a la asociación
               </Text>
               <Text
                 style={[

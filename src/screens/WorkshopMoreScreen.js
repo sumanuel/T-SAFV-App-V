@@ -178,13 +178,13 @@ export default function WorkshopMoreScreen({
       ? "Propietario"
       : resolvedRole === "fiscal"
         ? "Fiscal"
-      : resolvedRole === "administrator"
-        ? "Administrador"
-        : resolvedRole === "reception"
-          ? "Recepcion"
-          : resolvedRole === "mechanic"
-            ? "Mecanico"
-            : "Sin rol";
+        : resolvedRole === "administrator"
+          ? "Administrador"
+          : resolvedRole === "reception"
+            ? "Recepcion"
+            : resolvedRole === "mechanic"
+              ? "Mecanico"
+              : "Sin rol";
 
   return (
     <SafeAreaView
@@ -414,7 +414,8 @@ export default function WorkshopMoreScreen({
           <Text
             style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
           >
-            Identidad visual y versión actual del centro operativo de la asociación.
+            Identidad visual y versión actual del centro operativo de la
+            asociación.
           </Text>
 
           <View

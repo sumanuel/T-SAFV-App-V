@@ -4,7 +4,14 @@
  * Expone token, asociaciones y asociacion activa para los modulos del dominio.
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import {
   apiAcceptInvitation,
   apiGetAssociationCreationAccess,
@@ -73,7 +80,10 @@ export function AuthProvider({ children }) {
   const [activeWorkshop] = useState(WORKSHOP);
 
   const activeAssociation = useMemo(
-    () => associations.find((a) => String(a.id) === String(activeAssociationId)) || associations[0] || null,
+    () =>
+      associations.find((a) => String(a.id) === String(activeAssociationId)) ||
+      associations[0] ||
+      null,
     [associations, activeAssociationId],
   );
 
@@ -170,7 +180,13 @@ export function AuthProvider({ children }) {
       const nombre = parts[0] || "";
       const apellido = parts.slice(1).join(" ");
 
-      await apiRegister({ nombre, apellido, email, password, telefono: phone || "" });
+      await apiRegister({
+        nombre,
+        apellido,
+        email,
+        password,
+        telefono: phone || "",
+      });
 
       const { token: jwt, user } = await apiLogin({ email, password });
       await Promise.all([
@@ -234,12 +250,14 @@ export function AuthProvider({ children }) {
   const switchWorkshop = async () => {};
 
   const renameActiveWorkshop = async (name) => {
-    const { updateWorkshop } = await import("../services/workshops/workshopService");
+    const { updateWorkshop } =
+      await import("../services/workshops/workshopService");
     return updateWorkshop(MOCK_WORKSHOP_ID, { name });
   };
 
   const updateActiveWorkshop = async (data) => {
-    const { updateWorkshop } = await import("../services/workshops/workshopService");
+    const { updateWorkshop } =
+      await import("../services/workshops/workshopService");
     return updateWorkshop(MOCK_WORKSHOP_ID, data);
   };
 

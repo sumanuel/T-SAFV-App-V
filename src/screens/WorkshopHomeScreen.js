@@ -109,7 +109,7 @@ export default function WorkshopHomeScreen({
       } catch {
         Alert.alert(
           "Redes sociales inválidas",
-          "Si indicas redes sociales, usa un JSON válido. Ejemplo: {\"instagram\":\"@mi_asociacion\"}",
+          'Si indicas redes sociales, usa un JSON válido. Ejemplo: {"instagram":"@mi_asociacion"}',
         );
         return;
       }
@@ -186,7 +186,9 @@ export default function WorkshopHomeScreen({
                   ]}
                 >
                   <Ionicons
-                    name={canStartTrial ? "flask-outline" : "add-circle-outline"}
+                    name={
+                      canStartTrial ? "flask-outline" : "add-circle-outline"
+                    }
                     size={rf(18)}
                     color={colors.white}
                   />
@@ -214,9 +216,13 @@ export default function WorkshopHomeScreen({
                     color={colors.warning}
                   />
                   <Text
-                    style={[styles.blockedBadgeText, { color: colors.textSecondary }]}
+                    style={[
+                      styles.blockedBadgeText,
+                      { color: colors.textSecondary },
+                    ]}
                   >
-                    Creación bloqueada hasta resolver el estado de invitación o licencia.
+                    Creación bloqueada hasta resolver el estado de invitación o
+                    licencia.
                   </Text>
                 </View>
               )}
@@ -247,11 +253,21 @@ export default function WorkshopHomeScreen({
                     color={colors.primary}
                   />
                   <View style={styles.invitationCopy}>
-                    <Text style={[styles.invitationTitle, { color: colors.text }]}> 
+                    <Text
+                      style={[styles.invitationTitle, { color: colors.text }]}
+                    >
                       Invitación pendiente
                     </Text>
-                    <Text style={[styles.invitationText, { color: colors.textSecondary }]}> 
-                      Acepta la invitación de {pendingInvitation.rol_invitado?.toLowerCase?.() || "miembro"} para entrar a la asociación asignada.
+                    <Text
+                      style={[
+                        styles.invitationText,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Acepta la invitación de{" "}
+                      {pendingInvitation.rol_invitado?.toLowerCase?.() ||
+                        "miembro"}{" "}
+                      para entrar a la asociación asignada.
                     </Text>
                   </View>
                   <Ionicons
@@ -296,7 +312,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>RIF *</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  RIF *
+                </Text>
                 <TextInput
                   value={newAsocRif}
                   onChangeText={setNewAsocRif}
@@ -314,7 +332,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Dirección fiscal *</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Dirección fiscal *
+                </Text>
                 <TextInput
                   value={newAsocAddress}
                   onChangeText={setNewAsocAddress}
@@ -332,7 +352,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Correo *</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Correo *
+                </Text>
                 <TextInput
                   value={newAsocEmail}
                   onChangeText={setNewAsocEmail}
@@ -351,7 +373,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Teléfonos *</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Teléfonos *
+                </Text>
                 <TextInput
                   value={newAsocPhones}
                   onChangeText={setNewAsocPhones}
@@ -368,7 +392,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Logo URL</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Logo URL
+                </Text>
                 <TextInput
                   value={newAsocLogoUrl}
                   onChangeText={setNewAsocLogoUrl}
@@ -386,7 +412,9 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Redes sociales JSON</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Redes sociales JSON
+                </Text>
                 <TextInput
                   value={newAsocSocialText}
                   onChangeText={setNewAsocSocialText}

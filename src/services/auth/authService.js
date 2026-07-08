@@ -50,3 +50,32 @@ export async function apiRegister({
     throw new Error(resolveApiError(error));
   }
 }
+
+export async function apiGetAssociationCreationAccess() {
+  try {
+    const response = await apiClient.get("/api/auth/association-access");
+    return response.data;
+  } catch (error) {
+    throw new Error(resolveApiError(error));
+  }
+}
+
+export async function apiGetMyInvitations() {
+  try {
+    const response = await apiClient.get("/api/invitaciones/mine");
+    return response.data || [];
+  } catch (error) {
+    throw new Error(resolveApiError(error));
+  }
+}
+
+export async function apiAcceptInvitation(token) {
+  try {
+    const response = await apiClient.post("/api/invitaciones/respond", {
+      token,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(resolveApiError(error));
+  }
+}

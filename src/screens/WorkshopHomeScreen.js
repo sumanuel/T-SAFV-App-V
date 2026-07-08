@@ -24,8 +24,6 @@ export default function WorkshopHomeScreen({
   onOpenFiscales,
   onOpenTraza,
   onOpenFiscalRecord,
-  onSignOut,
-  currentRole,
   userProfile,
 }) {
   const { colors } = useTheme();
@@ -34,6 +32,8 @@ export default function WorkshopHomeScreen({
     associations,
     activeAssociation,
     activeAssociationId,
+    pendingInvitation,
+    acceptPendingInvitation,
     refreshAssociations,
   } = useAuth();
   const [vehicles, setVehicles] = useState([]);
@@ -42,8 +42,16 @@ export default function WorkshopHomeScreen({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAsocName, setNewAsocName] = useState("");
   const [newAsocRif, setNewAsocRif] = useState("");
+  const [newAsocAddress, setNewAsocAddress] = useState("");
+  const [newAsocEmail, setNewAsocEmail] = useState("");
+  const [newAsocPhones, setNewAsocPhones] = useState("");
+  const [newAsocLogoUrl, setNewAsocLogoUrl] = useState("");
+  const [newAsocSocialText, setNewAsocSocialText] = useState("");
   const [creating, setCreating] = useState(false);
   const hasAssociation = associations.length > 0;
+  const associationCreationAccess = userProfile?.associationCreationAccess;
+  const canCreateAssociation = associationCreationAccess?.allowed !== false;
+  const canStartTrial = Boolean(associationCreationAccess?.can_start_trial);
 
   const refreshUnits = async () => {
     if (!activeAssociation?.id) return;
@@ -80,19 +88,55 @@ export default function WorkshopHomeScreen({
   });
 
   const handleCreateAssociation = async () => {
-    if (!newAsocName.trim()) {
-      Alert.alert("Datos incompletos", "El nombre es obligatorio.");
+    if (
+      !newAsocName.trim() ||
+      !newAsocRif.trim() ||
+      !newAsocAddress.trim() ||
+      !newAsocEmail.trim() ||
+      !newAsocPhones.trim()
+    ) {
+      Alert.alert(
+        "Datos incompletos",
+        "Nombre, RIF, dirección fiscal, correo y teléfonos son obligatorios.",
+      );
       return;
     }
+
+    let socialPayload;
+    if (newAsocSocialText.trim()) {
+      try {
+        socialPayload = JSON.parse(newAsocSocialText);
+      } catch {
+        Alert.alert(
+          "Redes sociales inválidas",
+          "Si indicas redes sociales, usa un JSON válido. Ejemplo: {\"instagram\":\"@mi_asociacion\"}",
+        );
+        return;
+      }
+    }
+
     setCreating(true);
     try {
-      await createAssociation(token, { nombre: newAsocName, rif: newAsocRif });
+      await createAssociation(token, {
+        nombre: newAsocName,
+        rif: newAsocRif,
+        direccion_fiscal: newAsocAddress,
+        email: newAsocEmail,
+        telefonos: newAsocPhones,
+        logo_url: newAsocLogoUrl,
+        redes_sociales: socialPayload,
+      });
       await refreshAssociations();
       setShowCreateForm(false);
       setNewAsocName("");
       setNewAsocRif("");
+      setNewAsocAddress("");
+      setNewAsocEmail("");
+      setNewAsocPhones("");
+      setNewAsocLogoUrl("");
+      setNewAsocSocialText("");
     } catch (error) {
-      Alert.alert("Error", error?.message || "No se pudo crear la asociacion.");
+      Alert.alert("Error", error?.message || "No se pudo crear la asociación.");
     } finally {
       setCreating(false);
     }
@@ -130,27 +174,93 @@ export default function WorkshopHomeScreen({
               <Text
                 style={[styles.noAssocMsg, { color: colors.textSecondary }]}
               >
-                Para comenzar necesitas crear una asociacion. Solo se puede
-                crear una por cuenta.
+                {associationCreationAccess?.message ||
+                  "Para comenzar necesitas crear una asociación. Solo se permite una por cuenta y el acceso depende de pago o período de prueba."}
               </Text>
-              <Pressable
-                onPress={() => setShowCreateForm(true)}
-                style={[
-                  styles.createAssocBtn,
-                  { backgroundColor: colors.primary },
-                ]}
-              >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={rf(18)}
-                  color={colors.white}
-                />
-                <Text
-                  style={[styles.createAssocBtnText, { color: colors.white }]}
+              {canCreateAssociation ? (
+                <Pressable
+                  onPress={() => setShowCreateForm(true)}
+                  style={[
+                    styles.createAssocBtn,
+                    { backgroundColor: colors.primary },
+                  ]}
                 >
-                  Crear asociacion
-                </Text>
-              </Pressable>
+                  <Ionicons
+                    name={canStartTrial ? "flask-outline" : "add-circle-outline"}
+                    size={rf(18)}
+                    color={colors.white}
+                  />
+                  <Text
+                    style={[styles.createAssocBtnText, { color: colors.white }]}
+                  >
+                    {canStartTrial
+                      ? "Crear asociación y activar prueba"
+                      : "Crear asociación"}
+                  </Text>
+                </Pressable>
+              ) : (
+                <View
+                  style={[
+                    styles.blockedBadge,
+                    {
+                      backgroundColor: colors.cardMuted,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={rf(18)}
+                    color={colors.warning}
+                  />
+                  <Text
+                    style={[styles.blockedBadgeText, { color: colors.textSecondary }]}
+                  >
+                    Creación bloqueada hasta resolver el estado de invitación o licencia.
+                  </Text>
+                </View>
+              )}
+
+              {pendingInvitation ? (
+                <Pressable
+                  onPress={async () => {
+                    try {
+                      await acceptPendingInvitation();
+                    } catch (error) {
+                      Alert.alert(
+                        "Invitación",
+                        error?.message || "No se pudo aceptar la invitación.",
+                      );
+                    }
+                  }}
+                  style={[
+                    styles.invitationCard,
+                    {
+                      backgroundColor: colors.cardMuted,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="mail-open-outline"
+                    size={rf(18)}
+                    color={colors.primary}
+                  />
+                  <View style={styles.invitationCopy}>
+                    <Text style={[styles.invitationTitle, { color: colors.text }]}> 
+                      Invitación pendiente
+                    </Text>
+                    <Text style={[styles.invitationText, { color: colors.textSecondary }]}> 
+                      Acepta la invitación de {pendingInvitation.rol_invitado?.toLowerCase?.() || "miembro"} para entrar a la asociación asignada.
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={rf(18)}
+                    color={colors.textTertiary}
+                  />
+                </Pressable>
+              ) : null}
             </View>
           ) : (
             <View
@@ -186,9 +296,7 @@ export default function WorkshopHomeScreen({
                 />
               </View>
               <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  RIF (opcional)
-                </Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>RIF *</Text>
                 <TextInput
                   value={newAsocRif}
                   onChangeText={setNewAsocRif}
@@ -197,6 +305,98 @@ export default function WorkshopHomeScreen({
                   autoCapitalize="characters"
                   style={[
                     styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Dirección fiscal *</Text>
+                <TextInput
+                  value={newAsocAddress}
+                  onChangeText={setNewAsocAddress}
+                  placeholder="Dirección fiscal"
+                  placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="sentences"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Correo *</Text>
+                <TextInput
+                  value={newAsocEmail}
+                  onChangeText={setNewAsocEmail}
+                  placeholder="correo@asociacion.com"
+                  placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Teléfonos *</Text>
+                <TextInput
+                  value={newAsocPhones}
+                  onChangeText={setNewAsocPhones}
+                  placeholder="0414-0000000 / 0212-0000000"
+                  placeholderTextColor={colors.textTertiary}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Logo URL</Text>
+                <TextInput
+                  value={newAsocLogoUrl}
+                  onChangeText={setNewAsocLogoUrl}
+                  placeholder="https://..."
+                  placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="none"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>Redes sociales JSON</Text>
+                <TextInput
+                  value={newAsocSocialText}
+                  onChangeText={setNewAsocSocialText}
+                  placeholder='{"instagram":"@mi_asociacion"}'
+                  placeholderTextColor={colors.textTertiary}
+                  autoCapitalize="none"
+                  multiline
+                  style={[
+                    styles.input,
+                    styles.multilineInput,
                     {
                       backgroundColor: colors.inputBackground,
                       borderColor: colors.border,
@@ -238,7 +438,7 @@ export default function WorkshopHomeScreen({
                     <Text
                       style={[styles.confirmBtnText, { color: colors.white }]}
                     >
-                      Crear
+                      {canStartTrial ? "Crear y activar prueba" : "Crear"}
                     </Text>
                   )}
                 </Pressable>
@@ -546,6 +746,29 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   createAssocBtnText: { fontSize: rf(15), fontWeight: "800" },
+  blockedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  blockedBadgeText: { flex: 1, fontSize: rf(13), lineHeight: rf(18) },
+  invitationCard: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  invitationCopy: { flex: 1, gap: spacing.xs / 2 },
+  invitationTitle: { fontSize: rf(14), fontWeight: "800" },
+  invitationText: { fontSize: rf(12), lineHeight: rf(17) },
   formCard: {
     borderWidth: 1,
     borderRadius: borderRadius.xl,
@@ -567,6 +790,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: rf(14),
     minHeight: rf(44),
+  },
+  multilineInput: {
+    minHeight: rf(88),
+    textAlignVertical: "top",
   },
   formActions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs },
   cancelBtn: {

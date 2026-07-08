@@ -85,6 +85,18 @@ export function login(email, password) {
   return apiPost("/api/auth/login", { email, password });
 }
 
+export function getAssociationCreationAccess(token) {
+  return apiGet("/api/auth/association-access", token);
+}
+
+export function getMyInvitations(token) {
+  return apiGet("/api/invitaciones/mine", token);
+}
+
+export function acceptInvitation(token, inviteToken) {
+  return apiPost("/api/invitaciones/respond", { token: inviteToken }, token);
+}
+
 // ─── Asociaciones ─────────────────────────────────────────────────────────────
 
 export function getMyAssociations(token) {
@@ -190,6 +202,9 @@ export function createFiscalRecord(token, payload) {
 export default {
   register,
   login,
+  getAssociationCreationAccess,
+  getMyInvitations,
+  acceptInvitation,
   getMyAssociations,
   createAsociacion,
   updateAsociacion,

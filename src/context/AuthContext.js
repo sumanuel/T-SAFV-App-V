@@ -5,7 +5,13 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
-import { apiLogin, apiRegister } from "../services/auth/authService";
+import {
+  apiAcceptInvitation,
+  apiGetAssociationCreationAccess,
+  apiGetMyInvitations,
+  apiLogin,
+  apiRegister,
+} from "../services/auth/authService";
 import { getMyAssociations } from "../services/associations/associationService";
 import { getWorkshop } from "../services/mock/mockStore";
 
@@ -21,7 +27,8 @@ const ACTIVE_ASSOC_KEY = "@active_association_id";
 function mapApiUserToProfile(user) {
   const rawRol = String(user.rol || "ADMIN").toLowerCase();
   let role = "administrator";
-  if (rawRol === "owner") role = "owner";
+  if (rawRol === "owner" || rawRol === "propietario") role = "owner";
+  else if (rawRol === "fiscal") role = "fiscal";
   else if (rawRol === "mechanic" || rawRol === "mecanico") role = "mechanic";
   else if (rawRol === "reception" || rawRol === "recepcion") role = "reception";
 
@@ -36,6 +43,7 @@ function mapApiUserToProfile(user) {
     email: user.email || "",
     phone: user.telefono || "",
     role,
+    associationCreationAccess: user.association_creation_access || null,
     status: "active",
     defaultWorkshopId: MOCK_WORKSHOP_ID,
     createdAt: new Date(),
@@ -61,6 +69,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [associations, setAssociations] = useState([]);
   const [activeAssociationId, setActiveAssociationIdState] = useState(null);
+  const [pendingInvitation, setPendingInvitation] = useState(null);
   const [activeWorkshop] = useState(WORKSHOP);
 
   const activeAssociation = useMemo(
@@ -76,12 +85,24 @@ export function AuthProvider({ children }) {
   const loadAssociations = useCallback(async (authToken) => {
     if (!authToken) return;
     try {
-      const data = await getMyAssociations(authToken);
+      const [data, access, invitations] = await Promise.all([
+        getMyAssociations(authToken),
+        apiGetAssociationCreationAccess(),
+        apiGetMyInvitations(),
+      ]);
       setAssociations(data || []);
+      setPendingInvitation((invitations || [])[0] || null);
+      setUserProfile((current) =>
+        current
+          ? { ...current, associationCreationAccess: access || null }
+          : current,
+      );
       if (data && data.length > 0) {
         const savedId = await AsyncStorage.getItem(ACTIVE_ASSOC_KEY);
         const match = data.find((a) => String(a.id) === String(savedId));
         setActiveAssociationIdState(match ? match.id : data[0].id);
+      } else {
+        setActiveAssociationIdState(null);
       }
     } catch (error) {
       console.error("Error loading associations:", error);
@@ -197,7 +218,17 @@ export function AuthProvider({ children }) {
   };
 
   const acceptPendingInvitation = async () => {
-    throw new Error("Invitaciones no disponibles en esta version.");
+    if (!pendingInvitation?.token_invitacion) {
+      throw new Error("No hay invitaciones pendientes para aceptar.");
+    }
+
+    setAuthBusy(true);
+    try {
+      await apiAcceptInvitation(pendingInvitation.token_invitacion);
+      await loadAssociations(token);
+    } finally {
+      setAuthBusy(false);
+    }
   };
 
   const switchWorkshop = async () => {};
@@ -229,7 +260,7 @@ export function AuthProvider({ children }) {
       authReady,
       authUser,
       memberships,
-      pendingInvitation: null,
+      pendingInvitation,
       recoverPassword,
       refreshAssociations,
       refreshWorkshopContext,
@@ -251,6 +282,7 @@ export function AuthProvider({ children }) {
       authReady,
       authUser,
       memberships,
+      pendingInvitation,
       refreshAssociations,
       setActiveAssociationId,
       token,

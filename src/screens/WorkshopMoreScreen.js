@@ -10,32 +10,22 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
-import { hasPermission, isMechanicRole } from "../constants/accessControl";
+import { hasPermission } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
-const operationalItems = [
-  {
-    key: "stock-tools",
-    title: "Stock y herramientas",
-    subtitle: "Inventario general del taller con altas, edicion y bajas.",
-    icon: "cube-outline",
-    eyebrow: "Operacion",
-  },
-];
-
 const administrativeItems = [
   {
     key: "workshop-settings",
-    title: "Datos del taller",
-    subtitle: "Identidad comercial, logo, contacto y notas operativas.",
+    title: "Datos de la asociación",
+    subtitle: "Identidad, logo, contacto y datos fiscales de la asociación.",
     icon: "business-outline",
     eyebrow: "Administracion",
   },
   {
     key: "team",
-    title: "Colaboradores",
+    title: "Miembros e invitaciones",
     subtitle: "Invitaciones, roles, estados y control de accesos.",
     icon: "people-outline",
     eyebrow: "Administracion",
@@ -72,20 +62,6 @@ function resolveActionState(
           iconColor: "textSecondary",
           stateLabel: "Solo lectura",
           stateTone: "textSecondary",
-        };
-  }
-
-  if (itemKey === "stock-tools") {
-    return hasPermission(currentRole, "inventory.manage")
-      ? {
-          iconColor: "accent",
-          stateLabel: "CRUD habilitado",
-          stateTone: "accent",
-        }
-      : {
-          iconColor: "warning",
-          stateLabel: "Solo consulta",
-          stateTone: "warning",
         };
   }
 
@@ -184,7 +160,6 @@ export default function WorkshopMoreScreen({
   onBack,
   onOpenCollaborators,
   onOpenOnboarding,
-  onOpenStockItems,
   onOpenWorkshopManagement,
   onOpenWorkshopSettings,
   onSignOut,
@@ -201,6 +176,8 @@ export default function WorkshopMoreScreen({
   const roleLabel =
     resolvedRole === "owner"
       ? "Propietario"
+      : resolvedRole === "fiscal"
+        ? "Fiscal"
       : resolvedRole === "administrator"
         ? "Administrador"
         : resolvedRole === "reception"
@@ -221,7 +198,7 @@ export default function WorkshopMoreScreen({
         <WorkshopScreenHeader
           onBack={onBack}
           section="Configuracion"
-          subtitle="Agrupa herramientas operativas, administracion del taller y preferencias de la app en una sola vista ordenada."
+          subtitle="Agrupa la administración de la asociación y las preferencias de la app en una sola vista ordenada."
           title="Mas opciones"
         />
 
@@ -239,7 +216,7 @@ export default function WorkshopMoreScreen({
               Centro de configuracion
             </Text>
             <Text style={[styles.heroTitle, { color: colors.text }]}>
-              {workshopName || "Taller activo"}
+              {workshopName || "Asociación activa"}
             </Text>
             <Text
               style={[styles.heroSubtitle, { color: colors.textSecondary }]}
@@ -266,7 +243,7 @@ export default function WorkshopMoreScreen({
               <Text
                 style={[styles.heroStatLabel, { color: colors.textSecondary }]}
               >
-                Talleres
+                Asociaciones
               </Text>
               <Text style={[styles.heroStatAction, { color: colors.primary }]}>
                 Gestionar
@@ -303,44 +280,12 @@ export default function WorkshopMoreScreen({
           ]}
         >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Operacion
-          </Text>
-          <Text
-            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
-          >
-            Accesos que extienden el flujo principal del taller sin mezclarlo
-            con el dashboard.
-          </Text>
-          <View style={styles.listWrap}>
-            {operationalItems.map((item) =>
-              renderActionRow({
-                item,
-                colors,
-                onPress: onOpenStockItems,
-                userProfile,
-                memberships,
-                activeWorkshopId,
-              }),
-            )}
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Administracion
           </Text>
           <Text
             style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
           >
-            Configuracion del taller, miembros y accesos operativos.
+            Configuración de la asociación, miembros e invitaciones.
           </Text>
           <View style={styles.listWrap}>
             {administrativeItems.map((item) =>
@@ -469,7 +414,7 @@ export default function WorkshopMoreScreen({
           <Text
             style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
           >
-            Identidad visual y version actual del centro operativo del taller.
+            Identidad visual y versión actual del centro operativo de la asociación.
           </Text>
 
           <View
@@ -502,7 +447,7 @@ export default function WorkshopMoreScreen({
                 T-SAFV
               </Text>
               <Text style={[styles.aboutTitle, { color: colors.text }]}>
-                Centro operativo del taller
+                Centro operativo de la asociación
               </Text>
               <Text
                 style={[

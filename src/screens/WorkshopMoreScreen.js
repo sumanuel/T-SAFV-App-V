@@ -167,11 +167,20 @@ export default function WorkshopMoreScreen({
   themeLabel,
 }) {
   const { colors } = useTheme();
-  const { activeWorkshop, activeWorkshopId, memberships, userProfile } =
-    useAuth();
+  const {
+    activeAssociation,
+    activeAssociationId,
+    activeWorkshop,
+    activeWorkshopId,
+    memberships,
+    userProfile,
+  } = useAuth();
   const appVersion = Constants?.expoConfig?.version || "-";
   const activeMembership = getPrimaryMembership(memberships, activeWorkshopId);
-  const workshopName = activeWorkshop?.name || activeMembership?.workshopName;
+  const associationName =
+    activeAssociation?.nombre ||
+    activeWorkshop?.name ||
+    activeMembership?.workshopName;
   const resolvedRole = activeMembership?.role || userProfile?.role || "";
   const roleLabel =
     resolvedRole === "owner"
@@ -213,10 +222,10 @@ export default function WorkshopMoreScreen({
         >
           <View style={styles.heroCopy}>
             <Text style={[styles.heroEyebrow, { color: colors.primary }]}>
-              Centro de configuracion
+              Centro de la asociación
             </Text>
             <Text style={[styles.heroTitle, { color: colors.text }]}>
-              {workshopName || "Asociación activa"}
+              {associationName || "Asociación activa"}
             </Text>
             <Text
               style={[styles.heroSubtitle, { color: colors.textSecondary }]}
@@ -259,7 +268,7 @@ export default function WorkshopMoreScreen({
               ]}
             >
               <Text style={[styles.heroStatValue, { color: colors.text }]}>
-                {activeWorkshopId ? "Activo" : "Sin sesion"}
+                {activeAssociationId ? "Activa" : "Sin sesión"}
               </Text>
               <Text
                 style={[styles.heroStatLabel, { color: colors.textSecondary }]}

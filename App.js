@@ -22,6 +22,7 @@ import WorkshopTabBar from "./src/components/common/WorkshopTabBar";
 // Propietarios
 import PropietariosScreen from "./src/screens/PropietariosScreen";
 import PropietarioFormScreen from "./src/screens/PropietarioFormScreen";
+import MemberInvitationsScreen from "./src/screens/MemberInvitationsScreen";
 
 // Unidades / Vehiculos
 import VehicleFormScreen from "./src/screens/VehicleFormScreen";
@@ -46,6 +47,7 @@ const APP_SCREENS = {
   PROPIETARIO_FORM: "propietario-form",
   VEHICLE_FORM: "vehicle-form",
   FISCAL_RECORD_FORM: "fiscal-record-form",
+  MEMBER_INVITATIONS: "member-invitations",
   FISCALES: "fiscales",
   FISCAL_FORM: "fiscal-form",
   TRAZA: "traza",
@@ -97,6 +99,10 @@ function AppContent() {
   const [fiscalRecordContext, setFiscalRecordContext] = useState({
     unit: null,
   });
+  const [memberInvitationContext, setMemberInvitationContext] = useState({
+    role: "TODOS",
+    memberId: null,
+  });
   const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
   const [stockItemFormContext, setStockItemFormContext] = useState({
     stockItem: null,
@@ -129,6 +135,7 @@ function AppContent() {
     setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
     setVehicleFormContext({ propietario: null, vehicle: null });
     setFiscalRecordContext({ unit: null });
+    setMemberInvitationContext({ role: "TODOS", memberId: null });
     setFiscalFormContext({ fiscal: null });
     setStockItemFormContext({ stockItem: null, draft: null });
     setStockMovementFormContext({ stockItem: null, movementType: "in" });
@@ -145,6 +152,8 @@ function AppContent() {
       return APP_SCREENS.PROPIETARIOS;
     if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM)
       return APP_SCREENS.HOME;
+    if (activeScreen === APP_SCREENS.MEMBER_INVITATIONS)
+      return APP_SCREENS.MORE;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
     if (
       [
@@ -183,6 +192,10 @@ function AppContent() {
         }
         if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) {
           setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.MEMBER_INVITATIONS) {
+          setActiveScreen(APP_SCREENS.MORE);
           return true;
         }
         if (activeScreen === APP_SCREENS.FISCAL_FORM) {
@@ -315,6 +328,13 @@ function AppContent() {
       return (
         <PropietariosScreen
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
+          onOpenInvitationCenter={(role, memberId) => {
+            setMemberInvitationContext({
+              role: role || "TODOS",
+              memberId: memberId || null,
+            });
+            setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
+          }}
           onOpenPropietarioForm={(propietario, options = {}) => {
             setPropietarioFormContext({ propietario: propietario || null });
             setActiveScreen(APP_SCREENS.PROPIETARIO_FORM);
@@ -396,10 +416,27 @@ function AppContent() {
       );
     }
 
+    if (activeScreen === APP_SCREENS.MEMBER_INVITATIONS) {
+      return (
+        <MemberInvitationsScreen
+          initialRole={memberInvitationContext.role}
+          initialMemberId={memberInvitationContext.memberId}
+          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
+        />
+      );
+    }
+
     if (activeScreen === APP_SCREENS.FISCALES) {
       return (
         <FiscalesScreen
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
+          onOpenInvitationCenter={(role, memberId) => {
+            setMemberInvitationContext({
+              role: role || "TODOS",
+              memberId: memberId || null,
+            });
+            setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
+          }}
           onOpenFiscalForm={(fiscal) => {
             setFiscalFormContext({ fiscal: fiscal || null });
             setActiveScreen(APP_SCREENS.FISCAL_FORM);
@@ -506,7 +543,10 @@ function AppContent() {
       return (
         <WorkshopMoreScreen
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
-          onOpenCollaborators={() => setActiveScreen(APP_SCREENS.COLLABORATORS)}
+          onOpenCollaborators={() => {
+            setMemberInvitationContext({ role: "TODOS", memberId: null });
+            setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
+          }}
           onOpenOnboarding={() => setShowOnboarding(true)}
           onOpenStockItems={() => {
             setStockItemsViewState({ selectedStockItemId: null });

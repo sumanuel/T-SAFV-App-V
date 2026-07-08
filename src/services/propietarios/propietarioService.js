@@ -23,6 +23,7 @@ export async function createPropietario(token, asociacionId, payload) {
     telefono: payload.telefono?.trim() || "",
     rif_cedula: payload.rif_cedula?.trim() || "",
     direccion: payload.direccion?.trim() || "",
+    estado_invitacion: payload.estado_invitacion || "PENDIENTE_INVITACION",
     rol: "PROPIETARIO",
     role: "PROPIETARIO",
   });
@@ -47,6 +48,7 @@ export async function updatePropietario(
       telefono: payload.telefono?.trim() || "",
       rif_cedula: payload.rif_cedula?.trim() || "",
       direccion: payload.direccion?.trim() || "",
+      estado_invitacion: payload.estado_invitacion || "PENDIENTE_INVITACION",
       rol: "PROPIETARIO",
       role: "PROPIETARIO",
     },

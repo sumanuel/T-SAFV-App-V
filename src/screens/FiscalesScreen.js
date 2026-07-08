@@ -23,6 +23,7 @@ function getEntityId(entity) {
 
 export default function FiscalesScreen({
   onBack,
+  onOpenInvitationCenter,
   onOpenFiscalForm,
   currentRole,
   userProfile,
@@ -187,19 +188,59 @@ export default function FiscalesScreen({
                       {f.telefono}
                     </Text>
                   ) : null}
-                </View>
-                <View
-                  style={[
-                    styles.roleBadge,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.roleText, { color: colors.accent }]}>
-                    FISCAL
+                  {f.punto_control ? (
+                    <Text
+                      style={[
+                        styles.itemPhone,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Punto: {f.punto_control}
+                    </Text>
+                  ) : null}
+                  <Text
+                    style={[styles.itemPhone, { color: colors.textSecondary }]}
+                  >
+                    Invitación: {f.estado_invitacion || "PENDIENTE_INVITACION"}
                   </Text>
+                </View>
+                <View style={styles.cardActions}>
+                  <View
+                    style={[
+                      styles.roleBadge,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.roleText, { color: colors.accent }]}>
+                      FISCAL
+                    </Text>
+                  </View>
+                  {f.email ? (
+                    <Pressable
+                      onPress={() =>
+                        onOpenInvitationCenter?.(
+                          "FISCAL",
+                          f.membresia_id || f.id,
+                        )
+                      }
+                      style={[
+                        styles.inviteInline,
+                        {
+                          backgroundColor: colors.cardMuted,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="mail-outline"
+                        size={rf(16)}
+                        color={colors.primary}
+                      />
+                    </Pressable>
+                  ) : null}
                 </View>
               </Pressable>
             );
@@ -283,6 +324,15 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs / 2,
+  },
+  cardActions: { alignItems: "flex-end", gap: spacing.sm },
+  inviteInline: {
+    width: rf(36),
+    height: rf(36),
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
   },
   roleText: { fontSize: rf(10), fontWeight: "800", letterSpacing: 0.5 },
   emptyBlock: {

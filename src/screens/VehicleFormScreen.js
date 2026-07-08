@@ -19,6 +19,7 @@ import { useTheme } from "../context/ThemeContext";
 import { listPropietarios } from "../services/propietarios/propietarioService";
 import {
   createVehicle,
+  deleteVehicle,
   updateVehicle,
 } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
@@ -164,6 +165,36 @@ export default function VehicleFormScreen({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!isEditing || !initialVehicle?.id) return;
+
+    Alert.alert(
+      "Eliminar unidad",
+      "La unidad se eliminará de la asociación activa.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            setSubmitting(true);
+            try {
+              await deleteVehicle(token, asociacionId, initialVehicle.id);
+              onSaved?.();
+            } catch (error) {
+              Alert.alert(
+                "Error al eliminar",
+                error?.message || "No se pudo eliminar la unidad.",
+              );
+            } finally {
+              setSubmitting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -496,6 +527,23 @@ export default function VehicleFormScreen({
               </>
             )}
           </Pressable>
+
+          {isEditing ? (
+            <Pressable
+              onPress={handleDelete}
+              disabled={submitting}
+              style={[styles.deleteBtn, { borderColor: colors.danger }]}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={rf(18)}
+                color={colors.danger}
+              />
+              <Text style={[styles.deleteBtnText, { color: colors.danger }]}>
+                Eliminar unidad
+              </Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -562,4 +610,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   submitText: { fontSize: rf(15), fontWeight: "800" },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: borderRadius.xl,
+    minHeight: rf(48),
+    paddingHorizontal: spacing.lg,
+  },
+  deleteBtnText: { fontSize: rf(14), fontWeight: "800" },
 });

@@ -63,6 +63,7 @@ function mergeLinkedUnits(propietario, allVehicles) {
 
 export default function PropietariosScreen({
   onBack,
+  onOpenInvitationCenter,
   onOpenPropietarioForm,
   onOpenVehicleForm,
   viewState,
@@ -325,6 +326,11 @@ export default function PropietariosScreen({
                 <Text style={styles.fieldValueStrong}>Dirección:</Text>{" "}
                 {selectedPropietario.direccion || "Sin dirección"}
               </Text>
+              <Text style={[styles.fieldValue, { color: colors.text }]}>
+                <Text style={styles.fieldValueStrong}>Invitación:</Text>{" "}
+                {selectedPropietario.estado_invitacion ||
+                  "PENDIENTE_INVITACION"}
+              </Text>
             </View>
 
             <View style={styles.detailActionsRow}>
@@ -344,6 +350,24 @@ export default function PropietariosScreen({
                   Eliminar propietario
                 </Text>
               </Pressable>
+              {selectedPropietario.email ? (
+                <Pressable
+                  onPress={() =>
+                    onOpenInvitationCenter?.(
+                      "PROPIETARIO",
+                      selectedPropietario.membresia_id ||
+                        selectedPropietario.id,
+                    )
+                  }
+                  style={[styles.linkAction, { borderColor: colors.primary }]}
+                >
+                  <Text
+                    style={[styles.linkActionText, { color: colors.primary }]}
+                  >
+                    Invitar
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           </View>
 

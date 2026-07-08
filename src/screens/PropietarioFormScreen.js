@@ -22,6 +22,12 @@ import {
 } from "../services/propietarios/propietarioService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
+const INVITATION_STATES = [
+  { value: "PENDIENTE_INVITACION", label: "Pendiente" },
+  { value: "INVITACION_ENVIADA", label: "Enviada" },
+  { value: "ACEPTADA", label: "Aceptada" },
+];
+
 function getEntityId(entity) {
   return entity?.membresia_id || entity?.id || "";
 }
@@ -43,6 +49,8 @@ export default function PropietarioFormScreen({
     telefono: initialPropietario?.telefono || "",
     email: initialPropietario?.email || "",
     direccion: initialPropietario?.direccion || "",
+    estado_invitacion:
+      initialPropietario?.estado_invitacion || "PENDIENTE_INVITACION",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -192,6 +200,41 @@ export default function PropietarioFormScreen({
                 />
               </View>
             ))}
+
+            <View style={styles.fieldWrap}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Estado de invitación
+              </Text>
+              <View style={styles.stateChipRow}>
+                {INVITATION_STATES.map((state) => {
+                  const active = form.estado_invitacion === state.value;
+                  return (
+                    <Pressable
+                      key={state.value}
+                      onPress={() => update("estado_invitacion", state.value)}
+                      style={[
+                        styles.stateChip,
+                        {
+                          backgroundColor: active
+                            ? colors.primary
+                            : colors.cardMuted,
+                          borderColor: active ? colors.primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.stateChipText,
+                          { color: active ? colors.white : colors.text },
+                        ]}
+                      >
+                        {state.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           </View>
 
           <Pressable
@@ -251,6 +294,14 @@ const styles = StyleSheet.create({
     fontSize: rf(14),
     minHeight: rf(44),
   },
+  stateChipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  stateChip: {
+    borderWidth: 1,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  stateChipText: { fontSize: rf(12), fontWeight: "800" },
   submitBtn: {
     flexDirection: "row",
     alignItems: "center",

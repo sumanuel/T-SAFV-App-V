@@ -23,6 +23,8 @@ export async function createFiscal(token, asociacionId, payload) {
     telefono: payload.telefono?.trim() || "",
     rif_cedula: payload.rif_cedula?.trim() || "",
     direccion: payload.direccion?.trim() || "",
+    punto_control: payload.punto_control?.trim() || "",
+    estado_invitacion: payload.estado_invitacion || "PENDIENTE_INVITACION",
     rol: "FISCAL",
     role: "FISCAL",
   });
@@ -42,6 +44,8 @@ export async function updateFiscal(token, asociacionId, membresiaId, payload) {
       telefono: payload.telefono?.trim() || "",
       rif_cedula: payload.rif_cedula?.trim() || "",
       direccion: payload.direccion?.trim() || "",
+      punto_control: payload.punto_control?.trim() || "",
+      estado_invitacion: payload.estado_invitacion || "PENDIENTE_INVITACION",
       rol: "FISCAL",
       role: "FISCAL",
     },

@@ -97,6 +97,14 @@ export function acceptInvitation(token, inviteToken) {
   return apiPost("/api/invitaciones/respond", { token: inviteToken }, token);
 }
 
+export function createInvitation(token, payload) {
+  return apiPost("/api/invitaciones", payload, token);
+}
+
+export function getAssociationInvitations(token, asociacionId) {
+  return apiGet(`/api/invitaciones/asociaciones/${asociacionId}`, token);
+}
+
 // ─── Asociaciones ─────────────────────────────────────────────────────────────
 
 export function getMyAssociations(token) {
@@ -205,6 +213,8 @@ export default {
   getAssociationCreationAccess,
   getMyInvitations,
   acceptInvitation,
+  createInvitation,
+  getAssociationInvitations,
   getMyAssociations,
   createAsociacion,
   updateAsociacion,

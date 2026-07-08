@@ -19,6 +19,12 @@ import { useTheme } from "../context/ThemeContext";
 import { createFiscal, updateFiscal } from "../services/fiscales/fiscalService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
+const INVITATION_STATES = [
+  { value: "PENDIENTE_INVITACION", label: "Pendiente" },
+  { value: "INVITACION_ENVIADA", label: "Enviada" },
+  { value: "ACEPTADA", label: "Aceptada" },
+];
+
 function getEntityId(entity) {
   return entity?.membresia_id || entity?.id || "";
 }
@@ -36,6 +42,9 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
     telefono: initialFiscal?.telefono || "",
     email: initialFiscal?.email || "",
     direccion: initialFiscal?.direccion || "",
+    punto_control: initialFiscal?.punto_control || "",
+    estado_invitacion:
+      initialFiscal?.estado_invitacion || "PENDIENTE_INVITACION",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -161,6 +170,13 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 returnKeyType: "done",
                 multiline: true,
               },
+              {
+                key: "punto_control",
+                label: "Punto de control",
+                placeholder: "Punto o zona asignada",
+                autoCapitalize: "sentences",
+                returnKeyType: "done",
+              },
             ].map(({ key, label, ref: fieldRef, ...inputProps }) => (
               <View key={key} style={styles.fieldWrap}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
@@ -183,6 +199,41 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 />
               </View>
             ))}
+
+            <View style={styles.fieldWrap}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Estado de invitación
+              </Text>
+              <View style={styles.stateChipRow}>
+                {INVITATION_STATES.map((state) => {
+                  const active = form.estado_invitacion === state.value;
+                  return (
+                    <Pressable
+                      key={state.value}
+                      onPress={() => update("estado_invitacion", state.value)}
+                      style={[
+                        styles.stateChip,
+                        {
+                          backgroundColor: active
+                            ? colors.accent
+                            : colors.cardMuted,
+                          borderColor: active ? colors.accent : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.stateChipText,
+                          { color: active ? colors.white : colors.text },
+                        ]}
+                      >
+                        {state.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           </View>
 
           <Pressable
@@ -242,6 +293,14 @@ const styles = StyleSheet.create({
     fontSize: rf(14),
     minHeight: rf(44),
   },
+  stateChipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  stateChip: {
+    borderWidth: 1,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  stateChipText: { fontSize: rf(12), fontWeight: "800" },
   submitBtn: {
     flexDirection: "row",
     alignItems: "center",

@@ -23,6 +23,7 @@ import PropietarioFormScreen from "./src/screens/PropietarioFormScreen";
 
 // Unidades / Vehiculos
 import VehicleFormScreen from "./src/screens/VehicleFormScreen";
+import FiscalRecordFormScreen from "./src/screens/FiscalRecordFormScreen";
 
 // Fiscales
 import FiscalesScreen from "./src/screens/FiscalesScreen";
@@ -42,6 +43,7 @@ const APP_SCREENS = {
   PROPIETARIOS: "propietarios",
   PROPIETARIO_FORM: "propietario-form",
   VEHICLE_FORM: "vehicle-form",
+  FISCAL_RECORD_FORM: "fiscal-record-form",
   FISCALES: "fiscales",
   FISCAL_FORM: "fiscal-form",
   TRAZA: "traza",
@@ -82,6 +84,7 @@ function AppContent() {
   const [propietarioFormContext, setPropietarioFormContext] = useState({ propietario: null });
   const [propietariosViewState, setPropietariosViewState] = useState({ selectedClientId: null, screenMode: "list" });
   const [vehicleFormContext, setVehicleFormContext] = useState({ propietario: null, vehicle: null });
+  const [fiscalRecordContext, setFiscalRecordContext] = useState({ unit: null });
   const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
   const [stockItemFormContext, setStockItemFormContext] = useState({ stockItem: null, draft: null });
   const [stockMovementFormContext, setStockMovementFormContext] = useState({ stockItem: null, movementType: "in" });
@@ -105,6 +108,7 @@ function AppContent() {
     setPropietarioFormContext({ propietario: null });
     setPropietariosViewState({ selectedClientId: null, screenMode: "list" });
     setVehicleFormContext({ propietario: null, vehicle: null });
+    setFiscalRecordContext({ unit: null });
     setFiscalFormContext({ fiscal: null });
     setStockItemFormContext({ stockItem: null, draft: null });
     setStockMovementFormContext({ stockItem: null, movementType: "in" });
@@ -114,6 +118,7 @@ function AppContent() {
   const activeTab = useMemo(() => {
     if (ROOT_TABS.has(activeScreen)) return activeScreen;
     if ([APP_SCREENS.PROPIETARIO_FORM, APP_SCREENS.VEHICLE_FORM].includes(activeScreen)) return APP_SCREENS.PROPIETARIOS;
+    if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) return APP_SCREENS.HOME;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
     if ([APP_SCREENS.STOCK_ITEMS, APP_SCREENS.STOCK_ITEM_FORM, APP_SCREENS.STOCK_MOVEMENT_FORM, APP_SCREENS.WORKSHOP_SETTINGS, APP_SCREENS.COLLABORATORS].includes(activeScreen)) return APP_SCREENS.MORE;
     return APP_SCREENS.HOME;
@@ -134,6 +139,10 @@ function AppContent() {
       }
       if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
         setActiveScreen(APP_SCREENS.PROPIETARIOS);
+        return true;
+      }
+      if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) {
+        setActiveScreen(APP_SCREENS.HOME);
         return true;
       }
       if (activeScreen === APP_SCREENS.FISCAL_FORM) {
@@ -227,9 +236,9 @@ function AppContent() {
           onOpenPropietarios={() => { setPropietariosViewState({ selectedClientId: null, screenMode: "list" }); setActiveScreen(APP_SCREENS.PROPIETARIOS); }}
           onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
           onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
-          onOpenVehicleDetail={(vehicle) => {
-            setVehicleFormContext({ propietario: null, vehicle });
-            setActiveScreen(APP_SCREENS.VEHICLE_FORM);
+          onOpenFiscalRecord={(vehicle) => {
+            setFiscalRecordContext({ unit: vehicle || null });
+            setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
           }}
           onSignOut={signOutUser}
           currentRole={currentRole}
@@ -297,6 +306,16 @@ function AppContent() {
               setActiveScreen(APP_SCREENS.HOME);
             }
           }}
+        />
+      );
+    }
+
+    if (activeScreen === APP_SCREENS.FISCAL_RECORD_FORM) {
+      return (
+        <FiscalRecordFormScreen
+          initialUnit={fiscalRecordContext.unit}
+          onBack={() => setActiveScreen(APP_SCREENS.HOME)}
+          onSaved={() => setActiveScreen(APP_SCREENS.HOME)}
         />
       );
     }
@@ -405,7 +424,7 @@ function AppContent() {
         onOpenPropietarios={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
         onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
         onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
-        onOpenVehicleDetail={(vehicle) => { setVehicleFormContext({ propietario: null, vehicle }); setActiveScreen(APP_SCREENS.VEHICLE_FORM); }}
+        onOpenFiscalRecord={(vehicle) => { setFiscalRecordContext({ unit: vehicle || null }); setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM); }}
         onSignOut={signOutUser}
         currentRole={currentRole}
         userProfile={userProfile}

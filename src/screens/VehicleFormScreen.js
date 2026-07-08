@@ -123,7 +123,7 @@ export default function VehicleFormScreen({ initialPropietario, initialVehicle, 
         <ScrollView contentContainerStyle={styles.container}>
           <WorkshopScreenHeader
             onBack={onBack}
-            section="Costos y Repuestos"
+            section="Unidades"
             title={isEditing ? "Editar unidad" : "Nueva unidad"}
             subtitle={activeAssociation ? activeAssociation.nombre : "Sin asociacion activa"}
           />
@@ -154,11 +154,11 @@ export default function VehicleFormScreen({ initialPropietario, initialVehicle, 
           </View>
 
           <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos de identificacion</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos de identificación</Text>
             {[
               { label: "Placa *", value: placa, onChange: setPlaca, placeholder: "ABC-123", autoCapitalize: "characters" },
-              { label: "Numero de unidad *", value: numeroUnidad, onChange: setNumeroUnidad, placeholder: "001" },
-              { label: "N Puestos / Asientos", value: numeroPuestos, onChange: setNumeroPuestos, placeholder: "0", keyboardType: "numeric" },
+              { label: "Número de unidad *", value: numeroUnidad, onChange: setNumeroUnidad, placeholder: "001" },
+              { label: "N° puestos / asientos", value: numeroPuestos, onChange: setNumeroPuestos, placeholder: "0", keyboardType: "numeric" },
               { label: "Marca", value: marca, onChange: setMarca, placeholder: "Toyota", autoCapitalize: "words" },
               { label: "Modelo", value: modelo, onChange: setModelo, placeholder: "Corolla", autoCapitalize: "words" },
               { label: "Ano", value: ano, onChange: setAno, placeholder: "2020", keyboardType: "numeric" },
@@ -172,11 +172,11 @@ export default function VehicleFormScreen({ initialPropietario, initialVehicle, 
           </View>
 
           <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos tecnicos</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Datos técnicos</Text>
             {[
-              { label: "N Cilindros", value: numeroCilindros, onChange: setNumeroCilindros, placeholder: "4", keyboardType: "numeric" },
+              { label: "N° cilindros", value: numeroCilindros, onChange: setNumeroCilindros, placeholder: "4", keyboardType: "numeric" },
               { label: "Peso", value: peso, onChange: setPeso, placeholder: "1200 kg" },
-              { label: "Serial de carroceria", value: serialCarroceria, onChange: setSerialCarroceria, placeholder: "1HGCM826...", autoCapitalize: "characters" },
+              { label: "Serial de carrocería", value: serialCarroceria, onChange: setSerialCarroceria, placeholder: "1HGCM826...", autoCapitalize: "characters" },
               { label: "Serial de motor", value: serialMotor, onChange: setSerialMotor, placeholder: "B20B...", autoCapitalize: "characters" },
               { label: "Capacidad", value: capacidad, onChange: setCapacidad, placeholder: "Capacidad" },
             ].map(({ label, value, onChange, ...props }) => (
@@ -190,8 +190,8 @@ export default function VehicleFormScreen({ initialPropietario, initialVehicle, 
           <View style={[styles.formCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Documentos y responsable</Text>
             {[
-              { label: "Fecha de emision (AAAA-MM-DD)", value: fechaEmision, onChange: setFechaEmision, placeholder: "2024-01-15", keyboardType: "numeric" },
-              { label: "N Poliza RCV", value: numeroPolizaRcv, onChange: setNumeroPolizaRcv, placeholder: "RCV-000000", autoCapitalize: "characters" },
+              { label: "Fecha de emisión (AAAA-MM-DD)", value: fechaEmision, onChange: setFechaEmision, placeholder: "2024-01-15", keyboardType: "numeric" },
+              { label: "N° póliza RCV", value: numeroPolizaRcv, onChange: setNumeroPolizaRcv, placeholder: "RCV-000000", autoCapitalize: "characters" },
               { label: "Chofer habitual", value: chofer, onChange: setChofer, placeholder: "Nombre del chofer", autoCapitalize: "words" },
             ].map(({ label, value, onChange, ...props }) => (
               <View key={label} style={styles.fieldWrap}>

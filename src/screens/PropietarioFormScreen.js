@@ -152,7 +152,7 @@ export default function PropietarioFormScreen({
         <ScrollView contentContainerStyle={styles.container}>
           <WorkshopScreenHeader
             onBack={onBack}
-            section="Recepcion"
+            section="Ficha propietario"
             title={isEditing ? "Editar propietario" : "Nuevo propietario"}
             subtitle={
               activeAssociation

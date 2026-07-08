@@ -10,7 +10,7 @@ import { createAssociation } from "../services/associations/associationService";
 import { listVehicles } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
-export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales, onOpenTraza, onOpenVehicleDetail, onSignOut, currentRole, userProfile }) {
+export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales, onOpenTraza, onOpenFiscalRecord, onSignOut, currentRole, userProfile }) {
   const { colors } = useTheme();
   const { token, associations, activeAssociation, activeAssociationId, refreshAssociations } = useAuth();
   const [vehicles, setVehicles] = useState([]);
@@ -55,7 +55,7 @@ export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales,
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
         <ScrollView contentContainerStyle={styles.container}>
-          <WorkshopScreenHeader section="Centro operativo" title="T-SAFV" subtitle="Sistema de administracion y fiscalizacion vehicular." />
+          <WorkshopScreenHeader section="Fiscalización" title="T-SAFV" subtitle="Sistema operativo para control y fiscalización de unidades." />
           {!showCreateForm ? (
             <View style={[styles.noAssocBlock, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
               <Ionicons name="business-outline" size={rf(40)} color={colors.textTertiary} />
@@ -95,7 +95,7 @@ export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales,
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <WorkshopScreenHeader section="Centro operativo" title={activeAssociation?.nombre || "T-SAFV"} subtitle={activeAssociation?.rif || "Sistema de administracion vehicular"} />
+        <WorkshopScreenHeader section="Fiscalización" title={activeAssociation?.nombre || "T-SAFV"} subtitle={activeAssociation?.rif || "Control operativo de la asociación activa"} />
         <View style={styles.metricsRow}>
           <MetricCard value={String(vehicles.length)} label="Unidades" tone="primary" />
           <MetricCard value={loading ? "..." : String(filtered.length)} label="Visibles" tone="accent" />
@@ -112,7 +112,7 @@ export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales,
             </Pressable>
           ))}
         </View>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Parque operativo</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Unidades activas</Text>
         <View style={[styles.searchPanel, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <TextInput value={searchQuery} onChangeText={setSearchQuery} placeholder="Buscar por placa, unidad, marca o chofer" placeholderTextColor={colors.textTertiary} style={[styles.searchInput, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]} />
         </View>
@@ -120,27 +120,30 @@ export default function WorkshopHomeScreen({ onOpenPropietarios, onOpenFiscales,
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
         ) : filtered.length ? (
           filtered.map((v) => (
-            <Pressable key={v.id} onPress={() => onOpenVehicleDetail?.(v)} style={[styles.unitRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-              <View style={[styles.unitBadge, { backgroundColor: colors.backgroundAccent }]}>
-                <Ionicons name="car-outline" size={rf(18)} color={colors.primary} />
+            <Pressable key={v.id} onPress={() => onOpenFiscalRecord?.(v)} style={[styles.unitCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+              <View style={styles.unitCardTopRow}>
+                <View style={[styles.unitPill, { backgroundColor: colors.cardMuted, borderColor: colors.border }]}> 
+                  <Ionicons name="bus-outline" size={rf(14)} color={colors.primary} />
+                  <Text style={[styles.unitPillText, { color: colors.primary }]}>Unidad</Text>
+                </View>
+                <View style={[styles.unitActionPill, { borderColor: colors.primary }]}> 
+                  <Text style={[styles.unitActionText, { color: colors.primary }]}>Fiscalizar</Text>
+                </View>
               </View>
-              <View style={styles.unitInfo}>
-                <Text style={[styles.unitPlate, { color: colors.primary }]}>
-                  {v.placa}{v.numero_unidad ? <Text style={{ color: colors.textSecondary }}> - Unidad {v.numero_unidad}</Text> : null}
-                </Text>
-                <Text style={[styles.unitMeta, { color: colors.textSecondary }]}>{[v.marca, v.modelo, v.ano].filter(Boolean).join(" - ")}</Text>
-                {v.propietario_nombre || v.chofer ? (
-                  <Text style={[styles.unitOwner, { color: colors.textTertiary }]}>{[v.propietario_nombre, v.chofer ? ("Chofer: " + v.chofer) : null].filter(Boolean).join(" - ")}</Text>
-                ) : null}
-              </View>
-              <Ionicons name="chevron-forward" size={rf(14)} color={colors.textTertiary} />
+              <Text style={[styles.unitTitle, { color: colors.text }]}>{[v.marca, v.modelo, v.ano].filter(Boolean).join(" ") || "Unidad sin descripción"}</Text>
+              <Text style={[styles.unitAccent, { color: colors.accent }]}>Placa: {v.placa || "Sin placa"}</Text>
+              <Text style={[styles.unitCode, { color: colors.primary }]}>Unidad N° {v.numero_unidad || v.id}</Text>
+              {v.propietario_nombre || v.propietario_apellido ? (
+                <Text style={[styles.unitMeta, { color: colors.textSecondary }]}>Propietario: {[v.propietario_nombre, v.propietario_apellido].filter(Boolean).join(" ")}</Text>
+              ) : null}
+              <Text style={[styles.unitOwner, { color: colors.textTertiary }]}>Chofer: {v.ultimo_chofer || v.chofer || "Sin chofer"}</Text>
             </Pressable>
           ))
         ) : (
           <View style={[styles.emptyBlock, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <Ionicons name="car-outline" size={rf(32)} color={colors.textTertiary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin unidades</Text>
-            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>Registra propietarios y asignales unidades para verlas aqui.</Text>
+            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>Registra propietarios y asígnales unidades para verlas aquí.</Text>
           </View>
         )}
       </ScrollView>
@@ -158,12 +161,17 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: rf(15), fontWeight: "800", paddingHorizontal: spacing.xs },
   searchPanel: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md },
   searchInput: { borderWidth: 1, borderRadius: borderRadius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: rf(14), minHeight: rf(44) },
-  unitRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md, gap: spacing.md },
-  unitBadge: { width: rf(40), height: rf(40), borderRadius: borderRadius.pill, alignItems: "center", justifyContent: "center" },
-  unitInfo: { flex: 1, gap: spacing.xs / 2 },
-  unitPlate: { fontSize: rf(15), fontWeight: "800" },
-  unitMeta: { fontSize: rf(12) },
-  unitOwner: { fontSize: rf(11) },
+  unitCard: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.md, gap: spacing.sm },
+  unitCardTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  unitPill: { flexDirection: "row", alignItems: "center", gap: spacing.xs, alignSelf: "flex-start", borderWidth: 1, borderRadius: borderRadius.pill, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  unitPillText: { fontSize: rf(10), fontWeight: "800" },
+  unitActionPill: { borderWidth: 1, borderRadius: borderRadius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  unitActionText: { fontSize: rf(11), fontWeight: "800" },
+  unitTitle: { fontSize: rf(17), fontWeight: "800" },
+  unitAccent: { fontSize: rf(18), fontWeight: "900" },
+  unitCode: { fontSize: rf(14), fontWeight: "800" },
+  unitMeta: { fontSize: rf(13), lineHeight: rf(18) },
+  unitOwner: { fontSize: rf(12), lineHeight: rf(18) },
   emptyBlock: { borderWidth: 1, borderRadius: borderRadius.xl, padding: spacing.xl, alignItems: "center", gap: spacing.md },
   emptyTitle: { fontSize: rf(16), fontWeight: "800" },
   emptyMsg: { fontSize: rf(13), textAlign: "center", lineHeight: rf(19) },

@@ -43,6 +43,8 @@ const statusContent = {
 
 const roleLabels = {
   administrator: "Administrador",
+  fiscal: "Fiscal",
+  owner: "Propietario",
   reception: "Recepcion",
   mechanic: "Mecanico",
 };
@@ -172,9 +174,25 @@ export default function AccessStatusScreen({
                   { color: colors.textSecondary },
                 ]}
               >
-                Encontramos una invitacion pendiente para {authUser?.email}. Al
-                aceptarla se creara tu perfil operativo con el rol asignado.
+                Encontramos una invitación pendiente para {authUser?.email} en
+                la asociación{" "}
+                {pendingInvitation.asociacion_nombre || "asignada"}. Al
+                aceptarla se activará tu perfil con el rol indicado.
               </Text>
+
+              <View style={styles.statusBox}>
+                <Text
+                  style={[styles.statusLabel, { color: colors.textTertiary }]}
+                >
+                  Asociación
+                </Text>
+                <Text style={[styles.statusValue, { color: colors.text }]}>
+                  {pendingInvitation.asociacion_nombre || "Sin asociación"}
+                </Text>
+                <Text style={[styles.statusMeta, { color: colors.primary }]}>
+                  RIF {pendingInvitation.asociacion_rif || "Sin RIF"}
+                </Text>
+              </View>
 
               <View style={styles.statusBox}>
                 <Text
@@ -183,10 +201,12 @@ export default function AccessStatusScreen({
                   Rol asignado
                 </Text>
                 <Text style={[styles.statusValue, { color: colors.text }]}>
-                  {roleLabels[pendingInvitation.role] || pendingInvitation.role}
+                  {roleLabels[
+                    String(pendingInvitation.rol_invitado || "").toLowerCase()
+                  ] || pendingInvitation.rol_invitado}
                 </Text>
                 <Text style={[styles.statusMeta, { color: colors.primary }]}>
-                  Codigo{" "}
+                  Código{" "}
                   {pendingInvitation.id || pendingInvitation.invitationCode}
                 </Text>
               </View>

@@ -93,7 +93,7 @@ async function pickWorkshopLogo() {
 
   if (!permissionResult.granted) {
     throw new Error(
-      "Debes permitir acceso a la galeria para seleccionar el logo del taller.",
+      "Debes permitir acceso a la galería para seleccionar el logo de la asociación.",
     );
   }
 
@@ -267,11 +267,11 @@ export default function TeamAccessScreen({
       setSwitchingWorkshopId(workshopId);
       await switchWorkshop(workshopId);
       await refreshAdminData();
-      Alert.alert("Talleres", "El taller activo fue actualizado.");
+      Alert.alert("Asociaciones", "La asociación activa fue actualizada.");
     } catch (error) {
       Alert.alert(
-        "Talleres",
-        error?.message || "No se pudo cambiar el taller activo.",
+        "Asociaciones",
+        error?.message || "No se pudo cambiar la asociación activa.",
       );
     } finally {
       setSwitchingWorkshopId(null);
@@ -293,12 +293,12 @@ export default function TeamAccessScreen({
       });
       await refreshAdminData();
       Alert.alert(
-        "Talleres",
-        "La invitacion fue aceptada y puedes operar en ese taller.",
+        "Asociaciones",
+        "La invitación fue aceptada y ya puedes operar en esa asociación.",
       );
     } catch (error) {
       Alert.alert(
-        "Talleres",
+        "Asociaciones",
         error?.message || "No se pudo aceptar la invitacion pendiente.",
       );
     } finally {
@@ -308,7 +308,7 @@ export default function TeamAccessScreen({
 
   const handleUpdateWorkshop = async () => {
     if (!activeWorkshopForm.name.trim()) {
-      Alert.alert("Talleres", "Ingresa el nombre del taller activo.");
+      Alert.alert("Asociaciones", "Ingresa el nombre de la asociación activa.");
       return;
     }
 
@@ -325,13 +325,13 @@ export default function TeamAccessScreen({
       });
       await refreshAdminData();
       Alert.alert(
-        "Talleres",
+        "Asociaciones",
         `Los datos de ${workshop.name} fueron actualizados.`,
       );
     } catch (error) {
       Alert.alert(
-        "Talleres",
-        error?.message || "No se pudo actualizar el taller activo.",
+        "Asociaciones",
+        error?.message || "No se pudo actualizar la asociación activa.",
       );
     } finally {
       setWorkshopSubmitting(false);
@@ -352,8 +352,8 @@ export default function TeamAccessScreen({
       }));
     } catch (error) {
       Alert.alert(
-        "Talleres",
-        error?.message || "No se pudo seleccionar el logo del taller.",
+        "Asociaciones",
+        error?.message || "No se pudo seleccionar el logo de la asociación.",
       );
     }
   };
@@ -517,8 +517,8 @@ export default function TeamAccessScreen({
 
   const handleResetWorkshopData = () => {
     Alert.alert(
-      "Reiniciar taller",
-      "Se eliminaran clientes, vehiculos, diagnosticos, ordenes, avances, repuestos, stock y movimientos del taller activo. La identidad comercial, el taller y los colaboradores se conservan. Esta accion no se puede deshacer.",
+      "Reiniciar asociación",
+      "Se eliminarán los registros operativos de la asociación activa. La identidad comercial, la asociación y los colaboradores se conservan. Esta acción no se puede deshacer.",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -530,13 +530,14 @@ export default function TeamAccessScreen({
               const result = await resetActiveWorkshopDataForCurrentUser();
               await refreshAdminData();
               Alert.alert(
-                "Taller reiniciado",
-                `Se eliminaron ${result.deletedDocuments} registros operativos del taller activo.`,
+                "Asociación reiniciada",
+                `Se eliminaron ${result.deletedDocuments} registros operativos de la asociación activa.`,
               );
             } catch (error) {
               Alert.alert(
-                "Reiniciar taller",
-                error?.message || "No se pudo reiniciar la data del taller.",
+                "Reiniciar asociación",
+                error?.message ||
+                  "No se pudo reiniciar la data de la asociación.",
               );
             } finally {
               setResetSubmitting(false);
@@ -551,9 +552,9 @@ export default function TeamAccessScreen({
     screenMode === "workshop"
       ? {
           section: "Configuracion",
-          title: "Datos del taller",
+          title: "Datos de la asociación",
           subtitle:
-            "Identidad comercial, contexto activo y mantenimiento operativo del taller.",
+            "Identidad comercial, contexto activo y mantenimiento operativo de la asociación.",
         }
       : screenMode === "collaborators"
         ? {
@@ -564,9 +565,9 @@ export default function TeamAccessScreen({
           }
         : {
             section: "Control administrativo",
-            title: "Talleres y colaboradores",
+            title: "Asociación y colaboradores",
             subtitle:
-              "Taller activo, invitaciones y colaboradores con cambio de contexto dentro de la misma app.",
+              "Asociación activa, invitaciones y colaboradores dentro de la misma app.",
           };
 
   return (
@@ -597,7 +598,7 @@ export default function TeamAccessScreen({
           <View style={styles.panelHeader}>
             <View style={styles.panelCopy}>
               <Text style={[styles.panelTitle, { color: colors.text }]}>
-                Taller activo
+                Asociación activa
               </Text>
               <Text style={[styles.panelText, { color: colors.textSecondary }]}>
                 Selecciona desde que taller quieres trabajar en esta sesion.
@@ -615,7 +616,7 @@ export default function TeamAccessScreen({
               <Text
                 style={[styles.workshopBadgeText, { color: colors.primary }]}
               >
-                {activeWorkshop?.name || "Sin taller activo"}
+                {activeWorkshop?.name || "Sin asociación activa"}
               </Text>
             </View>
           </View>
@@ -693,16 +694,16 @@ export default function TeamAccessScreen({
             ]}
           >
             <Text style={[styles.panelTitle, { color: colors.text }]}>
-              Gestion del taller activo
+              Gestión de la asociación activa
             </Text>
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
               Ajusta identidad fiscal, contacto, logo y notas comerciales del
-              taller activo dentro del esquema de taller unico.
+              asociación activa dentro del esquema operativo actual.
             </Text>
 
             <View style={styles.formGroup}>
               <Text style={[styles.fieldLabel, { color: colors.text }]}>
-                Datos del taller activo
+                Datos de la asociación activa
               </Text>
               {canManageWorkshop ? (
                 <>
@@ -713,7 +714,7 @@ export default function TeamAccessScreen({
                         name: value,
                       }))
                     }
-                    placeholder="Nombre del taller activo"
+                    placeholder="Nombre de la asociación activa"
                     placeholderTextColor={colors.textTertiary}
                     style={[
                       styles.input,
@@ -960,7 +961,7 @@ export default function TeamAccessScreen({
                     >
                       {workshopSubmitting
                         ? "Guardando..."
-                        : "Guardar datos del taller"}
+                        : "Guardar datos de la asociación"}
                     </Text>
                   </Pressable>
                 </>
@@ -985,7 +986,7 @@ export default function TeamAccessScreen({
             >
               <Text style={[styles.summaryText, { color: colors.text }]}>
                 Esta implementacion opera con un solo taller. La seccion ya no
-                permite crear talleres adicionales.
+                no permite crear asociaciones adicionales.
               </Text>
             </View>
 
@@ -1000,13 +1001,14 @@ export default function TeamAccessScreen({
                 ]}
               >
                 <Text style={[styles.fieldLabel, { color: colors.text }]}>
-                  Reiniciar datos del taller
+                  Reiniciar datos de la asociación
                 </Text>
                 <Text
                   style={[styles.panelText, { color: colors.textSecondary }]}
                 >
-                  Borra toda la data operativa del taller activo y conserva la
-                  identidad comercial, el taller activo y los colaboradores.
+                  Borra toda la data operativa de la asociación activa y
+                  conserva la identidad comercial, la asociación activa y los
+                  colaboradores.
                 </Text>
                 <Pressable
                   disabled={resetSubmitting || authBusy}
@@ -1024,7 +1026,7 @@ export default function TeamAccessScreen({
                   >
                     {resetSubmitting
                       ? "Reiniciando..."
-                      : "Reiniciar datos del taller"}
+                      : "Reiniciar datos de la asociación"}
                   </Text>
                 </Pressable>
               </View>
@@ -1048,7 +1050,7 @@ export default function TeamAccessScreen({
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
               {currentRole === USER_ROLES.ADMINISTRATOR
                 ? "Tu perfil puede operar el equipo y el flujo diario, pero no cambiar la identidad comercial ni reiniciar la data del taller."
-                : "Este perfil no administra configuracion del taller. Usa esta pantalla solo como contexto del taller activo."}
+                : "Este perfil no administra la configuración de la asociación. Usa esta pantalla solo como contexto de la asociación activa."}
             </Text>
           </View>
         ) : null}

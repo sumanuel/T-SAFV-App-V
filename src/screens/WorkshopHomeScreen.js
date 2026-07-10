@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
-import MetricCard from "../components/common/MetricCard";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { createAssociation } from "../services/associations/associationService";
@@ -489,56 +488,116 @@ export default function WorkshopHomeScreen({
             "Control operativo de la asociación activa"
           }
         />
-        <View style={styles.metricsRow}>
-          <MetricCard
-            value={String(vehicles.length)}
-            label="Unidades"
-            tone="primary"
-          />
-          <MetricCard
-            value={loading ? "..." : String(filtered.length)}
-            label="Visibles"
-            tone="accent"
-          />
-        </View>
-        <View style={styles.quickActionsRow}>
-          {[
+        <View
+          style={[
+            styles.associationCard,
             {
-              icon: "people-outline",
-              label: "Propietarios",
-              color: colors.primary,
-              onPress: onOpenPropietarios,
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
             },
-            {
-              icon: "shield-checkmark-outline",
-              label: "Fiscales",
-              color: colors.accent,
-              onPress: onOpenFiscales,
-            },
-            {
-              icon: "git-merge-outline",
-              label: "Traza",
-              color: colors.warning,
-              onPress: onOpenTraza,
-            },
-          ].map((a) => (
-            <Pressable
-              key={a.label}
-              onPress={a.onPress}
+          ]}
+        >
+          <View style={styles.associationCardHeader}>
+            <View
               style={[
-                styles.quickAction,
+                styles.associationLogoWrap,
                 {
-                  backgroundColor: colors.cardBackground,
+                  backgroundColor: colors.cardMuted,
                   borderColor: colors.border,
                 },
               ]}
             >
-              <Ionicons name={a.icon} size={rf(22)} color={a.color} />
-              <Text style={[styles.quickActionLabel, { color: colors.text }]}>
-                {a.label}
+              <Ionicons
+                name="business-outline"
+                size={rf(28)}
+                color={colors.primary}
+              />
+            </View>
+            <View style={styles.associationCardCopy}>
+              <Text
+                style={[styles.associationEyebrow, { color: colors.primary }]}
+              >
+                Asociación activa
               </Text>
-            </Pressable>
-          ))}
+              <Text style={[styles.associationTitle, { color: colors.text }]}>
+                {activeAssociation?.nombre || "Sin asociación"}
+              </Text>
+              <Text
+                style={[
+                  styles.associationSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {activeAssociation?.rif || "Sin RIF"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.associationInfoList}>
+            <Text style={[styles.associationInfoText, { color: colors.text }]}>
+              <Text style={styles.associationInfoStrong}>Dirección:</Text>{" "}
+              {activeAssociation?.direccion_fiscal || "Sin dirección fiscal"}
+            </Text>
+            <Text style={[styles.associationInfoText, { color: colors.text }]}>
+              <Text style={styles.associationInfoStrong}>Teléfono:</Text>{" "}
+              {activeAssociation?.telefonos || "Sin teléfonos"}
+            </Text>
+            <Text style={[styles.associationInfoText, { color: colors.text }]}>
+              <Text style={styles.associationInfoStrong}>Usuario:</Text>{" "}
+              {userProfile?.fullName || userProfile?.email || "Sin usuario"}
+            </Text>
+            <Text style={[styles.associationInfoText, { color: colors.text }]}>
+              <Text style={styles.associationInfoStrong}>Perfil:</Text>{" "}
+              {userProfile?.role === "administrator"
+                ? "Administrador"
+                : userProfile?.role === "owner"
+                  ? "Propietario"
+                  : userProfile?.role === "fiscal"
+                    ? "Fiscal"
+                    : userProfile?.role || "Sin perfil"}
+            </Text>
+          </View>
+
+          <View style={styles.quickActionInlineRow}>
+            {[
+              {
+                icon: "people-outline",
+                label: "Propietarios",
+                onPress: onOpenPropietarios,
+              },
+              {
+                icon: "shield-checkmark-outline",
+                label: "Fiscales",
+                onPress: onOpenFiscales,
+              },
+              {
+                icon: "git-merge-outline",
+                label: "Traza",
+                onPress: onOpenTraza,
+              },
+            ].map((action) => (
+              <Pressable
+                key={action.label}
+                onPress={action.onPress}
+                style={[
+                  styles.inlineAction,
+                  {
+                    backgroundColor: colors.cardMuted,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={action.icon}
+                  size={rf(16)}
+                  color={colors.primary}
+                />
+                <Text style={[styles.inlineActionText, { color: colors.text }]}>
+                  {action.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Unidades activas
@@ -679,21 +738,52 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xxl * 2,
   },
-  metricsRow: { flexDirection: "row", gap: spacing.sm },
-  quickActionsRow: { flexDirection: "row", gap: spacing.sm },
-  quickAction: {
-    flex: 1,
+  associationCard: {
     borderWidth: 1,
     borderRadius: borderRadius.xl,
     padding: spacing.md,
+    gap: spacing.md,
+  },
+  associationCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  associationLogoWrap: {
+    width: rf(58),
+    height: rf(58),
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  associationCardCopy: { flex: 1, gap: spacing.xs / 2 },
+  associationEyebrow: {
+    fontSize: rf(11),
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
+  associationTitle: { fontSize: rf(18), fontWeight: "900" },
+  associationSubtitle: { fontSize: rf(13), lineHeight: rf(18) },
+  associationInfoList: { gap: spacing.xs },
+  associationInfoText: { fontSize: rf(13), lineHeight: rf(18) },
+  associationInfoStrong: { fontWeight: "800" },
+  quickActionInlineRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  inlineAction: {
+    flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    borderWidth: 1,
+    borderRadius: borderRadius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  quickActionLabel: {
-    fontSize: rf(11),
-    fontWeight: "700",
-    textAlign: "center",
-  },
+  inlineActionText: { fontSize: rf(12), fontWeight: "700" },
   sectionTitle: {
     fontSize: rf(15),
     fontWeight: "800",

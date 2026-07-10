@@ -34,7 +34,7 @@ const slides = [
     description:
       "Registra fiscalizaciones, consulta trazas y conserva una bitácora limpia por unidad.",
     icon: "git-merge-outline",
-    highlights: ["Diagnostico", "Orden", "Cronologia historica"],
+    highlights: ["Fiscalización", "Traza", "Bitácora histórica"],
   },
   {
     key: "team",
@@ -52,7 +52,7 @@ const slides = [
     description:
       "Mantiene trazas, responsables y movimientos por unidad para consultar sin ruido operativo.",
     icon: "shield-checkmark-outline",
-    highlights: ["Vehiculos", "Historial operativo", "Entrega final"],
+    highlights: ["Unidades", "Historial operativo", "Control final"],
   },
 ];
 

@@ -172,7 +172,7 @@ export default function AuthScreen() {
     try {
       await recoverPassword(recoveryEmail);
       setFeedback(
-        "Se envio el correo de recuperacion si la cuenta existe y esta habilitada.",
+        "Se envió el correo de recuperación si la cuenta existe y está habilitada.",
       );
     } catch (authError) {
       setError(

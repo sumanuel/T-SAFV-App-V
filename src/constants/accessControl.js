@@ -58,6 +58,7 @@ export const ROLE_PERMISSIONS = {
     "payments.manage",
     "dashboard.view",
     "settings.manage",
+    "workshop.manage",
   ],
   [USER_ROLES.RECEPTION]: [
     "inventory.manage",

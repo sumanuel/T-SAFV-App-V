@@ -105,6 +105,13 @@ export function getAssociationInvitations(token, asociacionId) {
   return apiGet(`/api/invitaciones/asociaciones/${asociacionId}`, token);
 }
 
+export function cancelAssociationInvitation(token, asociacionId, invitacionId) {
+  return apiDelete(
+    `/api/invitaciones/asociaciones/${asociacionId}/${invitacionId}`,
+    token,
+  );
+}
+
 // ─── Asociaciones ─────────────────────────────────────────────────────────────
 
 export function getMyAssociations(token) {
@@ -215,6 +222,7 @@ export default {
   acceptInvitation,
   createInvitation,
   getAssociationInvitations,
+  cancelAssociationInvitation,
   getMyAssociations,
   createAsociacion,
   updateAsociacion,

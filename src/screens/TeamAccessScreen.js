@@ -29,6 +29,7 @@ import {
   listStaffProfiles,
   updateStaffProfile,
 } from "../services/admin/staffAdmin";
+import { updateAssociation } from "../services/associations/associationService";
 import { resetActiveWorkshopDataForCurrentUser } from "../services/workshops/workshopResetService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
@@ -68,15 +69,18 @@ function buildStaffForm(profile) {
   };
 }
 
-function buildWorkshopForm(workshop) {
+function buildAssociationForm(association) {
   return {
-    name: workshop?.name || "",
-    phone: workshop?.phone || "",
-    email: workshop?.email || "",
-    address: workshop?.address || "",
-    rif: workshop?.rif || "",
-    logoUrl: workshop?.logoUrl || "",
-    commercialNotes: workshop?.commercialNotes || "",
+    name: association?.nombre || "",
+    phone: association?.telefonos || "",
+    email: association?.email || "",
+    address: association?.direccion_fiscal || "",
+    rif: association?.rif || "",
+    logoUrl: association?.logo_url || "",
+    logoData: association?.logo_data || "",
+    socialText: association?.redes_sociales
+      ? JSON.stringify(association.redes_sociales, null, 2)
+      : "",
   };
 }
 
@@ -155,13 +159,16 @@ export default function TeamAccessScreen({
   const { colors } = useTheme();
   const {
     acceptPendingInvitation,
+    activeAssociation,
+    activeAssociationId,
     activeWorkshop,
     activeWorkshopId,
     authBusy,
     memberships,
     pendingInvitation,
+    refreshAssociations,
     switchWorkshop,
-    updateActiveWorkshop,
+    token,
   } = useAuth();
   const activeMembership = memberships.find(
     (membership) => membership.workshopId === activeWorkshopId,
@@ -192,29 +199,32 @@ export default function TeamAccessScreen({
   const [acceptingIncomingInvitation, setAcceptingIncomingInvitation] =
     useState(false);
   const [workshopSubmitting, setWorkshopSubmitting] = useState(false);
-  const [activeWorkshopForm, setActiveWorkshopForm] =
-    useState(buildWorkshopForm());
+  const [activeWorkshopForm, setActiveWorkshopForm] = useState(
+    buildAssociationForm(),
+  );
   const [invitationForm, setInvitationForm] = useState({
     email: "",
     role: USER_ROLES.MECHANIC,
   });
 
-  const activeWorkshopLogoPreview = activeWorkshopForm.logoUrl.trim();
+  const activeWorkshopLogoPreview =
+    activeWorkshopForm.logoData?.trim() || activeWorkshopForm.logoUrl.trim();
 
   useEffect(() => {
-    setActiveWorkshopForm(buildWorkshopForm(activeWorkshop));
+    setActiveWorkshopForm(buildAssociationForm(activeAssociation));
   }, [
-    activeWorkshop?.address,
-    activeWorkshop?.commercialNotes,
-    activeWorkshop?.email,
-    activeWorkshop?.logoUrl,
-    activeWorkshop?.name,
-    activeWorkshop?.phone,
-    activeWorkshop?.rif,
+    activeAssociation?.direccion_fiscal,
+    activeAssociation?.email,
+    activeAssociation?.logo_data,
+    activeAssociation?.logo_url,
+    activeAssociation?.nombre,
+    activeAssociation?.redes_sociales,
+    activeAssociation?.rif,
+    activeAssociation?.telefonos,
   ]);
 
   const refreshAdminData = async () => {
-    if (!canManageCollaborators || !activeWorkshopId) {
+    if (!canManageCollaborators || !activeAssociationId) {
       setPendingInvitations([]);
       setPendingApprovals([]);
       setStaffProfiles([]);
@@ -260,7 +270,7 @@ export default function TeamAccessScreen({
 
   useEffect(() => {
     refreshAdminData();
-  }, [canManageCollaborators, activeWorkshopId]);
+  }, [canManageCollaborators, activeAssociationId]);
 
   const handleSwitchWorkshop = async (workshopId) => {
     try {
@@ -314,19 +324,24 @@ export default function TeamAccessScreen({
 
     try {
       setWorkshopSubmitting(true);
-      const workshop = await updateActiveWorkshop({
-        name: activeWorkshopForm.name.trim(),
-        phone: activeWorkshopForm.phone.trim(),
+      const redesSociales = activeWorkshopForm.socialText.trim()
+        ? JSON.parse(activeWorkshopForm.socialText)
+        : undefined;
+      const association = await updateAssociation(token, activeAssociationId, {
+        nombre: activeWorkshopForm.name.trim(),
+        telefonos: activeWorkshopForm.phone.trim(),
         email: activeWorkshopForm.email.trim().toLowerCase(),
-        address: activeWorkshopForm.address.trim(),
+        direccion_fiscal: activeWorkshopForm.address.trim(),
         rif: activeWorkshopForm.rif.trim(),
-        logoUrl: activeWorkshopForm.logoUrl.trim(),
-        commercialNotes: activeWorkshopForm.commercialNotes.trim(),
+        logo_url: activeWorkshopForm.logoUrl.trim(),
+        logo_data: activeWorkshopForm.logoData?.trim() || "",
+        redes_sociales: redesSociales,
       });
+      await refreshAssociations();
       await refreshAdminData();
       Alert.alert(
         "Asociaciones",
-        `Los datos de ${workshop.name} fueron actualizados.`,
+        `Los datos de ${association.nombre} fueron actualizados.`,
       );
     } catch (error) {
       Alert.alert(
@@ -348,7 +363,7 @@ export default function TeamAccessScreen({
 
       setActiveWorkshopForm((current) => ({
         ...current,
-        logoUrl: nextLogo,
+        logoData: nextLogo,
       }));
     } catch (error) {
       Alert.alert(
@@ -361,6 +376,7 @@ export default function TeamAccessScreen({
   const handleClearActiveWorkshopLogo = () => {
     setActiveWorkshopForm((current) => ({
       ...current,
+      logoData: "",
       logoUrl: "",
     }));
   };
@@ -601,7 +617,7 @@ export default function TeamAccessScreen({
                 Asociación activa
               </Text>
               <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-                Selecciona desde que taller quieres trabajar en esta sesion.
+                Identidad y contexto operativo de la asociación seleccionada.
               </Text>
             </View>
             <View
@@ -616,70 +632,46 @@ export default function TeamAccessScreen({
               <Text
                 style={[styles.workshopBadgeText, { color: colors.primary }]}
               >
-                {activeWorkshop?.name || "Sin asociación activa"}
+                {activeAssociation?.nombre || "Sin asociación activa"}
               </Text>
             </View>
           </View>
 
           <View style={styles.membershipList}>
-            {memberships.map((membership) => {
-              const selected = membership.workshopId === activeWorkshopId;
+            <View
+              style={[
+                styles.membershipRow,
+                {
+                  backgroundColor: colors.cardMuted,
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <View style={styles.membershipCopy}>
+                <Text style={[styles.rowTitle, { color: colors.text }]}>
+                  {activeAssociation?.nombre || "Sin asociación activa"}
+                </Text>
+                <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
+                  {activeAssociation?.rif || "Sin RIF"}
+                </Text>
+              </View>
 
-              return (
-                <View
-                  key={membership.refId || membership.id}
-                  style={[
-                    styles.membershipRow,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: selected ? colors.primary : colors.border,
-                    },
-                  ]}
+              <View
+                style={[
+                  styles.secondaryAction,
+                  {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary,
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.secondaryActionText, { color: colors.white }]}
                 >
-                  <View style={styles.membershipCopy}>
-                    <Text style={[styles.rowTitle, { color: colors.text }]}>
-                      {membership.workshopName || membership.workshopId}
-                    </Text>
-                    <Text
-                      style={[styles.rowMeta, { color: colors.textSecondary }]}
-                    >
-                      {roleLabels[membership.role] || membership.role}
-                    </Text>
-                  </View>
-
-                  <Pressable
-                    disabled={
-                      selected || switchingWorkshopId === membership.workshopId
-                    }
-                    onPress={() => handleSwitchWorkshop(membership.workshopId)}
-                    style={[
-                      styles.secondaryAction,
-                      {
-                        borderColor: selected
-                          ? colors.primary
-                          : colors.borderStrong,
-                        backgroundColor: selected
-                          ? colors.primary
-                          : colors.cardBackground,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.secondaryActionText,
-                        { color: selected ? colors.white : colors.text },
-                      ]}
-                    >
-                      {selected
-                        ? "Activo"
-                        : switchingWorkshopId === membership.workshopId
-                          ? "Cambiando..."
-                          : "Usar"}
-                    </Text>
-                  </Pressable>
-                </View>
-              );
-            })}
+                  Activa
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -697,8 +689,8 @@ export default function TeamAccessScreen({
               Gestión de la asociación activa
             </Text>
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-              Ajusta identidad fiscal, contacto, logo y notas comerciales del
-              asociación activa dentro del esquema operativo actual.
+              Ajusta identidad fiscal, contacto, logo y redes sociales de la
+              asociación activa.
             </Text>
 
             <View style={styles.formGroup}>
@@ -733,7 +725,7 @@ export default function TeamAccessScreen({
                         phone: value,
                       }))
                     }
-                    placeholder="Telefono del taller"
+                    placeholder="Teléfonos de la asociación"
                     placeholderTextColor={colors.textTertiary}
                     style={[
                       styles.input,
@@ -754,7 +746,7 @@ export default function TeamAccessScreen({
                         email: value,
                       }))
                     }
-                    placeholder="Correo del taller"
+                    placeholder="Correo de la asociación"
                     placeholderTextColor={colors.textTertiary}
                     style={[
                       styles.input,
@@ -773,7 +765,7 @@ export default function TeamAccessScreen({
                         address: value,
                       }))
                     }
-                    placeholder="Direccion del taller"
+                    placeholder="Dirección fiscal"
                     placeholderTextColor={colors.textTertiary}
                     style={[
                       styles.input,
@@ -870,7 +862,7 @@ export default function TeamAccessScreen({
                           { color: colors.textSecondary },
                         ]}
                       >
-                        Vista previa del logo comercial del taller.
+                        Vista previa del logo de la asociación.
                       </Text>
                     </View>
                   ) : (
@@ -904,7 +896,7 @@ export default function TeamAccessScreen({
                       <Text
                         style={[styles.logoPreviewText, { color: colors.text }]}
                       >
-                        Aun no hay logo cargado
+                        Aún no hay logo cargado
                       </Text>
                       <Text
                         style={[
@@ -912,8 +904,8 @@ export default function TeamAccessScreen({
                           { color: colors.textSecondary },
                         ]}
                       >
-                        Selecciona una imagen desde la galeria para guardarla
-                        como logo comercial del taller.
+                        Selecciona una imagen desde la galería para guardarla
+                        como logo de la asociación.
                       </Text>
                     </View>
                   )}
@@ -923,10 +915,10 @@ export default function TeamAccessScreen({
                     onChangeText={(value) =>
                       setActiveWorkshopForm((current) => ({
                         ...current,
-                        commercialNotes: value,
+                        socialText: value,
                       }))
                     }
-                    placeholder="Notas comerciales, slogan o texto breve para documentos"
+                    placeholder='Redes sociales en JSON. Ejemplo: {"instagram":"@mi_asociacion"}'
                     placeholderTextColor={colors.textTertiary}
                     style={[
                       styles.input,
@@ -938,7 +930,7 @@ export default function TeamAccessScreen({
                       },
                     ]}
                     textAlignVertical="top"
-                    value={activeWorkshopForm.commercialNotes}
+                    value={activeWorkshopForm.socialText}
                   />
                   <Pressable
                     disabled={
@@ -969,8 +961,8 @@ export default function TeamAccessScreen({
                 <Text
                   style={[styles.panelText, { color: colors.textSecondary }]}
                 >
-                  Solo el propietario puede cambiar la identidad y contacto del
-                  taller, igual que en tienda-app.
+                  Solo el administrador puede cambiar la identidad y el contacto
+                  de la asociación.
                 </Text>
               )}
             </View>
@@ -985,8 +977,8 @@ export default function TeamAccessScreen({
               ]}
             >
               <Text style={[styles.summaryText, { color: colors.text }]}>
-                Esta implementacion opera con un solo taller. La seccion ya no
-                no permite crear asociaciones adicionales.
+                Esta pantalla administra la identidad visible de la asociación
+                activa.
               </Text>
             </View>
 
@@ -1045,11 +1037,11 @@ export default function TeamAccessScreen({
             ]}
           >
             <Text style={[styles.panelTitle, { color: colors.text }]}>
-              Gestion del taller restringida
+              Gestión de la asociación restringida
             </Text>
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
               {currentRole === USER_ROLES.ADMINISTRATOR
-                ? "Tu perfil puede operar el equipo y el flujo diario, pero no cambiar la identidad comercial ni reiniciar la data del taller."
+                ? "Tu perfil puede operar el equipo y el flujo diario, pero no cambiar la identidad comercial ni reiniciar la data de la asociación."
                 : "Este perfil no administra la configuración de la asociación. Usa esta pantalla solo como contexto de la asociación activa."}
             </Text>
           </View>
@@ -1070,7 +1062,10 @@ export default function TeamAccessScreen({
             </Text>
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
               Tienes una invitacion pendiente para unirte a{" "}
-              {pendingInvitation.workshopName || "otro taller"}.
+              {pendingInvitation.asociacion_nombre ||
+                pendingInvitation.workshopName ||
+                "otra asociación"}
+              .
             </Text>
             <Text style={[styles.rowMeta, { color: colors.textSecondary }]}>
               Rol {roleLabels[pendingInvitation.role] || pendingInvitation.role}

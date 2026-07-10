@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -79,7 +80,7 @@ export default function AuthScreen() {
   const headline = useMemo(() => {
     if (mode === modes.recovery) {
       return {
-        kicker: "Recuperacion segura",
+        kicker: "Recuperación segura",
         title: "Recuperar acceso",
         subtitle:
           "Enviaremos el enlace de recuperación al correo operativo asociado a tu acceso en la asociación.",
@@ -93,7 +94,7 @@ export default function AuthScreen() {
         title: "Crear cuenta",
         subtitle:
           "Registra tu acceso para entrar al panel de fiscalización y sincronizar tu información desde el primer inicio.",
-        pills: ["Cuenta nueva", "Perfil", "Sincronizacion"],
+        pills: ["Cuenta nueva", "Perfil", "Sincronización"],
       };
     }
 
@@ -194,10 +195,17 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View
+          <LinearGradient
+            colors={
+              isDarkMode
+                ? ["#1C5FB8", "#0E366E", "#09111A"]
+                : ["#1C5FB8", "#124B97", "#0D2E62"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={[
               styles.heroCard,
-              { backgroundColor: palette.accent, shadowColor: palette.shadow },
+              { shadowColor: palette.shadow, borderColor: palette.border },
             ]}
           >
             <Text style={styles.heroEyebrow}>{headline.kicker}</Text>
@@ -222,7 +230,7 @@ export default function AuthScreen() {
                 </View>
               ))}
             </View>
-          </View>
+          </LinearGradient>
 
           <View
             style={[

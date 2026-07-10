@@ -29,8 +29,8 @@ const slides = [
   },
   {
     key: "flow",
-    eyebrow: "Flujo tecnico",
-    title: "Del diagnostico a la entrega sin perder contexto",
+    eyebrow: "Flujo de fiscalización",
+    title: "De la fiscalización a la traza sin perder contexto",
     description:
       "Registra fiscalizaciones, consulta trazas y conserva una bitácora limpia por unidad.",
     icon: "git-merge-outline",

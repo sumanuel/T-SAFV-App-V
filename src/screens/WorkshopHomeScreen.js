@@ -481,12 +481,10 @@ export default function WorkshopHomeScreen({
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <WorkshopScreenHeader
+          badgeImageSource={require("../../assets/icon.png")}
           section="Fiscalización"
-          title={activeAssociation?.nombre || "T-SAFV"}
-          subtitle={
-            activeAssociation?.rif ||
-            "Control operativo de la asociación activa"
-          }
+          title="T-SAFV"
+          subtitle="Sistema operativo para control y fiscalización de unidades."
         />
         <View
           style={[

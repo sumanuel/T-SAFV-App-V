@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +23,13 @@ function normalizeDateInput(value) {
   return value.replace(/[^0-9-]/g, "").slice(0, 10);
 }
 
+function formatInputDate(value = new Date()) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function formatDateTime(value) {
   if (!value) return "Sin fecha";
   const d = new Date(value);
@@ -35,10 +43,13 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const today = formatInputDate(new Date());
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
   const [selectedFiscalId, setSelectedFiscalId] = useState("ALL");
   const [fiscalOptions, setFiscalOptions] = useState([]);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   const asociacionId = activeAssociation?.id;
 
@@ -71,7 +82,7 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
 
   useEffect(() => {
     refreshData();
-  }, [asociacionId]);
+  }, [asociacionId, startDate, endDate]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -206,21 +217,30 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
               >
                 Desde
               </Text>
-              <TextInput
-                value={startDate}
-                onChangeText={(v) => setStartDate(normalizeDateInput(v))}
-                onEndEditing={refreshData}
-                placeholder="AAAA-MM-DD"
-                placeholderTextColor={colors.textTertiary}
+              <Pressable
+                onPress={() => setShowStartPicker(true)}
                 style={[
-                  styles.input,
+                  styles.dateSelector,
                   {
                     backgroundColor: colors.inputBackground,
                     borderColor: colors.border,
-                    color: colors.text,
                   },
                 ]}
-              />
+              >
+                <Text
+                  style={[
+                    styles.dateSelectorText,
+                    { color: startDate ? colors.text : colors.textTertiary },
+                  ]}
+                >
+                  {startDate || "AAAA-MM-DD"}
+                </Text>
+                <Ionicons
+                  name="calendar-outline"
+                  size={rf(18)}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
             </View>
             <View style={styles.dateField}>
               <Text
@@ -228,23 +248,58 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
               >
                 Hasta
               </Text>
-              <TextInput
-                value={endDate}
-                onChangeText={(v) => setEndDate(normalizeDateInput(v))}
-                onEndEditing={refreshData}
-                placeholder="AAAA-MM-DD"
-                placeholderTextColor={colors.textTertiary}
+              <Pressable
+                onPress={() => setShowEndPicker(true)}
                 style={[
-                  styles.input,
+                  styles.dateSelector,
                   {
                     backgroundColor: colors.inputBackground,
                     borderColor: colors.border,
-                    color: colors.text,
                   },
                 ]}
-              />
+              >
+                <Text
+                  style={[
+                    styles.dateSelectorText,
+                    { color: endDate ? colors.text : colors.textTertiary },
+                  ]}
+                >
+                  {endDate || "AAAA-MM-DD"}
+                </Text>
+                <Ionicons
+                  name="calendar-outline"
+                  size={rf(18)}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
             </View>
           </View>
+
+          {showStartPicker ? (
+            <DateTimePicker
+              mode="date"
+              value={new Date(startDate || today)}
+              onChange={(_, selectedDate) => {
+                setShowStartPicker(false);
+                if (selectedDate) {
+                  setStartDate(formatInputDate(selectedDate));
+                }
+              }}
+            />
+          ) : null}
+
+          {showEndPicker ? (
+            <DateTimePicker
+              mode="date"
+              value={new Date(endDate || today)}
+              onChange={(_, selectedDate) => {
+                setShowEndPicker(false);
+                if (selectedDate) {
+                  setEndDate(formatInputDate(selectedDate));
+                }
+              }}
+            />
+          ) : null}
 
           <TextInput
             value={searchQuery}
@@ -495,6 +550,17 @@ const styles = StyleSheet.create({
   dateRow: { flexDirection: "row", gap: spacing.sm },
   dateField: { flex: 1, gap: spacing.xs },
   inputLabel: { fontSize: rf(11), fontWeight: "700" },
+  dateSelector: {
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: rf(40),
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dateSelectorText: { fontSize: rf(13), fontWeight: "600" },
   input: {
     borderWidth: 1,
     borderRadius: borderRadius.lg,

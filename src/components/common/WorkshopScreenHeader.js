@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { borderRadius, rf, spacing } from "../../utils/responsive";
@@ -56,6 +56,8 @@ export default function WorkshopScreenHeader({
   section,
   onBack,
   rightAction,
+  badgeIcon,
+  badgeImageSource,
 }) {
   const { colors, isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
@@ -115,7 +117,19 @@ export default function WorkshopScreenHeader({
       >
         <View style={styles.heroRow}>
           <View style={styles.heroBadge}>
-            <Ionicons color="#D6E7FF" name={headerTone.icon} size={rf(26)} />
+            {badgeImageSource ? (
+              <Image
+                source={badgeImageSource}
+                resizeMode="contain"
+                style={styles.badgeImage}
+              />
+            ) : (
+              <Ionicons
+                color="#D6E7FF"
+                name={badgeIcon || headerTone.icon}
+                size={rf(26)}
+              />
+            )}
           </View>
 
           <View style={styles.titleWrap}>
@@ -150,6 +164,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.14)",
+  },
+  badgeImage: {
+    width: "78%",
+    height: "78%",
   },
   titleWrap: { flex: 1, gap: spacing.xs / 2 },
   section: {

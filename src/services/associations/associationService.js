@@ -33,6 +33,12 @@ export async function updateAssociation(token, asociacionId, payload) {
   const res = await sdk.updateAsociacion(token, asociacionId, {
     nombre: payload.nombre?.trim() || "",
     rif: payload.rif?.trim() || "",
+    direccion_fiscal: payload.direccion_fiscal?.trim() || "",
+    email: payload.email?.trim() || "",
+    telefonos: payload.telefonos?.trim() || "",
+    logo_url: payload.logo_url?.trim() || "",
+    logo_data: payload.logo_data?.trim() || "",
+    redes_sociales: payload.redes_sociales || undefined,
   });
   if (res.status === 200) return res.data;
   throw new Error(resolveError(res, "No se pudo actualizar la asociación."));

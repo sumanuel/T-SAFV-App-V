@@ -136,7 +136,7 @@ export default function TrazaScreen({
       }
       return true;
     });
-  }, [items, searchQuery, selectedFiscalId]);
+  }, [items, searchQuery, selectedFiscalId, selectedUnitId]);
 
   const exportTraza = async () => {
     if (!filtered.length) return;
@@ -155,7 +155,9 @@ export default function TrazaScreen({
       formatDateTime(item.fecha_hora_registro),
       item.numero_unidad || item.unidad_id || "",
       item.placa || "",
-      item.fiscal_nombre || item.fiscal_id || "",
+      [item.fiscal_nombre, item.fiscal_apellido].filter(Boolean).join(" ") ||
+        item.fiscal_id ||
+        "",
       item.punto_control || "",
       item.chofer || "",
       item.origen || "",
@@ -502,7 +504,9 @@ export default function TrazaScreen({
                     ]}
                   >
                     <Text style={{ fontWeight: "700" }}>Fiscal: </Text>
-                    {item.fiscal_nombre}
+                    {[item.fiscal_nombre, item.fiscal_apellido]
+                      .filter(Boolean)
+                      .join(" ") || item.fiscal_nombre}
                   </Text>
                 ) : null}
                 {item.punto_control ? (

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -45,6 +45,19 @@ export default function FiscalRecordFormScreen({
   const [origen, setOrigen] = useState("");
   const [destino, setDestino] = useState("");
   const [pasajeros, setPasajeros] = useState("");
+  const scrollRef = useRef(null);
+  const choferRef = useRef(null);
+  const origenRef = useRef(null);
+  const destinoRef = useRef(null);
+  const pasajerosRef = useRef(null);
+
+  const focusField = (ref, y) => {
+    scrollRef.current?.scrollTo({
+      y: Math.max(y - spacing.lg, 0),
+      animated: true,
+    });
+    ref?.current?.focus?.();
+  };
 
   useEffect(() => {
     if (!asociacionId) {
@@ -130,7 +143,11 @@ export default function FiscalRecordFormScreen({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <WorkshopScreenHeader
             onBack={onBack}
             section="Fiscalización"
@@ -154,7 +171,7 @@ export default function FiscalRecordFormScreen({
             </Text>
             {loading ? (
               <ActivityIndicator color={colors.primary} size="small" />
-            ) : units.length ? (
+            ) : initialUnit ? null : units.length ? (
               <View style={styles.unitChipWrap}>
                 {units.map((unit) => {
                   const selected = String(unit.id) === String(selectedUnitId);
@@ -268,6 +285,12 @@ export default function FiscalRecordFormScreen({
               onChangeText={setChofer}
               placeholder="Nombre del chofer"
               autoCapitalize="words"
+              inputRef={choferRef}
+              returnKeyType="next"
+              onFocus={() =>
+                scrollRef.current?.scrollTo({ y: 420, animated: true })
+              }
+              onSubmitEditing={() => focusField(origenRef, 500)}
             />
             <Field
               colors={colors}
@@ -276,6 +299,12 @@ export default function FiscalRecordFormScreen({
               onChangeText={setOrigen}
               placeholder="Punto de salida"
               autoCapitalize="sentences"
+              inputRef={origenRef}
+              returnKeyType="next"
+              onFocus={() =>
+                scrollRef.current?.scrollTo({ y: 500, animated: true })
+              }
+              onSubmitEditing={() => focusField(destinoRef, 580)}
             />
             <Field
               colors={colors}
@@ -284,6 +313,12 @@ export default function FiscalRecordFormScreen({
               onChangeText={setDestino}
               placeholder="Punto de destino"
               autoCapitalize="sentences"
+              inputRef={destinoRef}
+              returnKeyType="next"
+              onFocus={() =>
+                scrollRef.current?.scrollTo({ y: 580, animated: true })
+              }
+              onSubmitEditing={() => focusField(pasajerosRef, 660)}
             />
             <Field
               colors={colors}
@@ -294,6 +329,11 @@ export default function FiscalRecordFormScreen({
               }
               placeholder="0"
               keyboardType="numeric"
+              inputRef={pasajerosRef}
+              returnKeyType="done"
+              onFocus={() =>
+                scrollRef.current?.scrollTo({ y: 660, animated: true })
+              }
             />
           </View>
 
@@ -326,13 +366,14 @@ export default function FiscalRecordFormScreen({
   );
 }
 
-function Field({ colors, label, ...props }) {
+function Field({ colors, label, inputRef, ...props }) {
   return (
     <View style={styles.fieldWrap}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>
         {label}
       </Text>
       <TextInput
+        ref={inputRef}
         placeholderTextColor={colors.textTertiary}
         style={[
           styles.input,

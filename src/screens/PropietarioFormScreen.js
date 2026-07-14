@@ -56,11 +56,22 @@ export default function PropietarioFormScreen({
       initialPropietario?.estado_invitacion || "PENDIENTE_INVITACION",
   });
   const [submitting, setSubmitting] = useState(false);
+  const scrollRef = useRef(null);
 
+  const rifRef = useRef(null);
+  const nombreRef = useRef(null);
   const apellidoRef = useRef(null);
   const telefonoRef = useRef(null);
   const emailRef = useRef(null);
   const direccionRef = useRef(null);
+
+  const focusField = (ref, y) => {
+    scrollRef.current?.scrollTo({
+      y: Math.max(y - spacing.lg, 0),
+      animated: true,
+    });
+    ref?.current?.focus?.();
+  };
 
   const update = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -108,15 +119,19 @@ export default function PropietarioFormScreen({
       label: "Identificacion (RIF / Cedula)",
       placeholder: "V-12345678",
       autoCapitalize: "characters",
+      ref: rifRef,
       returnKeyType: "next",
-      onSubmitEditing: () => apellidoRef.current?.focus(),
+      onFocus: () => scrollRef.current?.scrollTo({ y: 220, animated: true }),
+      onSubmitEditing: () => focusField(nombreRef, 280),
     },
     {
       key: "nombre",
       label: "Nombre *",
       placeholder: "Nombre del propietario",
       autoCapitalize: "words",
+      ref: nombreRef,
       returnKeyType: "next",
+      onFocus: () => scrollRef.current?.scrollTo({ y: 280, animated: true }),
       onSubmitEditing: () => apellidoRef.current?.focus(),
     },
     {
@@ -126,6 +141,7 @@ export default function PropietarioFormScreen({
       autoCapitalize: "words",
       ref: apellidoRef,
       returnKeyType: "next",
+      onFocus: () => scrollRef.current?.scrollTo({ y: 340, animated: true }),
       onSubmitEditing: () => telefonoRef.current?.focus(),
     },
     {
@@ -135,6 +151,7 @@ export default function PropietarioFormScreen({
       keyboardType: "phone-pad",
       ref: telefonoRef,
       returnKeyType: "next",
+      onFocus: () => scrollRef.current?.scrollTo({ y: 400, animated: true }),
       onSubmitEditing: () => emailRef.current?.focus(),
     },
     {
@@ -145,6 +162,7 @@ export default function PropietarioFormScreen({
       autoCapitalize: "none",
       ref: emailRef,
       returnKeyType: "next",
+      onFocus: () => scrollRef.current?.scrollTo({ y: 460, animated: true }),
       onSubmitEditing: () => direccionRef.current?.focus(),
     },
     {
@@ -154,6 +172,7 @@ export default function PropietarioFormScreen({
       autoCapitalize: "sentences",
       ref: direccionRef,
       returnKeyType: "done",
+      onFocus: () => scrollRef.current?.scrollTo({ y: 520, animated: true }),
       multiline: true,
     },
   ];
@@ -164,7 +183,11 @@ export default function PropietarioFormScreen({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <WorkshopScreenHeader
             onBack={onBack}
             section="Ficha propietario"

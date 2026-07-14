@@ -87,6 +87,28 @@ export default function VehicleFormScreen({
   const [numeroPuestos, setNumeroPuestos] = useState(
     initialVehicle?.numero_puestos ? String(initialVehicle.numero_puestos) : "",
   );
+  const scrollRef = useRef(null);
+  const numeroUnidadRef = useRef(null);
+  const numeroPuestosRef = useRef(null);
+  const marcaRef = useRef(null);
+  const modeloRef = useRef(null);
+  const anoRef = useRef(null);
+  const colorRef = useRef(null);
+  const numeroCilindrosRef = useRef(null);
+  const pesoRef = useRef(null);
+  const serialCarroceriaRef = useRef(null);
+  const serialMotorRef = useRef(null);
+  const capacidadRef = useRef(null);
+  const fechaEmisionRef = useRef(null);
+  const numeroPolizaRcvRef = useRef(null);
+  const choferRef = useRef(null);
+
+  const scrollToY = (y) => {
+    scrollRef.current?.scrollTo({
+      y: Math.max(y - spacing.lg, 0),
+      animated: true,
+    });
+  };
 
   useEffect(() => {
     if (isOwnerSelfService) {
@@ -231,7 +253,11 @@ export default function VehicleFormScreen({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <WorkshopScreenHeader
             onBack={onBack}
             section="Unidades"
@@ -260,55 +286,40 @@ export default function VehicleFormScreen({
             {loading ? (
               <ActivityIndicator color={colors.primary} size="small" />
             ) : propietarios.length ? (
-              propietarios.map((p) => {
-                const pid = p.id || p.membresia_id;
-                const selected = String(pid) === String(selectedPropietarioId);
-                const fullName = [p.nombre, p.apellido]
+              (() => {
+                const selectedOwner = propietarios.find(
+                  (p) =>
+                    String(p.id || p.membresia_id) ===
+                    String(selectedPropietarioId),
+                );
+                const owner = selectedOwner || propietarios[0];
+                const fullName = [owner?.nombre, owner?.apellido]
                   .filter(Boolean)
                   .join(" ");
                 return (
-                  <Pressable
-                    key={pid}
-                    onPress={() => {
-                      if (!initialPropietario && !isOwnerSelfService) {
-                        setSelectedPropietarioId(pid);
-                      }
-                    }}
+                  <View
                     style={[
                       styles.ownerOption,
                       {
-                        backgroundColor: selected
-                          ? colors.primary
-                          : colors.cardMuted,
-                        borderColor: selected ? colors.primary : colors.border,
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
                       },
                     ]}
                   >
+                    <Text style={[styles.ownerText, { color: colors.text }]}>
+                      {fullName || "Propietario sin nombre"}
+                    </Text>
                     <Text
                       style={[
-                        styles.ownerText,
-                        { color: selected ? colors.white : colors.text },
+                        styles.ownerMeta,
+                        { color: colors.textSecondary },
                       ]}
                     >
-                      {fullName}
+                      {owner?.rif_cedula || "Sin cédula"}
                     </Text>
-                    {p.rif_cedula ? (
-                      <Text
-                        style={[
-                          styles.ownerMeta,
-                          {
-                            color: selected
-                              ? "rgba(255,255,255,0.8)"
-                              : colors.textTertiary,
-                          },
-                        ]}
-                      >
-                        {p.rif_cedula}
-                      </Text>
-                    ) : null}
-                  </Pressable>
+                  </View>
                 );
-              })
+              })()
             ) : (
               <Text
                 style={[styles.noOwnersText, { color: colors.textSecondary }]}
@@ -339,12 +350,19 @@ export default function VehicleFormScreen({
                 onChange: setPlaca,
                 placeholder: "ABC-123",
                 autoCapitalize: "characters",
+                returnKeyType: "next",
+                onFocus: () => scrollToY(280),
+                onSubmitEditing: () => numeroUnidadRef.current?.focus(),
               },
               {
                 label: "Número de unidad *",
                 value: numeroUnidad,
                 onChange: setNumeroUnidad,
                 placeholder: "001",
+                inputRef: numeroUnidadRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(340),
+                onSubmitEditing: () => numeroPuestosRef.current?.focus(),
               },
               {
                 label: "N° puestos / asientos",
@@ -352,6 +370,10 @@ export default function VehicleFormScreen({
                 onChange: setNumeroPuestos,
                 placeholder: "0",
                 keyboardType: "numeric",
+                inputRef: numeroPuestosRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(400),
+                onSubmitEditing: () => marcaRef.current?.focus(),
               },
               {
                 label: "Marca",
@@ -359,6 +381,10 @@ export default function VehicleFormScreen({
                 onChange: setMarca,
                 placeholder: "Toyota",
                 autoCapitalize: "words",
+                inputRef: marcaRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(460),
+                onSubmitEditing: () => modeloRef.current?.focus(),
               },
               {
                 label: "Modelo",
@@ -366,6 +392,10 @@ export default function VehicleFormScreen({
                 onChange: setModelo,
                 placeholder: "Corolla",
                 autoCapitalize: "words",
+                inputRef: modeloRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(520),
+                onSubmitEditing: () => anoRef.current?.focus(),
               },
               {
                 label: "Ano",
@@ -373,6 +403,10 @@ export default function VehicleFormScreen({
                 onChange: setAno,
                 placeholder: "2020",
                 keyboardType: "numeric",
+                inputRef: anoRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(580),
+                onSubmitEditing: () => colorRef.current?.focus(),
               },
               {
                 label: "Color",
@@ -380,13 +414,18 @@ export default function VehicleFormScreen({
                 onChange: setColor,
                 placeholder: "Blanco",
                 autoCapitalize: "words",
+                inputRef: colorRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(640),
+                onSubmitEditing: () => numeroCilindrosRef.current?.focus(),
               },
-            ].map(({ label, value, onChange, ...props }) => (
+            ].map(({ label, value, onChange, inputRef, ...props }) => (
               <View key={label} style={styles.fieldWrap}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
                   {label}
                 </Text>
                 <TextInput
+                  ref={inputRef}
                   value={value}
                   onChangeText={onChange}
                   placeholderTextColor={colors.textTertiary}
@@ -425,12 +464,20 @@ export default function VehicleFormScreen({
                 onChange: setNumeroCilindros,
                 placeholder: "4",
                 keyboardType: "numeric",
+                inputRef: numeroCilindrosRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(760),
+                onSubmitEditing: () => pesoRef.current?.focus(),
               },
               {
                 label: "Peso",
                 value: peso,
                 onChange: setPeso,
                 placeholder: "1200 kg",
+                inputRef: pesoRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(820),
+                onSubmitEditing: () => serialCarroceriaRef.current?.focus(),
               },
               {
                 label: "Serial de carrocería",
@@ -438,6 +485,10 @@ export default function VehicleFormScreen({
                 onChange: setSerialCarroceria,
                 placeholder: "1HGCM826...",
                 autoCapitalize: "characters",
+                inputRef: serialCarroceriaRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(880),
+                onSubmitEditing: () => serialMotorRef.current?.focus(),
               },
               {
                 label: "Serial de motor",
@@ -445,19 +496,28 @@ export default function VehicleFormScreen({
                 onChange: setSerialMotor,
                 placeholder: "B20B...",
                 autoCapitalize: "characters",
+                inputRef: serialMotorRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(940),
+                onSubmitEditing: () => capacidadRef.current?.focus(),
               },
               {
                 label: "Capacidad",
                 value: capacidad,
                 onChange: setCapacidad,
                 placeholder: "Capacidad",
+                inputRef: capacidadRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(1000),
+                onSubmitEditing: () => fechaEmisionRef.current?.focus(),
               },
-            ].map(({ label, value, onChange, ...props }) => (
+            ].map(({ label, value, onChange, inputRef, ...props }) => (
               <View key={label} style={styles.fieldWrap}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
                   {label}
                 </Text>
                 <TextInput
+                  ref={inputRef}
                   value={value}
                   onChangeText={onChange}
                   placeholderTextColor={colors.textTertiary}
@@ -496,6 +556,10 @@ export default function VehicleFormScreen({
                 onChange: setFechaEmision,
                 placeholder: "2024-01-15",
                 keyboardType: "numeric",
+                inputRef: fechaEmisionRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(1120),
+                onSubmitEditing: () => numeroPolizaRcvRef.current?.focus(),
               },
               {
                 label: "N° póliza RCV",
@@ -503,6 +567,10 @@ export default function VehicleFormScreen({
                 onChange: setNumeroPolizaRcv,
                 placeholder: "RCV-000000",
                 autoCapitalize: "characters",
+                inputRef: numeroPolizaRcvRef,
+                returnKeyType: "next",
+                onFocus: () => scrollToY(1180),
+                onSubmitEditing: () => choferRef.current?.focus(),
               },
               {
                 label: "Chofer habitual",
@@ -510,13 +578,17 @@ export default function VehicleFormScreen({
                 onChange: setChofer,
                 placeholder: "Nombre del chofer",
                 autoCapitalize: "words",
+                inputRef: choferRef,
+                returnKeyType: "done",
+                onFocus: () => scrollToY(1240),
               },
-            ].map(({ label, value, onChange, ...props }) => (
+            ].map(({ label, value, onChange, inputRef, ...props }) => (
               <View key={label} style={styles.fieldWrap}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
                   {label}
                 </Text>
                 <TextInput
+                  ref={inputRef}
                   value={value}
                   onChangeText={onChange}
                   placeholderTextColor={colors.textTertiary}

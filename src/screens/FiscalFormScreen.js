@@ -47,11 +47,23 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
       initialFiscal?.estado_invitacion || "PENDIENTE_INVITACION",
   });
   const [submitting, setSubmitting] = useState(false);
+  const scrollRef = useRef(null);
 
+  const rifRef = useRef(null);
+  const nombreRef = useRef(null);
   const apellidoRef = useRef(null);
   const telefonoRef = useRef(null);
   const emailRef = useRef(null);
   const direccionRef = useRef(null);
+  const puntoControlRef = useRef(null);
+
+  const focusField = (ref, y) => {
+    scrollRef.current?.scrollTo({
+      y: Math.max(y - spacing.lg, 0),
+      animated: true,
+    });
+    ref?.current?.focus?.();
+  };
 
   const update = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -95,7 +107,11 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <WorkshopScreenHeader
             onBack={onBack}
             section="Control"
@@ -122,15 +138,21 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 label: "Identificacion (RIF / Cedula)",
                 placeholder: "V-12345678",
                 autoCapitalize: "characters",
+                ref: rifRef,
                 returnKeyType: "next",
-                onSubmitEditing: () => apellidoRef.current?.focus(),
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 220, animated: true }),
+                onSubmitEditing: () => focusField(nombreRef, 280),
               },
               {
                 key: "nombre",
                 label: "Nombre *",
                 placeholder: "Nombre del fiscal",
                 autoCapitalize: "words",
+                ref: nombreRef,
                 returnKeyType: "next",
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 280, animated: true }),
                 onSubmitEditing: () => apellidoRef.current?.focus(),
               },
               {
@@ -140,6 +162,8 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 autoCapitalize: "words",
                 ref: apellidoRef,
                 returnKeyType: "next",
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 340, animated: true }),
                 onSubmitEditing: () => telefonoRef.current?.focus(),
               },
               {
@@ -149,6 +173,8 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 keyboardType: "phone-pad",
                 ref: telefonoRef,
                 returnKeyType: "next",
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 400, animated: true }),
                 onSubmitEditing: () => emailRef.current?.focus(),
               },
               {
@@ -159,6 +185,8 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 autoCapitalize: "none",
                 ref: emailRef,
                 returnKeyType: "next",
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 460, animated: true }),
                 onSubmitEditing: () => direccionRef.current?.focus(),
               },
               {
@@ -169,13 +197,19 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
                 ref: direccionRef,
                 returnKeyType: "done",
                 multiline: true,
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 520, animated: true }),
+                onSubmitEditing: () => focusField(puntoControlRef, 600),
               },
               {
                 key: "punto_control",
                 label: "Punto de control",
                 placeholder: "Punto o zona asignada",
                 autoCapitalize: "sentences",
+                ref: puntoControlRef,
                 returnKeyType: "done",
+                onFocus: () =>
+                  scrollRef.current?.scrollTo({ y: 600, animated: true }),
               },
             ].map(({ key, label, ref: fieldRef, ...inputProps }) => (
               <View key={key} style={styles.fieldWrap}>

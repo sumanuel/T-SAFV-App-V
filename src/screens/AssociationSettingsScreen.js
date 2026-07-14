@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
-import { hasPermission, USER_ROLES } from "../constants/accessControl";
+import { USER_ROLES } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { updateAssociation } from "../services/associations/associationService";
@@ -77,8 +77,11 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   } = useAuth();
   const activeMembership = memberships[0] || null;
   const currentRole = activeMembership?.role || userProfile?.role;
-  const canManageAssociation = hasPermission(currentRole, "workshop.manage");
-  const canResetAssociation = currentRole === USER_ROLES.OWNER;
+  const isAssociationCreator =
+    currentRole === "administrator" &&
+    String(activeAssociation?.creada_por) === String(userProfile?.uid);
+  const canManageAssociation = isAssociationCreator;
+  const canResetAssociation = isAssociationCreator;
   const [associationForm, setAssociationForm] = useState(
     buildAssociationForm(),
   );

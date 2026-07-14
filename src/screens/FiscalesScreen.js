@@ -33,6 +33,7 @@ export default function FiscalesScreen({
   const [fiscales, setFiscales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const canManageFiscales = currentRole === "administrator";
 
   const asociacionId = activeAssociation?.id;
 
@@ -151,7 +152,11 @@ export default function FiscalesScreen({
             return (
               <Pressable
                 key={getEntityId(f)}
-                onPress={() => onOpenFiscalForm?.(f)}
+                onPress={() => {
+                  if (canManageFiscales) {
+                    onOpenFiscalForm?.(f);
+                  }
+                }}
                 style={[
                   styles.itemRow,
                   {
@@ -218,7 +223,7 @@ export default function FiscalesScreen({
                       FISCAL
                     </Text>
                   </View>
-                  {f.email ? (
+                  {canManageFiscales && f.email ? (
                     <Pressable
                       onPress={() =>
                         onOpenInvitationCenter?.(
@@ -264,18 +269,22 @@ export default function FiscalesScreen({
               Sin fiscales registrados
             </Text>
             <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
-              Agrega el primer fiscal a la asociacion usando el boton inferior.
+              {canManageFiscales
+                ? "Agrega el primer fiscal a la asociacion usando el boton inferior."
+                : "No hay fiscales registrados en la asociación activa."}
             </Text>
           </View>
         )}
       </ScrollView>
 
-      <Pressable
-        onPress={() => onOpenFiscalForm?.(null)}
-        style={[styles.fab, { backgroundColor: colors.accent }]}
-      >
-        <Ionicons name="add" size={rf(22)} color={colors.white} />
-      </Pressable>
+      {canManageFiscales ? (
+        <Pressable
+          onPress={() => onOpenFiscalForm?.(null)}
+          style={[styles.fab, { backgroundColor: colors.accent }]}
+        >
+          <Ionicons name="add" size={rf(22)} color={colors.white} />
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }

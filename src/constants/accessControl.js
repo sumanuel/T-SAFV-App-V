@@ -1,6 +1,7 @@
 export const USER_ROLES = {
   OWNER: "owner",
   ADMINISTRATOR: "administrator",
+  FISCAL: "fiscal",
   RECEPTION: "reception",
   MECHANIC: "mechanic",
 };
@@ -31,19 +32,11 @@ export const REGISTRATION_POLICY = {
 
 export const ROLE_PERMISSIONS = {
   [USER_ROLES.OWNER]: [
-    "users.manage",
-    "invitations.manage",
-    "inventory.manage",
-    "clients.manage",
-    "vehicles.manage",
-    "diagnostics.manage",
-    "workOrders.manage",
-    "progress.manage",
-    "spareParts.manage",
-    "payments.manage",
+    "profile.self.manage",
+    "vehicles.self.manage",
+    "fiscales.view",
     "dashboard.view",
-    "settings.manage",
-    "workshop.manage",
+    "traza.view",
   ],
   [USER_ROLES.ADMINISTRATOR]: [
     "users.manage",
@@ -58,7 +51,16 @@ export const ROLE_PERMISSIONS = {
     "payments.manage",
     "dashboard.view",
     "settings.manage",
-    "workshop.manage",
+    "owners.manage",
+    "fiscales.manage",
+    "traza.view",
+  ],
+  [USER_ROLES.FISCAL]: [
+    "fiscalRecords.manage",
+    "vehicles.view",
+    "fiscales.view",
+    "dashboard.view",
+    "traza.view",
   ],
   [USER_ROLES.RECEPTION]: [
     "inventory.manage",
@@ -117,6 +119,14 @@ export function isMechanicRole(role) {
 
 export function isOwnerRole(role) {
   return role === USER_ROLES.OWNER;
+}
+
+export function isAdministratorRole(role) {
+  return role === USER_ROLES.ADMINISTRATOR;
+}
+
+export function isFiscalRole(role) {
+  return role === USER_ROLES.FISCAL;
 }
 
 export function isDiagnosticAssignedToUser(diagnostic, uid) {

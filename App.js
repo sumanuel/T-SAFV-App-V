@@ -78,6 +78,7 @@ function AppContent() {
     memberships,
     pendingInvitation,
     signOutUser,
+    syncCurrentUserProfile,
     userProfile,
   } = useAuth();
 
@@ -116,6 +117,7 @@ function AppContent() {
   const [stockItemsViewState, setStockItemsViewState] = useState({
     selectedStockItemId: null,
   });
+  const [trazaViewState, setTrazaViewState] = useState({ unit: null });
 
   useEffect(() => {
     const load = async () => {
@@ -141,6 +143,7 @@ function AppContent() {
     setStockItemFormContext({ stockItem: null, draft: null });
     setStockMovementFormContext({ stockItem: null, movementType: "in" });
     setStockItemsViewState({ selectedStockItemId: null });
+    setTrazaViewState({ unit: null });
   }, [authUser?.id]);
 
   const activeTab = useMemo(() => {
@@ -174,6 +177,21 @@ function AppContent() {
     (m) => m.workshopId === activeWorkshopId,
   );
   const currentRole = activeMembership?.role || userProfile?.role || "";
+  const isFiscalUser = currentRole === "fiscal";
+  const visibleTabs = isFiscalUser
+    ? [
+        APP_SCREENS.HOME,
+        APP_SCREENS.FISCALES,
+        APP_SCREENS.TRAZA,
+        APP_SCREENS.MORE,
+      ]
+    : [
+        APP_SCREENS.HOME,
+        APP_SCREENS.PROPIETARIOS,
+        APP_SCREENS.FISCALES,
+        APP_SCREENS.TRAZA,
+        APP_SCREENS.MORE,
+      ];
 
   // Hardware back button handler
   useEffect(() => {
@@ -295,6 +313,7 @@ function AppContent() {
       return;
     }
     if (nextTab === APP_SCREENS.TRAZA) {
+      setTrazaViewState({ unit: null });
       setActiveScreen(APP_SCREENS.TRAZA);
       return;
     }
@@ -313,10 +332,18 @@ function AppContent() {
             setActiveScreen(APP_SCREENS.PROPIETARIOS);
           }}
           onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
-          onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
+          onOpenTraza={() => {
+            setTrazaViewState({ unit: null });
+            setActiveScreen(APP_SCREENS.TRAZA);
+          }}
           onOpenFiscalRecord={(vehicle) => {
-            setFiscalRecordContext({ unit: vehicle || null });
-            setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
+            if (isFiscalUser) {
+              setFiscalRecordContext({ unit: vehicle || null });
+              setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
+              return;
+            }
+            setTrazaViewState({ unit: vehicle || null });
+            setActiveScreen(APP_SCREENS.TRAZA);
           }}
           onSignOut={signOutUser}
           currentRole={currentRole}
@@ -357,8 +384,10 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.PROPIETARIO_FORM) {
       return (
         <PropietarioFormScreen
+          currentRole={currentRole}
           initialPropietario={propietarioFormContext.propietario}
           onBack={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
+          onProfileSaved={syncCurrentUserProfile}
           onSaved={() => {
             setPropietariosViewState({
               selectedClientId: null,
@@ -373,6 +402,7 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.VEHICLE_FORM) {
       return (
         <VehicleFormScreen
+          currentRole={currentRole}
           initialPropietario={vehicleFormContext.propietario}
           initialVehicle={vehicleFormContext.vehicle}
           onBack={() => {
@@ -461,6 +491,7 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.TRAZA) {
       return (
         <TrazaScreen
+          initialUnit={trazaViewState.unit}
           onBack={() => setActiveScreen(APP_SCREENS.HOME)}
           currentRole={currentRole}
           userProfile={userProfile}
@@ -570,7 +601,10 @@ function AppContent() {
       <WorkshopHomeScreen
         onOpenPropietarios={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
         onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
-        onOpenTraza={() => setActiveScreen(APP_SCREENS.TRAZA)}
+        onOpenTraza={() => {
+          setTrazaViewState({ unit: null });
+          setActiveScreen(APP_SCREENS.TRAZA);
+        }}
         onOpenFiscalRecord={(vehicle) => {
           setFiscalRecordContext({ unit: vehicle || null });
           setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
@@ -590,13 +624,7 @@ function AppContent() {
         <WorkshopTabBar
           activeTab={activeTab}
           onChange={handleTabChange}
-          visibleTabs={[
-            APP_SCREENS.HOME,
-            APP_SCREENS.PROPIETARIOS,
-            APP_SCREENS.FISCALES,
-            APP_SCREENS.TRAZA,
-            APP_SCREENS.MORE,
-          ]}
+          visibleTabs={visibleTabs}
         />
       </View>
     </>

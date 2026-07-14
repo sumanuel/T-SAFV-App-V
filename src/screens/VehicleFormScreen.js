@@ -20,6 +20,7 @@ import { listPropietarios } from "../services/propietarios/propietarioService";
 import {
   createVehicle,
   deleteVehicle,
+  updateMyVehicle,
   updateVehicle,
 } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
@@ -29,6 +30,7 @@ function getVehicleId(vehicle) {
 }
 
 export default function VehicleFormScreen({
+  currentRole,
   initialPropietario,
   initialVehicle,
   onBack,
@@ -38,6 +40,7 @@ export default function VehicleFormScreen({
   const { token, activeAssociation } = useAuth();
   const asociacionId = activeAssociation?.id;
   const isEditing = Boolean(getVehicleId(initialVehicle));
+  const isOwnerSelfService = currentRole === "owner";
 
   const [propietarios, setPropietarios] = useState([]);
   const [selectedPropietarioId, setSelectedPropietarioId] = useState(
@@ -86,6 +89,14 @@ export default function VehicleFormScreen({
   );
 
   useEffect(() => {
+    if (isOwnerSelfService) {
+      const owner = initialPropietario || null;
+      setPropietarios(owner ? [owner] : []);
+      setSelectedPropietarioId(owner?.id || owner?.membresia_id || null);
+      setLoading(false);
+      return;
+    }
+
     if (!asociacionId) {
       setLoading(false);
       return;
@@ -108,9 +119,17 @@ export default function VehicleFormScreen({
       }
     };
     load();
-  }, [asociacionId]);
+  }, [asociacionId, initialPropietario, isOwnerSelfService, token]);
 
   const handleSubmit = async () => {
+    if (isOwnerSelfService && !isEditing) {
+      Alert.alert(
+        "Unidades",
+        "Desde este perfil solo puedes editar unidades ya asociadas a tu usuario.",
+      );
+      return;
+    }
+
     if (!placa.trim() || !numeroUnidad.trim()) {
       Alert.alert(
         "Datos incompletos",
@@ -147,12 +166,21 @@ export default function VehicleFormScreen({
         numero_puestos: numeroPuestos ? Number(numeroPuestos) : undefined,
       };
       if (isEditing) {
-        await updateVehicle(
-          token,
-          asociacionId,
-          getVehicleId(initialVehicle),
-          payload,
-        );
+        if (isOwnerSelfService) {
+          await updateMyVehicle(
+            token,
+            asociacionId,
+            getVehicleId(initialVehicle),
+            payload,
+          );
+        } else {
+          await updateVehicle(
+            token,
+            asociacionId,
+            getVehicleId(initialVehicle),
+            payload,
+          );
+        }
       } else {
         await createVehicle(token, asociacionId, payload);
       }
@@ -242,7 +270,9 @@ export default function VehicleFormScreen({
                   <Pressable
                     key={pid}
                     onPress={() => {
-                      if (!initialPropietario) setSelectedPropietarioId(pid);
+                      if (!initialPropietario && !isOwnerSelfService) {
+                        setSelectedPropietarioId(pid);
+                      }
                     }}
                     style={[
                       styles.ownerOption,
@@ -528,7 +558,7 @@ export default function VehicleFormScreen({
             )}
           </Pressable>
 
-          {isEditing ? (
+          {isEditing && !isOwnerSelfService ? (
             <Pressable
               onPress={handleDelete}
               disabled={submitting}

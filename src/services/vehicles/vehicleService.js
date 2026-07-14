@@ -1,5 +1,5 @@
 /**
- * vehicleService.js — API real para unidades de la asociacion
+ * vehicleService.js ï¿½ API real para unidades de la asociacion
  */
 import sdk from "../api/sdk";
 
@@ -14,7 +14,20 @@ export async function listVehicles(token, asociacionId) {
   return res.data || [];
 }
 
-export async function listVehiclesByPropietarioId(token, asociacionId, propietarioId) {
+export async function listMyVehicles(token, asociacionId) {
+  if (!asociacionId) return [];
+  const res = await sdk.getMyOwnerUnits(token);
+  if (res.status !== 200) return [];
+  return (res.data || []).filter(
+    (unit) => String(unit.asociacion_id) === String(asociacionId),
+  );
+}
+
+export async function listVehiclesByPropietarioId(
+  token,
+  asociacionId,
+  propietarioId,
+) {
   const all = await listVehicles(token, asociacionId);
   return all.filter((v) => String(v.propietario_id) === String(propietarioId));
 }
@@ -26,7 +39,23 @@ export async function createVehicle(token, asociacionId, payload) {
 }
 
 export async function updateVehicle(token, asociacionId, unidadId, payload) {
-  const res = await sdk.updateAssociationUnit(token, asociacionId, unidadId, payload);
+  const res = await sdk.updateAssociationUnit(
+    token,
+    asociacionId,
+    unidadId,
+    payload,
+  );
+  if (res.status === 200) return res.data;
+  throw new Error(resolveError(res, "No se pudo actualizar la unidad."));
+}
+
+export async function updateMyVehicle(token, asociacionId, unidadId, payload) {
+  const res = await sdk.updateMyAssociationUnit(
+    token,
+    asociacionId,
+    unidadId,
+    payload,
+  );
   if (res.status === 200) return res.data;
   throw new Error(resolveError(res, "No se pudo actualizar la unidad."));
 }

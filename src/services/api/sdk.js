@@ -149,6 +149,19 @@ export function updateAssociationMember(
   );
 }
 
+export function updateOwnAssociationMember(
+  token,
+  asociacionId,
+  membresiaId,
+  payload,
+) {
+  return apiPut(
+    `/api/asociaciones/${asociacionId}/miembros/${membresiaId}/self`,
+    payload,
+    token,
+  );
+}
+
 export function deleteAssociationMember(token, asociacionId, membresiaId) {
   return apiDelete(
     `/api/asociaciones/${asociacionId}/miembros/${membresiaId}`,
@@ -198,6 +211,36 @@ export function deleteAssociationUnit(token, asociacionId, unidadId) {
   );
 }
 
+export function updateMyAssociationUnit(
+  token,
+  asociacionId,
+  unidadId,
+  payload,
+) {
+  return apiPut(
+    `/api/unidades/asociaciones/${asociacionId}/mis-unidades/${unidadId}`,
+    payload,
+    token,
+  );
+}
+
+export function getMyOwnerUnits(token) {
+  return apiGet("/api/propietario/mis-unidades", token);
+}
+
+export function getMyOwnerTraceability(token, filters) {
+  const query = buildQueryString(filters || {});
+  return apiGet(`/api/propietario/mi-trazabilidad${query}`, token);
+}
+
+export function getOwnerUnitTraceability(token, unidadId, filters) {
+  const query = buildQueryString(filters || {});
+  return apiGet(
+    `/api/propietario/unidades/${unidadId}/trazabilidad${query}`,
+    token,
+  );
+}
+
 // ─── Trazabilidad ─────────────────────────────────────────────────────────────
 
 export function getAssociationTraceability(token, asociacionId, filters) {
@@ -229,12 +272,17 @@ export default {
   getAssociationMembers,
   createAssociationMember,
   updateAssociationMember,
+  updateOwnAssociationMember,
   deleteAssociationMember,
   changeMembershipState,
   getAssociationUnits,
   createAssociationUnit,
   updateAssociationUnit,
   deleteAssociationUnit,
+  updateMyAssociationUnit,
+  getMyOwnerUnits,
+  getMyOwnerTraceability,
+  getOwnerUnitTraceability,
   getAssociationTraceability,
   createFiscalRecord,
 };

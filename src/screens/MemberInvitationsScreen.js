@@ -423,6 +423,9 @@ export default function MemberInvitationsScreen({
             const isSending =
               String(sendingId) ===
               String(isMember ? member.membresia_id || member.id : row.key);
+            const isAssociationCreatorMember =
+              isMember &&
+              String(member.id) === String(activeAssociation?.creada_por);
 
             return (
               <View
@@ -493,7 +496,9 @@ export default function MemberInvitationsScreen({
 
                 {isMember ? (
                   <View style={styles.actionColumn}>
-                    {member.estado_invitacion !== "ACEPTADA" && member.email ? (
+                    {member.estado_invitacion !== "ACEPTADA" &&
+                    member.email &&
+                    !isAssociationCreatorMember ? (
                       <Pressable
                         onPress={() => handleSendInvitation(member)}
                         disabled={isSending}
@@ -527,8 +532,7 @@ export default function MemberInvitationsScreen({
                       </Pressable>
                     ) : null}
 
-                    {String(member.id) !==
-                    String(activeAssociation?.creada_por) ? (
+                    {!isAssociationCreatorMember ? (
                       <Pressable
                         onPress={() => handleRemoveMember(member)}
                         style={[

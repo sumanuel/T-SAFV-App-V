@@ -130,6 +130,45 @@ export function AuthProvider({ children }) {
     if (token) await loadAssociations(token);
   }, [token, loadAssociations]);
 
+  const syncCurrentUserProfile = useCallback(async (patch) => {
+    let nextUser = null;
+
+    setAuthUser((current) => {
+      if (!current) {
+        return current;
+      }
+
+      nextUser = {
+        ...current,
+        nombre: patch?.nombre ?? current.nombre,
+        apellido: patch?.apellido ?? current.apellido,
+        email: patch?.email ?? current.email,
+        telefono: patch?.telefono ?? current.telefono,
+        rif_cedula: patch?.rif_cedula ?? current.rif_cedula,
+        direccion: patch?.direccion ?? current.direccion,
+      };
+
+      return nextUser;
+    });
+
+    if (!nextUser) {
+      return;
+    }
+
+    await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(nextUser));
+    setUserProfile((profile) => {
+      if (!profile) {
+        return profile;
+      }
+
+      const mapped = mapApiUserToProfile(nextUser);
+      return {
+        ...mapped,
+        associationCreationAccess: profile.associationCreationAccess,
+      };
+    });
+  }, []);
+
   // Restaurar sesion desde AsyncStorage
   useEffect(() => {
     const restoreSession = async () => {
@@ -288,6 +327,7 @@ export function AuthProvider({ children }) {
       signIn,
       signOutUser,
       signUp,
+      syncCurrentUserProfile,
       switchWorkshop,
       token,
       updateActiveWorkshop,
@@ -303,6 +343,7 @@ export function AuthProvider({ children }) {
       pendingInvitation,
       refreshAssociations,
       setActiveAssociationId,
+      syncCurrentUserProfile,
       token,
       userProfile,
     ],

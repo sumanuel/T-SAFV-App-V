@@ -66,6 +66,8 @@ export default function PropietariosScreen({
   onOpenInvitationCenter,
   onOpenPropietarioForm,
   onOpenVehicleForm,
+  currentRole,
+  userProfile,
   viewState,
 }) {
   const { colors } = useTheme();
@@ -78,6 +80,8 @@ export default function PropietariosScreen({
   const [selectedPropietario, setSelectedPropietario] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [vehicleLoading, setVehicleLoading] = useState(false);
+  const isOwnerSelfService = currentRole === "owner";
+  const canManageOwners = currentRole === "administrator";
 
   const asociacionId = activeAssociation?.id;
   const selectedMembershipId = getMembershipId(selectedPropietario);
@@ -117,12 +121,18 @@ export default function PropietariosScreen({
         ...propietario,
         linked_units: mergeLinkedUnits(propietario, vehiclesData),
       }));
+      const scopedOwners = isOwnerSelfService
+        ? nextOwners.filter(
+            (propietario) =>
+              String(getUserId(propietario)) === String(userProfile?.uid),
+          )
+        : nextOwners;
 
       setAllVehicles(vehiclesData);
-      setPropietarios(nextOwners);
+      setPropietarios(scopedOwners);
 
       if (selectedMembershipId) {
-        const refreshed = nextOwners.find(
+        const refreshed = scopedOwners.find(
           (propietario) =>
             getMembershipId(propietario) === selectedMembershipId,
         );
@@ -271,15 +281,23 @@ export default function PropietariosScreen({
               setScreenMode(SCREEN_MODES.LIST);
             }}
             section="Ficha propietario"
-            title="Propietario"
-            subtitle="Gestiona la ficha y asocia sus unidades desde esta vista."
-            rightAction={{
-              icon: "create-outline",
-              onPress: () =>
-                onOpenPropietarioForm?.(selectedPropietario, {
-                  returnTo: "detail",
-                }),
-            }}
+            title={isOwnerSelfService ? "Mis datos" : "Propietario"}
+            subtitle={
+              isOwnerSelfService
+                ? "Edita únicamente tu ficha personal y revisa tus unidades asociadas."
+                : "Gestiona la ficha y asocia sus unidades desde esta vista."
+            }
+            rightAction={
+              canManageOwners || isOwnerSelfService
+                ? {
+                    icon: "create-outline",
+                    onPress: () =>
+                      onOpenPropietarioForm?.(selectedPropietario, {
+                        returnTo: "detail",
+                      }),
+                  }
+                : undefined
+            }
           />
 
           <View
@@ -334,23 +352,31 @@ export default function PropietariosScreen({
             </View>
 
             <View style={styles.detailActionsRow}>
-              <Pressable
-                onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
-                style={[styles.linkAction, { borderColor: colors.accent }]}
-              >
-                <Text style={[styles.linkActionText, { color: colors.accent }]}>
-                  Asociar unidad
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleDelete(selectedPropietario)}
-                style={[styles.linkAction, { borderColor: colors.danger }]}
-              >
-                <Text style={[styles.linkActionText, { color: colors.danger }]}>
-                  Eliminar propietario
-                </Text>
-              </Pressable>
-              {selectedPropietario.email ? (
+              {canManageOwners ? (
+                <Pressable
+                  onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
+                  style={[styles.linkAction, { borderColor: colors.accent }]}
+                >
+                  <Text
+                    style={[styles.linkActionText, { color: colors.accent }]}
+                  >
+                    Asociar unidad
+                  </Text>
+                </Pressable>
+              ) : null}
+              {canManageOwners ? (
+                <Pressable
+                  onPress={() => handleDelete(selectedPropietario)}
+                  style={[styles.linkAction, { borderColor: colors.danger }]}
+                >
+                  <Text
+                    style={[styles.linkActionText, { color: colors.danger }]}
+                  >
+                    Eliminar propietario
+                  </Text>
+                </Pressable>
+              ) : null}
+              {canManageOwners && selectedPropietario.email ? (
                 <Pressable
                   onPress={() =>
                     onOpenInvitationCenter?.(
@@ -375,15 +401,17 @@ export default function PropietariosScreen({
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Unidades asociadas
             </Text>
-            <Pressable
-              onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
-              style={[styles.addBtn, { backgroundColor: colors.primary }]}
-            >
-              <Ionicons name="add" size={rf(16)} color={colors.white} />
-              <Text style={[styles.addBtnText, { color: colors.white }]}>
-                Asociar unidad
-              </Text>
-            </Pressable>
+            {canManageOwners ? (
+              <Pressable
+                onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
+                style={[styles.addBtn, { backgroundColor: colors.primary }]}
+              >
+                <Ionicons name="add" size={rf(16)} color={colors.white} />
+                <Text style={[styles.addBtnText, { color: colors.white }]}>
+                  Asociar unidad
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {vehicleLoading ? (
@@ -470,8 +498,12 @@ export default function PropietariosScreen({
         <WorkshopScreenHeader
           onBack={onBack}
           section="Recepcion"
-          title="Propietarios"
-          subtitle="Lista operativa más limpia, con unidades asociadas visibles por propietario."
+          title={isOwnerSelfService ? "Mis datos" : "Propietarios"}
+          subtitle={
+            isOwnerSelfService
+              ? "Solo verás la ficha vinculada a tu usuario y las unidades asociadas a tu perfil."
+              : "Lista operativa más limpia, con unidades asociadas visibles por propietario."
+          }
         />
 
         <View
@@ -536,40 +568,44 @@ export default function PropietariosScreen({
                       {fullName || "Sin nombre"}
                     </Text>
                   </View>
-                  <View style={styles.ownerActions}>
-                    <Pressable
-                      onPress={() => onOpenPropietarioForm?.(propietario, {})}
-                      style={[
-                        styles.iconAction,
-                        {
-                          backgroundColor: colors.cardMuted,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name="create-outline"
-                        size={rf(18)}
-                        color={colors.text}
-                      />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handleDelete(propietario)}
-                      style={[
-                        styles.iconAction,
-                        {
-                          backgroundColor: colors.cardMuted,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={rf(18)}
-                        color={colors.danger}
-                      />
-                    </Pressable>
-                  </View>
+                  {canManageOwners || isOwnerSelfService ? (
+                    <View style={styles.ownerActions}>
+                      <Pressable
+                        onPress={() => onOpenPropietarioForm?.(propietario, {})}
+                        style={[
+                          styles.iconAction,
+                          {
+                            backgroundColor: colors.cardMuted,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={rf(18)}
+                          color={colors.text}
+                        />
+                      </Pressable>
+                      {canManageOwners ? (
+                        <Pressable
+                          onPress={() => handleDelete(propietario)}
+                          style={[
+                            styles.iconAction,
+                            {
+                              backgroundColor: colors.cardMuted,
+                              borderColor: colors.border,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={rf(18)}
+                            color={colors.danger}
+                          />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
 
                 <View
@@ -690,12 +726,14 @@ export default function PropietariosScreen({
         )}
       </ScrollView>
 
-      <Pressable
-        onPress={() => onOpenPropietarioForm?.(null, {})}
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-      >
-        <Ionicons name="add" size={rf(22)} color={colors.white} />
-      </Pressable>
+      {canManageOwners ? (
+        <Pressable
+          onPress={() => onOpenPropietarioForm?.(null, {})}
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+        >
+          <Ionicons name="add" size={rf(22)} color={colors.white} />
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }

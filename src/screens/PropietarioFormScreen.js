@@ -33,14 +33,17 @@ function getEntityId(entity) {
 }
 
 export default function PropietarioFormScreen({
+  currentRole,
   initialPropietario,
   onBack,
+  onProfileSaved,
   onSaved,
 }) {
   const { colors } = useTheme();
   const { token, activeAssociation } = useAuth();
   const asociacionId = activeAssociation?.id;
   const isEditing = Boolean(getEntityId(initialPropietario));
+  const isOwnerSelfService = currentRole === "owner";
 
   const [form, setForm] = useState({
     rif_cedula: initialPropietario?.rif_cedula || "",
@@ -80,9 +83,13 @@ export default function PropietarioFormScreen({
           asociacionId,
           getEntityId(initialPropietario),
           form,
+          { selfService: isOwnerSelfService },
         );
       } else {
         await createPropietario(token, asociacionId, form);
+      }
+      if (isOwnerSelfService) {
+        onProfileSaved?.(form);
       }
       onSaved?.();
     } catch (error) {
@@ -161,7 +168,13 @@ export default function PropietarioFormScreen({
           <WorkshopScreenHeader
             onBack={onBack}
             section="Ficha propietario"
-            title={isEditing ? "Editar propietario" : "Nuevo propietario"}
+            title={
+              isOwnerSelfService
+                ? "Mis datos"
+                : isEditing
+                  ? "Editar propietario"
+                  : "Nuevo propietario"
+            }
             subtitle={
               activeAssociation
                 ? activeAssociation.nombre
@@ -201,40 +214,44 @@ export default function PropietarioFormScreen({
               </View>
             ))}
 
-            <View style={styles.fieldWrap}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                Estado de invitación
-              </Text>
-              <View style={styles.stateChipRow}>
-                {INVITATION_STATES.map((state) => {
-                  const active = form.estado_invitacion === state.value;
-                  return (
-                    <Pressable
-                      key={state.value}
-                      onPress={() => update("estado_invitacion", state.value)}
-                      style={[
-                        styles.stateChip,
-                        {
-                          backgroundColor: active
-                            ? colors.primary
-                            : colors.cardMuted,
-                          borderColor: active ? colors.primary : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
+            {!isOwnerSelfService ? (
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  Estado de invitación
+                </Text>
+                <View style={styles.stateChipRow}>
+                  {INVITATION_STATES.map((state) => {
+                    const active = form.estado_invitacion === state.value;
+                    return (
+                      <Pressable
+                        key={state.value}
+                        onPress={() => update("estado_invitacion", state.value)}
                         style={[
-                          styles.stateChipText,
-                          { color: active ? colors.white : colors.text },
+                          styles.stateChip,
+                          {
+                            backgroundColor: active
+                              ? colors.primary
+                              : colors.cardMuted,
+                            borderColor: active
+                              ? colors.primary
+                              : colors.border,
+                          },
                         ]}
                       >
-                        {state.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                        <Text
+                          style={[
+                            styles.stateChipText,
+                            { color: active ? colors.white : colors.text },
+                          ]}
+                        >
+                          {state.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
-            </View>
+            ) : null}
           </View>
 
           <Pressable
@@ -255,7 +272,11 @@ export default function PropietarioFormScreen({
                   color={colors.white}
                 />
                 <Text style={[styles.submitText, { color: colors.white }]}>
-                  {isEditing ? "Guardar cambios" : "Crear propietario"}
+                  {isOwnerSelfService
+                    ? "Guardar mis datos"
+                    : isEditing
+                      ? "Guardar cambios"
+                      : "Crear propietario"}
                 </Text>
               </>
             )}

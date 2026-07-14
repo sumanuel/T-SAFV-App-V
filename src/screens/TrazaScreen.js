@@ -16,7 +16,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { listTraza } from "../services/traza/trazaService";
+import {
+  listMyTraza,
+  listMyUnitTraza,
+  listTraza,
+} from "../services/traza/trazaService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 function normalizeDateInput(value) {
@@ -37,7 +41,12 @@ function formatDateTime(value) {
   return d.toLocaleString("es-VE");
 }
 
-export default function TrazaScreen({ onBack, currentRole, userProfile }) {
+export default function TrazaScreen({
+  initialUnit,
+  onBack,
+  currentRole,
+  userProfile,
+}) {
   const { colors } = useTheme();
   const { token, activeAssociation } = useAuth();
   const [items, setItems] = useState([]);
@@ -50,17 +59,33 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
   const [fiscalOptions, setFiscalOptions] = useState([]);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [selectedUnitId, setSelectedUnitId] = useState(initialUnit?.id || null);
 
   const asociacionId = activeAssociation?.id;
+  const isOwnerUser = currentRole === "owner";
+
+  useEffect(() => {
+    setSelectedUnitId(initialUnit?.id || null);
+    if (initialUnit?.placa || initialUnit?.numero_unidad) {
+      setSearchQuery(initialUnit?.placa || initialUnit?.numero_unidad || "");
+    } else {
+      setSearchQuery("");
+    }
+  }, [initialUnit?.id, initialUnit?.numero_unidad, initialUnit?.placa]);
 
   const refreshData = async () => {
     if (!asociacionId) return;
     setLoading(true);
     try {
-      const data = await listTraza(token, asociacionId, {
+      const filters = {
         fecha_inicio: startDate || undefined,
         fecha_fin: endDate || undefined,
-      });
+      };
+      const data = isOwnerUser
+        ? selectedUnitId
+          ? await listMyUnitTraza(token, selectedUnitId, filters)
+          : await listMyTraza(token, asociacionId, filters)
+        : await listTraza(token, asociacionId, filters);
       setItems(data);
 
       // Extract unique fiscales for filter
@@ -82,7 +107,7 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
 
   useEffect(() => {
     refreshData();
-  }, [asociacionId, startDate, endDate]);
+  }, [asociacionId, endDate, isOwnerUser, selectedUnitId, startDate]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -91,6 +116,9 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
         selectedFiscalId !== "ALL" &&
         String(item.fiscal_id) !== String(selectedFiscalId)
       ) {
+        return false;
+      }
+      if (selectedUnitId && String(item.unidad_id) !== String(selectedUnitId)) {
         return false;
       }
       if (q) {
@@ -209,6 +237,26 @@ export default function TrazaScreen({ onBack, currentRole, userProfile }) {
           <Text style={[styles.filterTitle, { color: colors.text }]}>
             Filtros
           </Text>
+
+          {selectedUnitId ? (
+            <View
+              style={[
+                styles.chip,
+                {
+                  alignSelf: "flex-start",
+                  backgroundColor: colors.cardMuted,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>
+                Unidad filtrada:{" "}
+                {initialUnit?.numero_unidad ||
+                  initialUnit?.placa ||
+                  selectedUnitId}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.dateRow}>
             <View style={styles.dateField}>

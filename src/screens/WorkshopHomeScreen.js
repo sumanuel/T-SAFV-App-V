@@ -16,7 +16,10 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { createAssociation } from "../services/associations/associationService";
-import { listVehicles } from "../services/vehicles/vehicleService";
+import {
+  listMyVehicles,
+  listVehicles,
+} from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 export default function WorkshopHomeScreen({
@@ -24,6 +27,7 @@ export default function WorkshopHomeScreen({
   onOpenFiscales,
   onOpenTraza,
   onOpenFiscalRecord,
+  currentRole,
   userProfile,
 }) {
   const { colors } = useTheme();
@@ -52,12 +56,16 @@ export default function WorkshopHomeScreen({
   const associationCreationAccess = userProfile?.associationCreationAccess;
   const canCreateAssociation = associationCreationAccess?.allowed !== false;
   const canStartTrial = Boolean(associationCreationAccess?.can_start_trial);
+  const isFiscalUser = currentRole === "fiscal";
+  const isOwnerUser = currentRole === "owner";
 
   const refreshUnits = async () => {
     if (!activeAssociation?.id) return;
     setLoading(true);
     try {
-      const data = await listVehicles(token, activeAssociation.id);
+      const data = isOwnerUser
+        ? await listMyVehicles(token, activeAssociation.id)
+        : await listVehicles(token, activeAssociation.id);
       setVehicles(data);
     } catch {
       Alert.alert("Unidades", "No se pudo cargar las unidades.");
@@ -569,11 +577,13 @@ export default function WorkshopHomeScreen({
 
           <View style={styles.quickActionInlineRow}>
             {[
-              {
-                icon: "people-outline",
-                label: "Propietarios",
-                onPress: onOpenPropietarios,
-              },
+              !isFiscalUser
+                ? {
+                    icon: "people-outline",
+                    label: isOwnerUser ? "Mis datos" : "Propietarios",
+                    onPress: onOpenPropietarios,
+                  }
+                : null,
               {
                 icon: "shield-checkmark-outline",
                 label: "Fiscales",
@@ -584,28 +594,32 @@ export default function WorkshopHomeScreen({
                 label: "Traza",
                 onPress: onOpenTraza,
               },
-            ].map((action) => (
-              <Pressable
-                key={action.label}
-                onPress={action.onPress}
-                style={[
-                  styles.inlineAction,
-                  {
-                    backgroundColor: colors.cardMuted,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={action.icon}
-                  size={rf(16)}
-                  color={colors.primary}
-                />
-                <Text style={[styles.inlineActionText, { color: colors.text }]}>
-                  {action.label}
-                </Text>
-              </Pressable>
-            ))}
+            ]
+              .filter(Boolean)
+              .map((action) => (
+                <Pressable
+                  key={action.label}
+                  onPress={action.onPress}
+                  style={[
+                    styles.inlineAction,
+                    {
+                      backgroundColor: colors.cardMuted,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={action.icon}
+                    size={rf(16)}
+                    color={colors.primary}
+                  />
+                  <Text
+                    style={[styles.inlineActionText, { color: colors.text }]}
+                  >
+                    {action.label}
+                  </Text>
+                </Pressable>
+              ))}
           </View>
         </View>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -683,7 +697,7 @@ export default function WorkshopHomeScreen({
                   <Text
                     style={[styles.unitActionText, { color: colors.primary }]}
                   >
-                    Fiscalizar
+                    {isFiscalUser ? "Fiscalizar" : "Ver traza"}
                   </Text>
                 </View>
               </View>

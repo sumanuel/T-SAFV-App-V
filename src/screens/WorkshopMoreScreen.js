@@ -45,14 +45,18 @@ function resolveActionState(
   userProfile,
   memberships,
   activeWorkshopId,
+  activeAssociation,
 ) {
   const currentRole =
     memberships.find((item) => item.workshopId === activeWorkshopId)?.role ||
     userProfile?.role ||
     "";
+  const isAssociationCreator =
+    currentRole === "administrator" &&
+    String(activeAssociation?.creada_por) === String(userProfile?.uid);
 
   if (itemKey === "workshop-settings") {
-    return hasPermission(currentRole, "workshop.manage")
+    return isAssociationCreator
       ? {
           iconColor: "primary",
           stateLabel: "Editable",
@@ -85,12 +89,14 @@ function renderActionRow({
   userProfile,
   memberships,
   activeWorkshopId,
+  activeAssociation,
 }) {
   const actionState = resolveActionState(
     item.key,
     userProfile,
     memberships,
     activeWorkshopId,
+    activeAssociation,
   );
 
   return (
@@ -194,6 +200,21 @@ export default function WorkshopMoreScreen({
             : resolvedRole === "mechanic"
               ? "Mecanico"
               : "Sin rol";
+  const isAssociationCreator =
+    resolvedRole === "administrator" &&
+    String(activeAssociation?.creada_por) === String(userProfile?.uid);
+  const canManageInvitations = resolvedRole === "administrator";
+  const visibleAdministrativeItems = administrativeItems.filter((item) => {
+    if (item.key === "workshop-settings") {
+      return isAssociationCreator;
+    }
+
+    if (item.key === "team") {
+      return canManageInvitations;
+    }
+
+    return false;
+  });
 
   return (
     <SafeAreaView
@@ -279,39 +300,42 @@ export default function WorkshopMoreScreen({
           </View>
         </View>
 
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Administracion
-          </Text>
-          <Text
-            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
+        {visibleAdministrativeItems.length ? (
+          <View
+            style={[
+              styles.sectionCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
           >
-            Configuración de la asociación, miembros e invitaciones.
-          </Text>
-          <View style={styles.listWrap}>
-            {administrativeItems.map((item) =>
-              renderActionRow({
-                item,
-                colors,
-                onPress:
-                  item.key === "workshop-settings"
-                    ? onOpenWorkshopSettings
-                    : onOpenCollaborators,
-                userProfile,
-                memberships,
-                activeWorkshopId,
-              }),
-            )}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Administracion
+            </Text>
+            <Text
+              style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
+            >
+              Configuración de la asociación, miembros e invitaciones.
+            </Text>
+            <View style={styles.listWrap}>
+              {visibleAdministrativeItems.map((item) =>
+                renderActionRow({
+                  item,
+                  colors,
+                  onPress:
+                    item.key === "workshop-settings"
+                      ? onOpenWorkshopSettings
+                      : onOpenCollaborators,
+                  userProfile,
+                  memberships,
+                  activeWorkshopId,
+                  activeAssociation,
+                }),
+              )}
+            </View>
           </View>
-        </View>
+        ) : null}
 
         <View
           style={[

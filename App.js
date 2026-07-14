@@ -40,6 +40,7 @@ import StockItemsScreen from "./src/screens/StockItemsScreen";
 import StockItemFormScreen from "./src/screens/StockItemFormScreen";
 import StockMovementFormScreen from "./src/screens/StockMovementFormScreen";
 import TeamAccessScreen from "./src/screens/TeamAccessScreen";
+import AssociationSettingsScreen from "./src/screens/AssociationSettingsScreen";
 
 const APP_SCREENS = {
   HOME: "home",
@@ -521,9 +522,8 @@ function AppContent() {
 
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
       return (
-        <TeamAccessScreen
+        <AssociationSettingsScreen
           onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          screenMode="workshop"
           userProfile={userProfile}
         />
       );

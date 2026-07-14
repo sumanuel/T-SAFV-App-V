@@ -217,6 +217,14 @@ export default function MemberInvitationsScreen({
   };
 
   const handleRemoveMember = (member) => {
+    if (String(member.id) === String(activeAssociation?.creada_por)) {
+      Alert.alert(
+        "Miembro protegido",
+        "El creador de la asociación no se puede dar de baja.",
+      );
+      return;
+    }
+
     Alert.alert(
       "Dar de baja",
       `Se eliminará a ${
@@ -295,7 +303,7 @@ export default function MemberInvitationsScreen({
           })}
         </View>
 
-        {(roleFilter === "TODOS" || roleFilter === "ADMIN") && (
+        {roleFilter === "ADMIN" && (
           <View
             style={[
               styles.createCard,
@@ -519,45 +527,54 @@ export default function MemberInvitationsScreen({
                       </Pressable>
                     ) : null}
 
-                    <Pressable
-                      onPress={() => handleRemoveMember(member)}
-                      style={[
-                        styles.secondaryButton,
-                        { borderColor: colors.danger },
-                      ]}
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={rf(18)}
-                        color={colors.danger}
-                      />
-                      <Text
+                    {String(member.id) !==
+                    String(activeAssociation?.creada_por) ? (
+                      <Pressable
+                        onPress={() => handleRemoveMember(member)}
                         style={[
-                          styles.secondaryButtonText,
-                          { color: colors.danger },
+                          styles.secondaryButton,
+                          {
+                            borderColor: colors.border,
+                            backgroundColor: colors.cardMuted,
+                          },
                         ]}
                       >
-                        Dar de baja
-                      </Text>
-                    </Pressable>
+                        <Ionicons
+                          name="trash-outline"
+                          size={rf(18)}
+                          color={colors.textSecondary}
+                        />
+                        <Text
+                          style={[
+                            styles.secondaryButtonText,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          Dar de baja
+                        </Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                 ) : (
                   <Pressable
                     onPress={() => handleCancelInvitation(invitation)}
                     style={[
                       styles.secondaryButton,
-                      { borderColor: colors.danger },
+                      {
+                        borderColor: colors.border,
+                        backgroundColor: colors.cardMuted,
+                      },
                     ]}
                   >
                     <Ionicons
                       name="close-circle-outline"
                       size={rf(18)}
-                      color={colors.danger}
+                      color={colors.textSecondary}
                     />
                     <Text
                       style={[
                         styles.secondaryButtonText,
-                        { color: colors.danger },
+                        { color: colors.textSecondary },
                       ]}
                     >
                       Anular invitación

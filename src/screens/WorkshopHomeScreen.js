@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -505,11 +506,21 @@ export default function WorkshopHomeScreen({
                 },
               ]}
             >
-              <Ionicons
-                name="business-outline"
-                size={rf(28)}
-                color={colors.primary}
-              />
+              {activeAssociation?.logo_data || activeAssociation?.logo_url ? (
+                <Image
+                  source={{
+                    uri:
+                      activeAssociation.logo_data || activeAssociation.logo_url,
+                  }}
+                  style={styles.associationLogoImage}
+                />
+              ) : (
+                <Ionicons
+                  name="business-outline"
+                  size={rf(28)}
+                  color={colors.primary}
+                />
+              )}
             </View>
             <View style={styles.associationCardCopy}>
               <Text
@@ -680,11 +691,11 @@ export default function WorkshopHomeScreen({
                 {[v.marca, v.modelo, v.ano].filter(Boolean).join(" ") ||
                   "Unidad sin descripción"}
               </Text>
-              <Text style={[styles.unitAccent, { color: colors.accent }]}>
-                Placa: {v.placa || "Sin placa"}
-              </Text>
               <Text style={[styles.unitCode, { color: colors.primary }]}>
                 Unidad N° {v.numero_unidad || v.id}
+              </Text>
+              <Text style={[styles.unitAccent, { color: colors.accent }]}>
+                Placa: {v.placa || "Sin placa"}
               </Text>
               {v.propietario_nombre || v.propietario_apellido ? (
                 <Text
@@ -754,6 +765,11 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  associationLogoImage: {
+    width: "100%",
+    height: "100%",
   },
   associationCardCopy: { flex: 1, gap: spacing.xs / 2 },
   associationEyebrow: {

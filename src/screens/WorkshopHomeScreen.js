@@ -691,10 +691,10 @@ export default function WorkshopHomeScreen({
                 {[v.marca, v.modelo, v.ano].filter(Boolean).join(" ") ||
                   "Unidad sin descripción"}
               </Text>
-              <Text style={[styles.unitCode, { color: colors.primary }]}>
+              <Text style={[styles.unitCode, { color: colors.accent }]}>
                 Unidad N° {v.numero_unidad || v.id}
               </Text>
-              <Text style={[styles.unitAccent, { color: colors.accent }]}>
+              <Text style={[styles.unitAccent, { color: colors.primary }]}>
                 Placa: {v.placa || "Sin placa"}
               </Text>
               {v.propietario_nombre || v.propietario_apellido ? (
@@ -847,8 +847,8 @@ const styles = StyleSheet.create({
   },
   unitActionText: { fontSize: rf(11), fontWeight: "800" },
   unitTitle: { fontSize: rf(17), fontWeight: "800" },
-  unitAccent: { fontSize: rf(18), fontWeight: "900" },
-  unitCode: { fontSize: rf(14), fontWeight: "800" },
+  unitAccent: { fontSize: rf(14), fontWeight: "900" },
+  unitCode: { fontSize: rf(18), fontWeight: "800" },
   unitMeta: { fontSize: rf(13), lineHeight: rf(18) },
   unitOwner: { fontSize: rf(12), lineHeight: rf(18) },
   emptyBlock: {

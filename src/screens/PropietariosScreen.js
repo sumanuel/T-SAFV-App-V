@@ -631,20 +631,21 @@ export default function PropietariosScreen({
                       />
                       <Text
                         style={[
-                          styles.ownerVehicleAccent,
-                          { color: colors.accent },
-                        ]}
-                      >
-                        Placa: {vehicle.placa || "Sin placa"}
-                      </Text>
-                      <Text
-                        style={[
                           styles.ownerVehicleUnit,
                           { color: colors.text },
                         ]}
                       >
                         Unidad N° {vehicle.numero_unidad || "Sin número"}
                       </Text>
+                      <Text
+                        style={[
+                          styles.ownerVehicleAccent,
+                          { color: colors.accent },
+                        ]}
+                      >
+                        Placa: {vehicle.placa || "Sin placa"}
+                      </Text>
+
                       <Text
                         style={[
                           styles.ownerVehicleMeta,
@@ -862,7 +863,7 @@ const styles = StyleSheet.create({
   },
   ownerVehicleTitle: { fontSize: rf(14), fontWeight: "800" },
   ownerVehicleDivider: { height: 1 },
-  ownerVehicleAccent: { fontSize: rf(15), fontWeight: "900" },
-  ownerVehicleUnit: { fontSize: rf(13), fontWeight: "800" },
+  ownerVehicleAccent: { fontSize: rf(13), fontWeight: "900" },
+  ownerVehicleUnit: { fontSize: rf(15), fontWeight: "800" },
   ownerVehicleMeta: { fontSize: rf(12), lineHeight: rf(18) },
 });

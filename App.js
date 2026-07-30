@@ -14,6 +14,11 @@ import OnboardingScreen, {
   ONBOARDING_STORAGE_KEY,
 } from "./src/screens/OnboardingScreen";
 
+// Pantallas de recuperación de contraseña
+import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
+import VerifyCodeScreen from "./src/screens/VerifyCodeScreen";
+import ResetPasswordScreen from "./src/screens/ResetPasswordScreen";
+
 // Pantallas principales
 import WorkshopHomeScreen from "./src/screens/WorkshopHomeScreen";
 import WorkshopMoreScreen from "./src/screens/WorkshopMoreScreen";
@@ -85,6 +90,10 @@ function AppContent() {
   const [activeScreen, setActiveScreen] = useState(APP_SCREENS.HOME);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Estado para navegación de autenticación
+  const [authScreen, setAuthScreen] = useState("AuthScreen");
+  const [authScreenContext, setAuthScreenContext] = useState({});
 
   // Contextos de formularios
   const [propietarioFormContext, setPropietarioFormContext] = useState({
@@ -275,10 +284,45 @@ function AppContent() {
   }
 
   if (!authUser) {
+    // Handler para navegación entre pantallas de autenticación
+    const handleAuthNavigation = (screen, context = {}) => {
+      setAuthScreen(screen);
+      setAuthScreenContext(context);
+    };
+
+    // Renderizar pantallas de autenticación
+    const renderAuthScreen = () => {
+      if (authScreen === "ForgotPasswordScreen") {
+        return (
+          <ForgotPasswordScreen
+            onNavigate={handleAuthNavigation}
+            screenContext={authScreenContext}
+          />
+        );
+      }
+      if (authScreen === "VerifyCodeScreen") {
+        return (
+          <VerifyCodeScreen
+            onNavigate={handleAuthNavigation}
+            screenContext={authScreenContext}
+          />
+        );
+      }
+      if (authScreen === "ResetPasswordScreen") {
+        return (
+          <ResetPasswordScreen
+            onNavigate={handleAuthNavigation}
+            screenContext={authScreenContext}
+          />
+        );
+      }
+      return <AuthScreen onNavigate={handleAuthNavigation} />;
+    };
+
     return (
       <>
         <StatusBar style={isDarkMode ? "light" : "dark"} />
-        <AuthScreen />
+        {renderAuthScreen()}
       </>
     );
   }

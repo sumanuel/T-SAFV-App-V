@@ -23,7 +23,7 @@ const modes = {
   recovery: "recovery",
 };
 
-export default function AuthScreen() {
+export default function AuthScreen({ onNavigate }) {
   const { authBusy, recoverPassword, signIn, signUp } = useAuth();
   const { colors, isDarkMode } = useTheme();
   const scrollRef = useRef(null);
@@ -634,9 +634,11 @@ export default function AuthScreen() {
               <View style={styles.secondaryLinks}>
                 <Pressable
                   onPress={() => {
-                    resetMessages();
-                    setRecoveryEmail(loginForm.email);
-                    setMode(modes.recovery);
+                    if (onNavigate) {
+                      onNavigate("ForgotPasswordScreen", {
+                        email: loginForm.email,
+                      });
+                    }
                   }}
                   style={({ pressed }) => [
                     styles.linkButton,

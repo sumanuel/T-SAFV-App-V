@@ -11,7 +11,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 //  - Emulador Android:  http://10.0.2.2:3000
 //  - Dispositivo real:  http://<IP_LOCAL>:3000
 //  - iOS Simulator:     http://localhost:3000
-export const API_BASE_URL = "http://192.168.1.2:3000";
+//  - local:     http://192.168.1.2:3000
+//  - Entorno de producción:     "https://api-autoguardian.system-meek.com"
+export const API_BASE_URL = "https://api-autoguardian.system-meek.com";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

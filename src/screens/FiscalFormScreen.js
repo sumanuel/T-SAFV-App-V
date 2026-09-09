@@ -73,6 +73,16 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
       Alert.alert("Datos incompletos", "El nombre es obligatorio.");
       return;
     }
+    if (
+      !form.email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+    ) {
+      Alert.alert(
+        "Datos incompletos",
+        "El correo electronico es obligatorio y debe ser valido.",
+      );
+      return;
+    }
     if (!asociacionId) {
       Alert.alert("Sin asociacion", "Selecciona una asociacion activa.");
       return;
@@ -179,7 +189,7 @@ export default function FiscalFormScreen({ initialFiscal, onBack, onSaved }) {
               },
               {
                 key: "email",
-                label: "Correo electronico",
+                label: "Correo electronico *",
                 placeholder: "correo@ejemplo.com",
                 keyboardType: "email-address",
                 autoCapitalize: "none",

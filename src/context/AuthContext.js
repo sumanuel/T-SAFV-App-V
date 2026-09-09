@@ -100,11 +100,19 @@ export function AuthProvider({ children }) {
         apiGetAssociationCreationAccess(),
         apiGetMyInvitations(),
       ]);
+      const hasAssociations = Boolean(data && data.length > 0);
+      const hasPendingInvitation = Boolean(invitations && invitations.length > 0);
       setAssociations(data || []);
       setPendingInvitation((invitations || [])[0] || null);
       setUserProfile((current) =>
         current
-          ? { ...current, associationCreationAccess: access || null }
+          ? {
+              ...current,
+              associationCreationAccess: access || null,
+              // Sin asociaciones activas pero con invitacion pendiente: mostrar
+              // AccessStatusScreen para que el usuario la vea y pueda aceptarla.
+              status: !hasAssociations && hasPendingInvitation ? "missing" : "active",
+            }
           : current,
       );
       if (data && data.length > 0) {

@@ -102,6 +102,15 @@ export default function WorkshopScreenHeader({
                 name={rightAction.icon || "ellipsis-horizontal"}
                 size={rf(20)}
               />
+              {rightAction.badgeCount > 0 ? (
+                <View
+                  style={[styles.badge, { borderColor: colors.background }]}
+                >
+                  <Text style={styles.badgeText}>
+                    {rightAction.badgeCount > 9 ? "9+" : rightAction.badgeCount}
+                  </Text>
+                </View>
+              ) : null}
             </Pressable>
           ) : (
             <View style={styles.iconButtonSpacer} />
@@ -189,6 +198,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.84)",
   },
   iconButton: {
+    position: "relative",
     width: rf(44),
     height: rf(44),
     borderRadius: borderRadius.pill,
@@ -197,4 +207,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconButtonSpacer: { width: rf(44), height: rf(44) },
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    minWidth: rf(18),
+    height: rf(18),
+    borderRadius: rf(9),
+    borderWidth: 2,
+    backgroundColor: "#e6473f",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: rf(10),
+    fontWeight: "800",
+  },
 });

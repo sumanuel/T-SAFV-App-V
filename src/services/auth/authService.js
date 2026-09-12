@@ -60,6 +60,14 @@ export async function apiGetAssociationCreationAccess() {
   }
 }
 
+export async function apiRegisterPushToken(pushToken) {
+  try {
+    await apiClient.patch("/api/auth/push-token", { push_token: pushToken });
+  } catch (error) {
+    throw new Error(resolveApiError(error));
+  }
+}
+
 export async function apiGetMyInvitations() {
   try {
     const response = await apiClient.get("/api/invitaciones/mine");

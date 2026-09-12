@@ -1,14 +1,16 @@
 ﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, BackHandler, StyleSheet, View } from "react-native";
+import { Alert, AppState, BackHandler, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
+import { getBiometricLockEnabled } from "./src/services/security/biometricAuthService";
 
 // Pantallas de autenticacion y navegacion
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
 import AuthScreen from "./src/screens/AuthScreen";
+import BiometricLockScreen from "./src/screens/BiometricLockScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
 import OnboardingScreen, {
   ONBOARDING_STORAGE_KEY,
@@ -46,6 +48,7 @@ import StockItemFormScreen from "./src/screens/StockItemFormScreen";
 import StockMovementFormScreen from "./src/screens/StockMovementFormScreen";
 import TeamAccessScreen from "./src/screens/TeamAccessScreen";
 import AssociationSettingsScreen from "./src/screens/AssociationSettingsScreen";
+import NotificationsScreen from "./src/screens/NotificationsScreen";
 
 const APP_SCREENS = {
   HOME: "home",
@@ -62,6 +65,7 @@ const APP_SCREENS = {
   STOCK_MOVEMENT_FORM: "stock-movement-form",
   WORKSHOP_SETTINGS: "workshop-settings",
   COLLABORATORS: "collaborators",
+  NOTIFICATIONS: "notifications",
   MORE: "more",
 };
 
@@ -90,6 +94,9 @@ function AppContent() {
   const [activeScreen, setActiveScreen] = useState(APP_SCREENS.HOME);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [biometricLockEnabled, setBiometricLockEnabledFlag] = useState(false);
+  const [lockChecked, setLockChecked] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   // Estado para navegación de autenticación
   const [authScreen, setAuthScreen] = useState("AuthScreen");
@@ -139,6 +146,41 @@ function AppContent() {
     };
     load();
   }, []);
+
+  // Bloqueo con huella/Face ID: si el usuario lo activo en Mas > Configuracion,
+  // se exige desbloquear cada vez que hay una sesion restaurada o la app vuelve
+  // de segundo plano.
+  useEffect(() => {
+    let cancelled = false;
+    if (!authReady) return undefined;
+    if (!authUser) {
+      setLockChecked(true);
+      setIsLocked(false);
+      return undefined;
+    }
+    (async () => {
+      const enabled = await getBiometricLockEnabled();
+      if (cancelled) return;
+      setBiometricLockEnabledFlag(enabled);
+      setIsLocked(enabled);
+      setLockChecked(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, authUser?.id]);
+
+  useEffect(() => {
+    if (!biometricLockEnabled) return undefined;
+    let previousState = AppState.currentState;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (/background/.test(previousState) && nextState === "active") {
+        setIsLocked(true);
+      }
+      previousState = nextState;
+    });
+    return () => subscription.remove();
+  }, [biometricLockEnabled]);
 
   // Limpiar estado al cambiar de usuario
   useEffect(() => {
@@ -231,6 +273,10 @@ function AppContent() {
           return true;
         }
         if (activeScreen === APP_SCREENS.TRAZA) {
+          setActiveScreen(APP_SCREENS.HOME);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.NOTIFICATIONS) {
           setActiveScreen(APP_SCREENS.HOME);
           return true;
         }
@@ -327,6 +373,27 @@ function AppContent() {
     );
   }
 
+  if (!lockChecked) {
+    return (
+      <>
+        <StatusBar style={isDarkMode ? "light" : "dark"} />
+        <LoadingScreen />
+      </>
+    );
+  }
+
+  if (isLocked) {
+    return (
+      <>
+        <StatusBar style={isDarkMode ? "light" : "dark"} />
+        <BiometricLockScreen
+          onUnlock={() => setIsLocked(false)}
+          onSignOut={signOutUser}
+        />
+      </>
+    );
+  }
+
   if (!userProfile || profileStatus !== "active") {
     return (
       <>
@@ -389,11 +456,16 @@ function AppContent() {
             setTrazaViewState({ unit: vehicle || null });
             setActiveScreen(APP_SCREENS.TRAZA);
           }}
+          onOpenNotifications={() => setActiveScreen(APP_SCREENS.NOTIFICATIONS)}
           onSignOut={signOutUser}
           currentRole={currentRole}
           userProfile={userProfile}
         />
       );
+    }
+
+    if (activeScreen === APP_SCREENS.NOTIFICATIONS) {
+      return <NotificationsScreen onBack={() => setActiveScreen(APP_SCREENS.HOME)} />;
     }
 
     if (activeScreen === APP_SCREENS.PROPIETARIOS) {
@@ -653,6 +725,7 @@ function AppContent() {
           setFiscalRecordContext({ unit: vehicle || null });
           setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);
         }}
+        onOpenNotifications={() => setActiveScreen(APP_SCREENS.NOTIFICATIONS)}
         onSignOut={signOutUser}
         currentRole={currentRole}
         userProfile={userProfile}

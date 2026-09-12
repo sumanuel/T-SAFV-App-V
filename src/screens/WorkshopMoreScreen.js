@@ -1,10 +1,13 @@
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
@@ -13,6 +16,12 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { hasPermission } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import {
+  authenticateWithBiometrics,
+  getBiometricLockEnabled,
+  isBiometricHardwareAvailable,
+  setBiometricLockEnabled,
+} from "../services/security/biometricAuthService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 const administrativeItems = [
@@ -182,6 +191,43 @@ export default function WorkshopMoreScreen({
     userProfile,
   } = useAuth();
   const appVersion = Constants?.expoConfig?.version || "-";
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const [available, enabled] = await Promise.all([
+        isBiometricHardwareAvailable(),
+        getBiometricLockEnabled(),
+      ]);
+      setBiometricAvailable(available);
+      setBiometricEnabled(available && enabled);
+    })();
+  }, []);
+
+  const handleToggleBiometric = async (value) => {
+    if (biometricBusy) return;
+    setBiometricBusy(true);
+    try {
+      if (value) {
+        const confirmed = await authenticateWithBiometrics(
+          "Confirma tu huella o Face ID para activar el desbloqueo",
+        );
+        if (!confirmed) {
+          Alert.alert(
+            "Desbloqueo con huella",
+            "No se pudo verificar tu identidad. Intenta de nuevo.",
+          );
+          return;
+        }
+      }
+      await setBiometricLockEnabled(value);
+      setBiometricEnabled(value);
+    } finally {
+      setBiometricBusy(false);
+    }
+  };
   const activeMembership = getPrimaryMembership(memberships, activeWorkshopId);
   const associationName =
     activeAssociation?.nombre ||
@@ -408,6 +454,35 @@ export default function WorkshopMoreScreen({
                 size={rf(18)}
               />
             </Pressable>
+
+            {biometricAvailable ? (
+              <View
+                style={[
+                  styles.actionRow,
+                  {
+                    borderBottomColor: colors.border,
+                    backgroundColor: colors.cardMuted,
+                  },
+                ]}
+              >
+                <View style={styles.actionCopy}>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>
+                    Desbloquear con huella
+                  </Text>
+                  <Text
+                    style={[styles.actionMeta, { color: colors.textSecondary }]}
+                  >
+                    Pide huella o Face ID cada vez que abres la app.
+                  </Text>
+                </View>
+                <Switch
+                  disabled={biometricBusy}
+                  onValueChange={handleToggleBiometric}
+                  value={biometricEnabled}
+                  trackColor={{ true: colors.primary }}
+                />
+              </View>
+            ) : null}
 
             <Pressable
               onPress={onSignOut}

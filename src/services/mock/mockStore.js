@@ -20,13 +20,13 @@ function now() {
 
 const WORKSHOP = {
   id: "workshop-1",
-  name: "Taller Demo T-SAFV",
+  name: "Asociación Demo T-SAFV",
   phone: "0414-1234567",
-  email: "taller@tsafv.com",
+  email: "contacto@tsafv.com",
   address: "Caracas, Venezuela",
   rif: "J-12345678-9",
   logoUrl: null,
-  commercialNotes: "Taller de demostración operativa.",
+  commercialNotes: "Asociación de demostración operativa.",
   status: "active",
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),

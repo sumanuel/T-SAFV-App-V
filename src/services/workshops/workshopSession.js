@@ -15,7 +15,7 @@ export function requireActiveWorkshopId() {
 export function getActiveWorkshopSession() {
   return {
     workshopId: MOCK_WORKSHOP_ID,
-    workshopName: "Taller Demo T-SAFV",
+    workshopName: "Asociación Demo T-SAFV",
     role: "administrator",
   };
 }

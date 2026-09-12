@@ -16,7 +16,7 @@ export default function LoadingScreen() {
           Preparando acceso
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Verificando sesion y perfil del taller.
+          Verificando sesion y perfil de la asociación.
         </Text>
       </View>
     </SafeAreaView>

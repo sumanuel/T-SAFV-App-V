@@ -5,6 +5,11 @@
  * estructura de respuesta { status, data } para compatibilidad directa.
  */
 import { API_BASE_URL } from "./apiClient";
+import { notifySessionExpired } from "../auth/sessionExpiry";
+
+function checkSessionExpired(status) {
+  if (status === 401) notifySessionExpired();
+}
 
 async function apiGet(path, token) {
   const headers = {};
@@ -12,6 +17,7 @@ async function apiGet(path, token) {
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, { headers });
     const data = await res.json().catch(() => null);
+    checkSessionExpired(res.status);
     return { status: res.status, data };
   } catch (error) {
     return { status: 0, data: null, error };
@@ -28,6 +34,7 @@ async function apiPost(path, body, token) {
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
+    checkSessionExpired(res.status);
     return { status: res.status, data };
   } catch (error) {
     return { status: 0, data: null, error };
@@ -44,6 +51,24 @@ async function apiPut(path, body, token) {
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
+    checkSessionExpired(res.status);
+    return { status: res.status, data };
+  } catch (error) {
+    return { status: 0, data: null, error };
+  }
+}
+
+async function apiPatch(path, body, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => null);
+    checkSessionExpired(res.status);
     return { status: res.status, data };
   } catch (error) {
     return { status: 0, data: null, error };
@@ -59,6 +84,7 @@ async function apiDelete(path, token) {
       headers,
     });
     const data = await res.json().catch(() => null);
+    checkSessionExpired(res.status);
     return { status: res.status, data };
   } catch (error) {
     return { status: 0, data: null, error };
@@ -257,6 +283,25 @@ export function createFiscalRecord(token, payload) {
   return apiPost("/api/fiscal/registros", payload, token);
 }
 
+// ─── Notificaciones ───────────────────────────────────────────────────────────
+
+export function updatePushToken(token, pushToken) {
+  return apiPatch("/api/auth/push-token", { push_token: pushToken }, token);
+}
+
+export function getMyNotifications(token, limit) {
+  const query = buildQueryString({ limit });
+  return apiGet(`/api/notificaciones/mine${query}`, token);
+}
+
+export function markNotificationRead(token, notificacionId) {
+  return apiPatch(`/api/notificaciones/${notificacionId}/leida`, {}, token);
+}
+
+export function markAllNotificationsRead(token) {
+  return apiPatch("/api/notificaciones/leidas", {}, token);
+}
+
 export default {
   register,
   login,
@@ -285,4 +330,8 @@ export default {
   getOwnerUnitTraceability,
   getAssociationTraceability,
   createFiscalRecord,
+  updatePushToken,
+  getMyNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
 };

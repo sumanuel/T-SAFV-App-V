@@ -9,18 +9,23 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   useEffect,
 } from "react";
+import { Alert } from "react-native";
 import {
   apiAcceptInvitation,
   apiGetAssociationCreationAccess,
   apiGetMyInvitations,
   apiLogin,
   apiRegister,
+  apiRegisterPushToken,
 } from "../services/auth/authService";
 import { getMyAssociations } from "../services/associations/associationService";
 import { getWorkshop } from "../services/mock/mockStore";
+import { setSessionExpiredHandler } from "../services/auth/sessionExpiry";
+import { registerForPushNotificationsAsync } from "../services/notifications/pushNotificationService";
 
 const AuthContext = createContext();
 
@@ -77,6 +82,7 @@ export function AuthProvider({ children }) {
   const [associations, setAssociations] = useState([]);
   const [activeAssociationId, setActiveAssociationIdState] = useState(null);
   const [pendingInvitation, setPendingInvitation] = useState(null);
+  const [associationsLoadError, setAssociationsLoadError] = useState(false);
   const [activeWorkshop] = useState(WORKSHOP);
 
   const activeAssociation = useMemo(
@@ -100,6 +106,7 @@ export function AuthProvider({ children }) {
         apiGetAssociationCreationAccess(),
         apiGetMyInvitations(),
       ]);
+      setAssociationsLoadError(false);
       const hasAssociations = Boolean(data && data.length > 0);
       const hasPendingInvitation = Boolean(invitations && invitations.length > 0);
       setAssociations(data || []);
@@ -124,7 +131,21 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error("Error loading associations:", error);
+      setAssociationsLoadError(true);
     }
+  }, []);
+
+  // Registra el push token del dispositivo en el backend (silencioso: no debe
+  // bloquear ni romper el flujo de login si falla o el usuario no dio permiso).
+  const syncPushToken = useCallback(() => {
+    (async () => {
+      try {
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken) await apiRegisterPushToken(pushToken);
+      } catch (error) {
+        console.error("No se pudo registrar el push token:", error?.message);
+      }
+    })();
   }, []);
 
   const setActiveAssociationId = useCallback(async (id) => {
@@ -177,6 +198,21 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  // Notificacion global de sesion vencida (token 401): cierra sesion en vez de
+  // dejar a la app en un estado inconsistente (ej: pantalla de crear/activar
+  // prueba pese a que el usuario ya tiene asociacion).
+  const signOutUserRef = useRef(null);
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      Alert.alert(
+        "Sesión expirada",
+        "Tu sesión ha expirado. Por favor inicia sesión nuevamente.",
+      );
+      signOutUserRef.current?.();
+    });
+    return () => setSessionExpiredHandler(null);
+  }, []);
+
   // Restaurar sesion desde AsyncStorage
   useEffect(() => {
     const restoreSession = async () => {
@@ -192,6 +228,7 @@ export function AuthProvider({ children }) {
           setAuthUser(user);
           setUserProfile(mapApiUserToProfile(user));
           await loadAssociations(storedToken);
+          syncPushToken();
         }
       } catch (error) {
         console.error("Error restoring session:", error);
@@ -201,7 +238,7 @@ export function AuthProvider({ children }) {
     };
 
     restoreSession();
-  }, [loadAssociations]);
+  }, [loadAssociations, syncPushToken]);
 
   const signIn = async ({ email, password }) => {
     setAuthBusy(true);
@@ -215,6 +252,7 @@ export function AuthProvider({ children }) {
       setAuthUser(user);
       setUserProfile(mapApiUserToProfile(user));
       await loadAssociations(jwt);
+      syncPushToken();
     } finally {
       setAuthBusy(false);
     }
@@ -244,6 +282,7 @@ export function AuthProvider({ children }) {
       setAuthUser(user);
       setUserProfile(mapApiUserToProfile(user));
       await loadAssociations(jwt);
+      syncPushToken();
     } finally {
       setAuthBusy(false);
     }
@@ -271,10 +310,12 @@ export function AuthProvider({ children }) {
       setUserProfile(null);
       setAssociations([]);
       setActiveAssociationIdState(null);
+      setAssociationsLoadError(false);
     } finally {
       setAuthBusy(false);
     }
   };
+  signOutUserRef.current = signOutUser;
 
   const activateInvitation = async () => {
     throw new Error("Activacion por invitacion no disponible en esta version.");
@@ -321,6 +362,7 @@ export function AuthProvider({ children }) {
       activeWorkshop,
       activeWorkshopId,
       associations,
+      associationsLoadError,
       authBusy,
       authReady,
       authUser,
@@ -344,6 +386,7 @@ export function AuthProvider({ children }) {
     [
       activeAssociation,
       associations,
+      associationsLoadError,
       authBusy,
       authReady,
       authUser,

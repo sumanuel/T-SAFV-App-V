@@ -6,6 +6,7 @@
  */
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { notifySessionExpired } from "../auth/sessionExpiry";
 
 // Ajusta según tu entorno:
 //  - Emulador Android:  http://10.0.2.2:3000
@@ -35,5 +36,16 @@ apiClient.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Interceptor: si el token fue rechazado (401), la sesion se considera vencida
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      notifySessionExpired();
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;

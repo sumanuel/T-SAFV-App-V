@@ -4,6 +4,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +18,7 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { createAssociation } from "../services/associations/associationService";
+import { getMyNotifications } from "../services/notifications/notificationService";
 import {
   listMyVehicles,
   listVehicles,
@@ -27,6 +30,7 @@ export default function WorkshopHomeScreen({
   onOpenFiscales,
   onOpenTraza,
   onOpenFiscalRecord,
+  onOpenNotifications,
   currentRole,
   userProfile,
 }) {
@@ -34,6 +38,7 @@ export default function WorkshopHomeScreen({
   const {
     token,
     associations,
+    associationsLoadError,
     activeAssociation,
     activeAssociationId,
     pendingInvitation,
@@ -42,6 +47,7 @@ export default function WorkshopHomeScreen({
   } = useAuth();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAsocName, setNewAsocName] = useState("");
@@ -52,6 +58,7 @@ export default function WorkshopHomeScreen({
   const [newAsocLogoUrl, setNewAsocLogoUrl] = useState("");
   const [newAsocSocialText, setNewAsocSocialText] = useState("");
   const [creating, setCreating] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const hasAssociation = associations.length > 0;
   const associationCreationAccess = userProfile?.associationCreationAccess;
   const canCreateAssociation = associationCreationAccess?.allowed !== false;
@@ -77,6 +84,13 @@ export default function WorkshopHomeScreen({
   useEffect(() => {
     refreshUnits();
   }, [activeAssociationId]);
+
+  useEffect(() => {
+    if (!token) return;
+    getMyNotifications(token, 1)
+      .then((result) => setUnreadNotifications(result.no_leidas || 0))
+      .catch(() => {});
+  }, [token]);
 
   const filtered = vehicles.filter((v) => {
     const q = searchQuery.trim().toLowerCase();
@@ -150,12 +164,85 @@ export default function WorkshopHomeScreen({
     }
   };
 
-  if (!hasAssociation) {
+  if (!hasAssociation && associationsLoadError) {
     return (
       <SafeAreaView
         style={[styles.safe, { backgroundColor: colors.background }]}
       >
         <ScrollView contentContainerStyle={styles.container}>
+          <WorkshopScreenHeader
+            section="Fiscalización"
+            title="T-SAFV"
+            subtitle="Sistema operativo para control y fiscalización de unidades."
+          />
+          <View
+            style={[
+              styles.noAssocBlock,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Ionicons
+              name="cloud-offline-outline"
+              size={rf(40)}
+              color={colors.textTertiary}
+            />
+            <Text style={[styles.noAssocTitle, { color: colors.text }]}>
+              No se pudo cargar tu información
+            </Text>
+            <Text style={[styles.noAssocMsg, { color: colors.textSecondary }]}>
+              Ocurrió un problema al conectar con el servidor. Verifica tu
+              conexión e intenta de nuevo.
+            </Text>
+            <Pressable
+              disabled={retrying}
+              onPress={async () => {
+                setRetrying(true);
+                try {
+                  await refreshAssociations();
+                } finally {
+                  setRetrying(false);
+                }
+              }}
+              style={[
+                styles.createAssocBtn,
+                { backgroundColor: colors.primary, opacity: retrying ? 0.7 : 1 },
+              ]}
+            >
+              {retrying ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons
+                  name="refresh-outline"
+                  size={rf(18)}
+                  color={colors.white}
+                />
+              )}
+              <Text style={[styles.createAssocBtnText, { color: colors.white }]}>
+                Reintentar
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (!hasAssociation) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: colors.background }]}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <WorkshopScreenHeader
             section="Fiscalización"
             title="T-SAFV"
@@ -482,6 +569,7 @@ export default function WorkshopHomeScreen({
             </View>
           )}
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -494,6 +582,15 @@ export default function WorkshopHomeScreen({
           section="Fiscalización"
           title="T-SAFV"
           subtitle="Sistema operativo para control y fiscalización de unidades."
+          rightAction={
+            onOpenNotifications
+              ? {
+                  icon: "notifications-outline",
+                  onPress: onOpenNotifications,
+                  badgeCount: unreadNotifications,
+                }
+              : undefined
+          }
         />
         <View
           style={[

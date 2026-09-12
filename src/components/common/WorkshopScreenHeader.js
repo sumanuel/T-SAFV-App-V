@@ -71,7 +71,7 @@ export default function WorkshopScreenHeader({
         end={{ x: 1, y: 1 }}
         style={[
           styles.heroSurface,
-          { paddingTop: Math.max(insets.top, spacing.md) + spacing.sm },
+          { paddingTop: Math.max(insets.top, spacing.sm) },
         ]}
       >
         {onBack || rightAction ? (
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   heroSurface: {
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
+    paddingBottom: spacing.lg,
   },
   heroRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   heroBadge: {
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
   },
   heroIconButton: {
     position: "relative",
-    width: rf(40),
-    height: rf(40),
+    width: rf(36),
+    height: rf(36),
     borderRadius: borderRadius.pill,
     backgroundColor: "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
-  iconButtonSpacer: { width: rf(40), height: rf(40) },
+  iconButtonSpacer: { width: rf(36), height: rf(36) },
   badge: {
     position: "absolute",
     top: -2,

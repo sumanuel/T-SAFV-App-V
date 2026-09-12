@@ -59,71 +59,54 @@ export default function WorkshopScreenHeader({
   badgeIcon,
   badgeImageSource,
 }) {
-  const { colors, isDarkMode } = useTheme();
+  const { isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
   const headerTone = getHeaderTone(section, isDarkMode);
 
   return (
-    <View
-      style={[styles.wrapper, { paddingTop: Math.max(insets.top, spacing.md) }]}
-    >
-      {onBack || rightAction ? (
-        <View style={styles.topRow}>
-          {onBack ? (
-            <Pressable
-              onPress={onBack}
-              style={[
-                styles.iconButton,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Ionicons color={colors.text} name="arrow-back" size={rf(20)} />
-            </Pressable>
-          ) : (
-            <View style={styles.iconButtonSpacer} />
-          )}
-
-          {rightAction ? (
-            <Pressable
-              onPress={rightAction.onPress}
-              style={[
-                styles.iconButton,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Ionicons
-                color={rightAction.color || colors.text}
-                name={rightAction.icon || "ellipsis-horizontal"}
-                size={rf(20)}
-              />
-              {rightAction.badgeCount > 0 ? (
-                <View
-                  style={[styles.badge, { borderColor: colors.background }]}
-                >
-                  <Text style={styles.badgeText}>
-                    {rightAction.badgeCount > 9 ? "9+" : rightAction.badgeCount}
-                  </Text>
-                </View>
-              ) : null}
-            </Pressable>
-          ) : (
-            <View style={styles.iconButtonSpacer} />
-          )}
-        </View>
-      ) : null}
-
+    <View style={styles.wrapper}>
       <LinearGradient
         colors={headerTone.colors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.heroSurface}
+        style={[
+          styles.heroSurface,
+          { paddingTop: Math.max(insets.top, spacing.md) + spacing.sm },
+        ]}
       >
+        {onBack || rightAction ? (
+          <View style={styles.topRow}>
+            {onBack ? (
+              <Pressable onPress={onBack} style={styles.heroIconButton}>
+                <Ionicons color="#ffffff" name="arrow-back" size={rf(20)} />
+              </Pressable>
+            ) : (
+              <View style={styles.iconButtonSpacer} />
+            )}
+
+            {rightAction ? (
+              <Pressable onPress={rightAction.onPress} style={styles.heroIconButton}>
+                <Ionicons
+                  color={rightAction.color || "#ffffff"}
+                  name={rightAction.icon || "ellipsis-horizontal"}
+                  size={rf(20)}
+                />
+                {rightAction.badgeCount > 0 ? (
+                  <View
+                    style={[styles.badge, { borderColor: headerTone.colors[0] }]}
+                  >
+                    <Text style={styles.badgeText}>
+                      {rightAction.badgeCount > 9 ? "9+" : rightAction.badgeCount}
+                    </Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            ) : (
+              <View style={styles.iconButtonSpacer} />
+            )}
+          </View>
+        ) : null}
+
         <View style={styles.heroRow}>
           <View style={styles.heroBadge}>
             {badgeImageSource ? (
@@ -159,6 +142,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+    marginBottom: spacing.md,
   },
   heroSurface: {
     borderRadius: borderRadius.xl,
@@ -197,16 +181,16 @@ const styles = StyleSheet.create({
     lineHeight: rf(17),
     color: "rgba(255,255,255,0.84)",
   },
-  iconButton: {
+  heroIconButton: {
     position: "relative",
-    width: rf(44),
-    height: rf(44),
+    width: rf(40),
+    height: rf(40),
     borderRadius: borderRadius.pill,
-    borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
-  iconButtonSpacer: { width: rf(44), height: rf(44) },
+  iconButtonSpacer: { width: rf(40), height: rf(40) },
   badge: {
     position: "absolute",
     top: -2,

@@ -226,7 +226,6 @@ export default function TrazaScreen({
           }}
         />
 
-        {/* Filtros */}
         <View
           style={[
             styles.filtersCard,
@@ -236,10 +235,6 @@ export default function TrazaScreen({
             },
           ]}
         >
-          <Text style={[styles.filterTitle, { color: colors.text }]}>
-            Filtros
-          </Text>
-
           {selectedUnitId ? (
             <View
               style={[
@@ -485,7 +480,7 @@ export default function TrazaScreen({
                   ]}
                 >
                   <Text style={[styles.unitText, { color: colors.primary }]}>
-                    {item.placa || item.numero_unidad || "—"}
+                    {item.numero_unidad || item.placa || "—"}
                   </Text>
                 </View>
                 <Text
@@ -598,7 +593,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
   },
-  filterTitle: { fontSize: rf(14), fontWeight: "800" },
   dateRow: { flexDirection: "row", gap: spacing.sm },
   dateField: { flex: 1, gap: spacing.xs },
   inputLabel: { fontSize: rf(11), fontWeight: "700" },

@@ -435,18 +435,6 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.HOME) {
       return (
         <WorkshopHomeScreen
-          onOpenPropietarios={() => {
-            setPropietariosViewState({
-              selectedClientId: null,
-              screenMode: "list",
-            });
-            setActiveScreen(APP_SCREENS.PROPIETARIOS);
-          }}
-          onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
-          onOpenTraza={() => {
-            setTrazaViewState({ unit: null });
-            setActiveScreen(APP_SCREENS.TRAZA);
-          }}
           onOpenFiscalRecord={(vehicle) => {
             if (isFiscalUser) {
               setFiscalRecordContext({ unit: vehicle || null });
@@ -715,12 +703,6 @@ function AppContent() {
     // default: HOME
     return (
       <WorkshopHomeScreen
-        onOpenPropietarios={() => setActiveScreen(APP_SCREENS.PROPIETARIOS)}
-        onOpenFiscales={() => setActiveScreen(APP_SCREENS.FISCALES)}
-        onOpenTraza={() => {
-          setTrazaViewState({ unit: null });
-          setActiveScreen(APP_SCREENS.TRAZA);
-        }}
         onOpenFiscalRecord={(vehicle) => {
           setFiscalRecordContext({ unit: vehicle || null });
           setActiveScreen(APP_SCREENS.FISCAL_RECORD_FORM);

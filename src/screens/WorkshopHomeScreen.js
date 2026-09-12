@@ -26,9 +26,6 @@ import {
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 export default function WorkshopHomeScreen({
-  onOpenPropietarios,
-  onOpenFiscales,
-  onOpenTraza,
   onOpenFiscalRecord,
   onOpenNotifications,
   currentRole,
@@ -671,53 +668,6 @@ export default function WorkshopHomeScreen({
                     : userProfile?.role || "Sin perfil"}
             </Text>
           </View>
-
-          <View style={styles.quickActionInlineRow}>
-            {[
-              !isFiscalUser
-                ? {
-                    icon: "people-outline",
-                    label: isOwnerUser ? "Mis datos" : "Propietarios",
-                    onPress: onOpenPropietarios,
-                  }
-                : null,
-              {
-                icon: "shield-checkmark-outline",
-                label: "Fiscales",
-                onPress: onOpenFiscales,
-              },
-              {
-                icon: "git-merge-outline",
-                label: "Traza",
-                onPress: onOpenTraza,
-              },
-            ]
-              .filter(Boolean)
-              .map((action) => (
-                <Pressable
-                  key={action.label}
-                  onPress={action.onPress}
-                  style={[
-                    styles.inlineAction,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={action.icon}
-                    size={rf(16)}
-                    color={colors.primary}
-                  />
-                  <Text
-                    style={[styles.inlineActionText, { color: colors.text }]}
-                  >
-                    {action.label}
-                  </Text>
-                </Pressable>
-              ))}
-          </View>
         </View>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Unidades activas
@@ -894,21 +844,6 @@ const styles = StyleSheet.create({
   associationInfoList: { gap: spacing.xs },
   associationInfoText: { fontSize: rf(13), lineHeight: rf(18) },
   associationInfoStrong: { fontWeight: "800" },
-  quickActionInlineRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  inlineAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    borderWidth: 1,
-    borderRadius: borderRadius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  inlineActionText: { fontSize: rf(12), fontWeight: "700" },
   sectionTitle: {
     fontSize: rf(15),
     fontWeight: "800",

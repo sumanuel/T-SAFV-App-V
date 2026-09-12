@@ -59,7 +59,9 @@ export default function AuthScreen({ onNavigate }) {
       page: colors.background,
       surface: colors.cardBackground,
       surfaceAlt: colors.cardMuted,
-      accent: colors.primary,
+      // Mismo azul que el header (WorkshopScreenHeader) para mantener
+      // consistencia visual entre pantallas.
+      accent: isDarkMode ? "#1350a7" : "#0f5fd2",
       accentStrong: colors.primaryStrong,
       accentSoft: isDarkMode
         ? "rgba(255,255,255,0.12)"

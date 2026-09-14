@@ -15,7 +15,10 @@ import { Platform } from "react-native";
 let notificationsModulePromise = null;
 
 function loadNotifications() {
-  if (isRunningInExpoGo()) return Promise.resolve(null);
+  if (isRunningInExpoGo()) {
+    console.log("[push] omitido: corriendo en Expo Go");
+    return Promise.resolve(null);
+  }
 
   if (!notificationsModulePromise) {
     notificationsModulePromise = import("expo-notifications").then(
@@ -38,18 +41,24 @@ function loadNotifications() {
 }
 
 export async function registerForPushNotificationsAsync() {
+  console.log("[push] iniciando registro de push token...");
   try {
     const Notifications = await loadNotifications();
     if (!Notifications) return null;
 
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
+    console.log("[push] permiso actual:", existingStatus);
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
+      console.log("[push] permiso tras solicitarlo:", status);
       finalStatus = status;
     }
-    if (finalStatus !== "granted") return null;
+    if (finalStatus !== "granted") {
+      console.log("[push] omitido: permiso no concedido:", finalStatus);
+      return null;
+    }
 
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {
@@ -61,12 +70,14 @@ export async function registerForPushNotificationsAsync() {
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ||
       Constants.easConfig?.projectId;
+    console.log("[push] projectId usado:", projectId);
     const tokenResponse = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined,
     );
+    console.log("[push] token obtenido:", tokenResponse.data);
     return tokenResponse.data;
   } catch (error) {
-    console.error("No se pudo obtener el push token:", error?.message);
+    console.error("[push] No se pudo obtener el push token:", error);
     return null;
   }
 }

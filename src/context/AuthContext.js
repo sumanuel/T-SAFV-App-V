@@ -141,9 +141,15 @@ export function AuthProvider({ children }) {
     (async () => {
       try {
         const pushToken = await registerForPushNotificationsAsync();
-        if (pushToken) await apiRegisterPushToken(pushToken);
+        if (!pushToken) {
+          console.log("[push] sin token, no se llama al backend");
+          return;
+        }
+        console.log("[push] enviando token al backend...");
+        await apiRegisterPushToken(pushToken);
+        console.log("[push] token registrado en el backend con exito");
       } catch (error) {
-        console.error("No se pudo registrar el push token:", error?.message);
+        console.error("[push] No se pudo registrar el push token:", error);
       }
     })();
   }, []);

@@ -23,6 +23,8 @@ out/
 .DS_Store
 *.pem
 *.key
+google-services.json
+GoogleService-Info.plist
 .vscode/settings.json
 .vscode/launch.json
 *.log

@@ -302,6 +302,14 @@ export function markAllNotificationsRead(token) {
   return apiPatch("/api/notificaciones/leidas", {}, token);
 }
 
+export function deleteNotification(token, notificacionId) {
+  return apiDelete(`/api/notificaciones/${notificacionId}`, token);
+}
+
+export function deleteAllNotifications(token) {
+  return apiDelete("/api/notificaciones/all", token);
+}
+
 export default {
   register,
   login,
@@ -334,4 +342,6 @@ export default {
   getMyNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
+  deleteAllNotifications,
 };

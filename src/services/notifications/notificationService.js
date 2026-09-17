@@ -31,3 +31,19 @@ export async function markAllNotificationsRead(token) {
   }
   return res.data;
 }
+
+export async function deleteNotification(token, notificacionId) {
+  const res = await sdk.deleteNotification(token, notificacionId);
+  if (res.status !== 200) {
+    throw new Error(resolveError(res, "No se pudo eliminar la notificación."));
+  }
+  return res.data;
+}
+
+export async function deleteAllNotifications(token) {
+  const res = await sdk.deleteAllNotifications(token);
+  if (res.status !== 200) {
+    throw new Error(resolveError(res, "No se pudieron eliminar las notificaciones."));
+  }
+  return res.data;
+}

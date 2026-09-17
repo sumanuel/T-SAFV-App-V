@@ -15,6 +15,8 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import {
+  deleteAllNotifications,
+  deleteNotification,
   getMyNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -108,6 +110,69 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
     }
   };
 
+  const handleDeleteNotification = (notification) => {
+    Alert.alert(
+      "Eliminar notificación",
+      "¿Quieres eliminar esta notificación?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            const previous = notifications;
+            setNotifications((current) =>
+              current.filter((item) => item.id !== notification.id),
+            );
+            if (!notification.leida) {
+              onUnreadCountChange?.(
+                Math.max(0, previous.filter((n) => !n.leida).length - 1),
+              );
+            }
+            try {
+              await deleteNotification(token, notification.id);
+            } catch (error) {
+              setNotifications(previous);
+              Alert.alert(
+                "Notificaciones",
+                error?.message || "No se pudo eliminar la notificación.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDeleteAll = () => {
+    if (!notifications.length) return;
+    Alert.alert(
+      "Eliminar todas",
+      "¿Quieres eliminar todas tus notificaciones? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar todas",
+          style: "destructive",
+          onPress: async () => {
+            const previous = notifications;
+            setNotifications([]);
+            onUnreadCountChange?.(0);
+            try {
+              await deleteAllNotifications(token);
+            } catch (error) {
+              setNotifications(previous);
+              Alert.alert(
+                "Notificaciones",
+                error?.message || "No se pudieron eliminar las notificaciones.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const unreadCount = notifications.filter((item) => !item.leida).length;
 
   return (
@@ -123,6 +188,11 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
           section="Notificaciones"
           title="Notificaciones"
           subtitle="Avisos sobre tus unidades, invitaciones y periodo de prueba."
+          rightAction={
+            notifications.length > 0
+              ? { icon: "trash-outline", onPress: handleDeleteAll }
+              : undefined
+          }
         />
 
         {unreadCount > 0 ? (
@@ -217,6 +287,17 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
                     {formatDateTime(item.created_at)}
                   </Text>
                 </View>
+                <Pressable
+                  hitSlop={8}
+                  onPress={() => handleDeleteNotification(item)}
+                  style={styles.deleteBtn}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={rf(16)}
+                    color={colors.textTertiary}
+                  />
+                </Pressable>
               </Pressable>
             ))}
           </View>
@@ -275,4 +356,5 @@ const styles = StyleSheet.create({
   dot: { width: rf(8), height: rf(8), borderRadius: rf(4) },
   cardBody: { fontSize: rf(13), lineHeight: rf(18) },
   cardMeta: { fontSize: rf(11), marginTop: 2 },
+  deleteBtn: { alignSelf: "center", padding: spacing.xs },
 });

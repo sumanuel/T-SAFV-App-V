@@ -138,6 +138,12 @@ export default function TrazaScreen({
     });
   }, [items, searchQuery, selectedFiscalId, selectedUnitId]);
 
+  const totalPasajeros = useMemo(
+    () =>
+      filtered.reduce((sum, item) => sum + (Number(item.pasajeros) || 0), 0),
+    [filtered],
+  );
+
   const exportTraza = async () => {
     if (!filtered.length) return;
     const header = [
@@ -442,8 +448,8 @@ export default function TrazaScreen({
             ]}
           >
             <Text style={[styles.countText, { color: colors.primary }]}>
-              {filtered.length}{" "}
-              {filtered.length === 1 ? "registro" : "registros"}
+              {totalPasajeros}{" "}
+              {totalPasajeros === 1 ? "pasajero" : "pasajeros"}
             </Text>
             <Pressable onPress={refreshData} style={styles.refreshBtn}>
               <Ionicons

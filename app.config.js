@@ -46,6 +46,7 @@ module.exports = {
         "expo-splash-screen",
         {
           image: "./assets/splash.png",
+          imageWidth: 220,
           resizeMode: "contain",
           backgroundColor: "#09111a",
         },

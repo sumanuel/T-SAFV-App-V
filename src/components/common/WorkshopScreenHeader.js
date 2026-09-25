@@ -119,7 +119,7 @@ export default function WorkshopScreenHeader({
               <Ionicons
                 color="#D6E7FF"
                 name={badgeIcon || headerTone.icon}
-                size={rf(26)}
+                size={rf(40)}
               />
             )}
           </View>
@@ -151,16 +151,17 @@ const styles = StyleSheet.create({
   },
   heroRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   heroBadge: {
-    width: rf(54),
-    height: rf(54),
-    borderRadius: borderRadius.lg,
+    width: rf(92),
+    height: rf(92),
+    borderRadius: borderRadius.xl,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.14)",
   },
   badgeImage: {
-    width: "78%",
-    height: "78%",
+    width: "90%",
+    height: "90%",
+    borderRadius: borderRadius.md,
   },
   titleWrap: { flex: 1, gap: spacing.xs / 2 },
   section: {

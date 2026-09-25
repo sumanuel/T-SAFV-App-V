@@ -264,7 +264,6 @@ export default function WorkshopMoreScreen({
 
   return (
     <SafeAreaView
-      edges={["left", "right", "bottom"]}
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -591,9 +590,9 @@ export default function WorkshopMoreScreen({
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    gap: spacing.xl,
+    padding: spacing.md,
+    paddingBottom: spacing.xxl * 2,
+    gap: spacing.md,
   },
   heroCard: {
     borderWidth: 1,
@@ -652,17 +651,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   aboutLogoWrap: {
-    width: rf(72),
-    height: rf(72),
-    borderRadius: borderRadius.lg,
+    width: rf(92),
+    height: rf(92),
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: spacing.sm,
+    padding: spacing.xs,
   },
   aboutLogo: {
     width: "100%",
     height: "100%",
+    borderRadius: borderRadius.md,
   },
   aboutCopy: {
     flex: 1,

@@ -13,8 +13,8 @@ import { notifySessionExpired } from "../auth/sessionExpiry";
 //  - Dispositivo real:  http://<IP_LOCAL>:3000
 //  - iOS Simulator:     http://localhost:3000
 //  - local:     http://192.168.1.2:3000
-//  - Entorno de producción:     "https://api-autoguardian.system-meek.com"
-export const API_BASE_URL = "https://api-autoguardian.system-meek.com";
+//  - Entorno de producción:     "https://t-safv.system-meek.com"
+export const API_BASE_URL = "https://t-safv.system-meek.com";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

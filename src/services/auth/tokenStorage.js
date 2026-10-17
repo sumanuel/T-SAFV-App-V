@@ -1,27 +1,30 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
+import { logger } from "../../utils/logger";
 
 // SecureStore no admite "@" en las claves, por eso difiere de la clave legada.
 const TOKEN_KEY = "auth_token";
 const LEGACY_TOKEN_KEY = "@auth_token";
 
-let secureAvailable = null;
+let secureStorePromise = null;
 
-async function isSecureAvailable() {
-  if (secureAvailable === null) {
-    try {
-      secureAvailable = await SecureStore.isAvailableAsync();
-    } catch {
-      secureAvailable = false;
-    }
+// Carga perezosa: en un build que aun no incluye el modulo nativo (p. ej. un
+// APK de desarrollo anterior) el import lanza error; en ese caso se usa
+// AsyncStorage en lugar de romper la app al abrirla.
+function loadSecureStore() {
+  if (!secureStorePromise) {
+    secureStorePromise = import("expo-secure-store")
+      .then(async (SecureStore) => ((await SecureStore.isAvailableAsync()) ? SecureStore : null))
+      .catch((error) => {
+        logger.warn("[tokenStorage] SecureStore no disponible:", error?.message);
+        return null;
+      });
   }
-  return secureAvailable;
+  return secureStorePromise;
 }
 
 export async function getToken() {
-  if (!(await isSecureAvailable())) {
-    return AsyncStorage.getItem(LEGACY_TOKEN_KEY);
-  }
+  const SecureStore = await loadSecureStore();
+  if (!SecureStore) return AsyncStorage.getItem(LEGACY_TOKEN_KEY);
 
   const secureToken = await SecureStore.getItemAsync(TOKEN_KEY);
   if (secureToken) return secureToken;
@@ -36,7 +39,8 @@ export async function getToken() {
 }
 
 export async function setToken(token) {
-  if (!(await isSecureAvailable())) {
+  const SecureStore = await loadSecureStore();
+  if (!SecureStore) {
     await AsyncStorage.setItem(LEGACY_TOKEN_KEY, token);
     return;
   }
@@ -45,8 +49,7 @@ export async function setToken(token) {
 }
 
 export async function removeToken() {
-  if (await isSecureAvailable()) {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-  }
+  const SecureStore = await loadSecureStore();
+  if (SecureStore) await SecureStore.deleteItemAsync(TOKEN_KEY);
   await AsyncStorage.removeItem(LEGACY_TOKEN_KEY);
 }

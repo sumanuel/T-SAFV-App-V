@@ -291,6 +291,7 @@ export default function PropietariosScreen({
               canManageOwners || isOwnerSelfService
                 ? {
                     icon: "create-outline",
+                    label: "Editar propietario",
                     onPress: () =>
                       onOpenPropietarioForm?.(selectedPropietario, {
                         returnTo: "detail",
@@ -403,6 +404,8 @@ export default function PropietariosScreen({
             </Text>
             {canManageOwners ? (
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Agregar unidad"
                 onPress={() => onOpenVehicleForm?.(selectedPropietario, null)}
                 style={[styles.addBtn, { backgroundColor: colors.primary }]}
               >
@@ -571,6 +574,8 @@ export default function PropietariosScreen({
                   {canManageOwners || isOwnerSelfService ? (
                     <View style={styles.ownerActions}>
                       <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Editar propietario"
                         onPress={() => onOpenPropietarioForm?.(propietario, {})}
                         style={[
                           styles.iconAction,
@@ -588,6 +593,8 @@ export default function PropietariosScreen({
                       </Pressable>
                       {canManageOwners ? (
                         <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Eliminar propietario"
                           onPress={() => handleDelete(propietario)}
                           style={[
                             styles.iconAction,
@@ -728,6 +735,8 @@ export default function PropietariosScreen({
 
       {canManageOwners ? (
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Agregar propietario"
           onPress={() => onOpenPropietarioForm?.(null, {})}
           style={[styles.fab, { backgroundColor: colors.primary }]}
         >

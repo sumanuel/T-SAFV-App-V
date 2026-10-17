@@ -279,6 +279,8 @@ export default function FiscalesScreen({
 
       {canManageFiscales ? (
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Agregar fiscal"
           onPress={() => onOpenFiscalForm?.(null)}
           style={[styles.fab, { backgroundColor: colors.accent }]}
         >

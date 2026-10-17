@@ -583,6 +583,7 @@ export default function WorkshopHomeScreen({
             onOpenNotifications
               ? {
                   icon: "notifications-outline",
+                  label: "Notificaciones",
                   onPress: onOpenNotifications,
                   badgeCount: unreadNotifications,
                 }

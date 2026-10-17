@@ -190,7 +190,11 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
           subtitle="Avisos sobre tus unidades, invitaciones y periodo de prueba."
           rightAction={
             notifications.length > 0
-              ? { icon: "trash-outline", onPress: handleDeleteAll }
+              ? {
+                  icon: "trash-outline",
+                  label: "Eliminar todas las notificaciones",
+                  onPress: handleDeleteAll,
+                }
               : undefined
           }
         />
@@ -288,6 +292,8 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
                   </Text>
                 </View>
                 <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Eliminar notificación"
                   hitSlop={8}
                   onPress={() => handleDeleteNotification(item)}
                   style={styles.deleteBtn}

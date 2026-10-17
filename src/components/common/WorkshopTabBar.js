@@ -64,6 +64,9 @@ export default function WorkshopTabBar({ activeTab, onChange, visibleTabs }) {
           return (
             <Pressable
               key={tab.key}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected }}
               onPress={() => onChange?.(tab.key)}
               style={styles.tabButton}
             >

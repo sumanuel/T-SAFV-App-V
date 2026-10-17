@@ -265,6 +265,8 @@ export default function DateRangeFilterModal({
           >
             <View style={styles.calendarHeader}>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Mes anterior"
                 onPress={() =>
                   setDisplayMonth(
                     (c) => new Date(c.getFullYear(), c.getMonth() - 1, 1),
@@ -282,6 +284,8 @@ export default function DateRangeFilterModal({
                 {monthLabel}
               </Text>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Mes siguiente"
                 onPress={() =>
                   setDisplayMonth(
                     (c) => new Date(c.getFullYear(), c.getMonth() + 1, 1),

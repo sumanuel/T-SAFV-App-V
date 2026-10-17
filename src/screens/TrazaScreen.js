@@ -228,6 +228,7 @@ export default function TrazaScreen({
           }
           rightAction={{
             icon: "share-outline",
+            label: "Exportar traza",
             onPress: exportTraza,
           }}
         />
@@ -451,7 +452,12 @@ export default function TrazaScreen({
               {totalPasajeros}{" "}
               {totalPasajeros === 1 ? "pasajero" : "pasajeros"}
             </Text>
-            <Pressable onPress={refreshData} style={styles.refreshBtn}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Actualizar traza"
+              onPress={refreshData}
+              style={styles.refreshBtn}
+            >
               <Ionicons
                 name="refresh-outline"
                 size={rf(14)}

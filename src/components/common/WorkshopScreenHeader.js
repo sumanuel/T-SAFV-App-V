@@ -77,7 +77,12 @@ export default function WorkshopScreenHeader({
         {onBack || rightAction ? (
           <View style={styles.topRow}>
             {onBack ? (
-              <Pressable onPress={onBack} style={styles.heroIconButton}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Volver"
+                onPress={onBack}
+                style={styles.heroIconButton}
+              >
                 <Ionicons color="#ffffff" name="arrow-back" size={rf(20)} />
               </Pressable>
             ) : (
@@ -85,7 +90,16 @@ export default function WorkshopScreenHeader({
             )}
 
             {rightAction ? (
-              <Pressable onPress={rightAction.onPress} style={styles.heroIconButton}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  rightAction.badgeCount > 0
+                    ? `${rightAction.label || "Acción"}, ${rightAction.badgeCount} sin leer`
+                    : rightAction.label || "Acción"
+                }
+                onPress={rightAction.onPress}
+                style={styles.heroIconButton}
+              >
                 <Ionicons
                   color={rightAction.color || "#ffffff"}
                   name={rightAction.icon || "ellipsis-horizontal"}

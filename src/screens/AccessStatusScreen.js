@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { USER_STATUSES } from "../constants/accessControl";
 import { useTheme } from "../context/ThemeContext";
 import { borderRadius, rf, spacing } from "../utils/responsive";
+import { logger } from "../utils/logger";
 
 const statusContent = {
   missing: {
@@ -99,7 +100,7 @@ export default function AccessStatusScreen({
     try {
       await onAcceptInvitation(invitationForm);
     } catch (error) {
-      console.error("Error accepting pending invitation:", error);
+      logger.error("Error accepting pending invitation:", error);
     } finally {
       setAcceptingInvitation(false);
     }

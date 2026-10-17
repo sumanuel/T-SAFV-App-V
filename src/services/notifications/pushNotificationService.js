@@ -11,12 +11,13 @@
 import { isRunningInExpoGo } from "expo";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { logger } from "../../utils/logger";
 
 let notificationsModulePromise = null;
 
 function loadNotifications() {
   if (isRunningInExpoGo()) {
-    console.log("[push] omitido: corriendo en Expo Go");
+    logger.debug("[push] omitido: corriendo en Expo Go");
     return Promise.resolve(null);
   }
 
@@ -41,22 +42,22 @@ function loadNotifications() {
 }
 
 export async function registerForPushNotificationsAsync() {
-  console.log("[push] iniciando registro de push token...");
+  logger.debug("[push] iniciando registro de push token...");
   try {
     const Notifications = await loadNotifications();
     if (!Notifications) return null;
 
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
-    console.log("[push] permiso actual:", existingStatus);
+    logger.debug("[push] permiso actual:", existingStatus);
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
-      console.log("[push] permiso tras solicitarlo:", status);
+      logger.debug("[push] permiso tras solicitarlo:", status);
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      console.log("[push] omitido: permiso no concedido:", finalStatus);
+      logger.debug("[push] omitido: permiso no concedido:", finalStatus);
       return null;
     }
 
@@ -70,14 +71,14 @@ export async function registerForPushNotificationsAsync() {
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ||
       Constants.easConfig?.projectId;
-    console.log("[push] projectId usado:", projectId);
+    logger.debug("[push] projectId usado:", projectId);
     const tokenResponse = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined,
     );
-    console.log("[push] token obtenido:", tokenResponse.data);
+    logger.debug("[push] token obtenido:", tokenResponse.data);
     return tokenResponse.data;
   } catch (error) {
-    console.error("[push] No se pudo obtener el push token:", error);
+    logger.error("[push] No se pudo obtener el push token:", error);
     return null;
   }
 }

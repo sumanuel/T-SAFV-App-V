@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { getBiometricLockEnabled } from "./src/services/security/biometricAuthService";
+import ErrorBoundary from "./src/components/common/ErrorBoundary";
 
 // Pantallas de autenticacion y navegacion
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
@@ -734,9 +735,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>
   );

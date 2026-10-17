@@ -5,8 +5,8 @@
  * Para dispositivo físico en la misma red, cambia a la IP de tu máquina.
  */
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { notifySessionExpired } from "../auth/sessionExpiry";
+import { getToken } from "../auth/tokenStorage";
 
 // Ajusta según tu entorno:
 //  - Emulador Android:  http://10.0.2.2:3000
@@ -27,7 +27,7 @@ const apiClient = axios.create({
 // Interceptor: agrega el token JWT a cada request si existe
 apiClient.interceptors.request.use(async (config) => {
   try {
-    const token = await AsyncStorage.getItem("@auth_token");
+    const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

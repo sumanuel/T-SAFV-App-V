@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { apiVerifyResetCode } from "../services/auth/verifyCodeService";
 import { apiForgotPassword } from "../services/auth/forgotPasswordService";
+import { logger } from "../utils/logger";
 
 export default function VerifyCodeScreen({ onNavigate, screenContext }) {
   const { colors } = useTheme();
@@ -89,7 +90,7 @@ export default function VerifyCodeScreen({ onNavigate, screenContext }) {
         resetToken: response.resetToken,
       });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError(err.message || "Error al verificar código");
     } finally {
       setLoading(false);
@@ -108,7 +109,7 @@ export default function VerifyCodeScreen({ onNavigate, screenContext }) {
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError(err.message || "Error al reenviar código");
     } finally {
       setLoading(false);

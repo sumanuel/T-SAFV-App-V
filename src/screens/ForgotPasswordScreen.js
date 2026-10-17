@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { apiForgotPassword } from "../services/auth/forgotPasswordService";
+import { logger } from "../utils/logger";
 
 export default function ForgotPasswordScreen({ onNavigate, screenContext }) {
   const { colors } = useTheme();
@@ -50,7 +51,7 @@ export default function ForgotPasswordScreen({ onNavigate, screenContext }) {
       // Navegar a VerifyCodeScreen
       onNavigate("VerifyCodeScreen", { email: email.trim() });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError(err.message || "Error al enviar código");
     } finally {
       setLoading(false);

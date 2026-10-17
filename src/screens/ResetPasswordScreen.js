@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { apiResetPassword } from "../services/auth/resetPasswordService";
+import { logger } from "../utils/logger";
 
 export default function ResetPasswordScreen({ onNavigate, screenContext }) {
   const { colors } = useTheme();
@@ -77,7 +78,7 @@ export default function ResetPasswordScreen({ onNavigate, screenContext }) {
         { cancelable: false },
       );
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError(err.message || "Error al actualizar contraseña");
     } finally {
       setLoading(false);

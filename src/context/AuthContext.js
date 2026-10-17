@@ -25,14 +25,19 @@ import {
 import { getMyAssociations } from "../services/associations/associationService";
 import { getWorkshop } from "../services/mock/mockStore";
 import { setSessionExpiredHandler } from "../services/auth/sessionExpiry";
+import {
+  getToken as getStoredToken,
+  removeToken as removeStoredToken,
+  setToken as saveStoredToken,
+} from "../services/auth/tokenStorage";
 import { registerForPushNotificationsAsync } from "../services/notifications/pushNotificationService";
+import { logger } from "../utils/logger";
 
 const AuthContext = createContext();
 
 const WORKSHOP = getWorkshop();
 const MOCK_WORKSHOP_ID = WORKSHOP.id;
 
-const AUTH_TOKEN_KEY = "@auth_token";
 const AUTH_USER_KEY = "@auth_user";
 const ACTIVE_ASSOC_KEY = "@active_association_id";
 
@@ -130,7 +135,7 @@ export function AuthProvider({ children }) {
         setActiveAssociationIdState(null);
       }
     } catch (error) {
-      console.error("Error loading associations:", error);
+      logger.error("Error loading associations:", error);
       setAssociationsLoadError(true);
     }
   }, []);
@@ -142,14 +147,14 @@ export function AuthProvider({ children }) {
       try {
         const pushToken = await registerForPushNotificationsAsync();
         if (!pushToken) {
-          console.log("[push] sin token, no se llama al backend");
+          logger.debug("[push] sin token, no se llama al backend");
           return;
         }
-        console.log("[push] enviando token al backend...");
+        logger.debug("[push] enviando token al backend...");
         await apiRegisterPushToken(pushToken);
-        console.log("[push] token registrado en el backend con exito");
+        logger.debug("[push] token registrado en el backend con exito");
       } catch (error) {
-        console.error("[push] No se pudo registrar el push token:", error);
+        logger.error("[push] No se pudo registrar el push token:", error);
       }
     })();
   }, []);
@@ -224,7 +229,7 @@ export function AuthProvider({ children }) {
     const restoreSession = async () => {
       try {
         const [storedToken, userJson] = await Promise.all([
-          AsyncStorage.getItem(AUTH_TOKEN_KEY),
+          getStoredToken(),
           AsyncStorage.getItem(AUTH_USER_KEY),
         ]);
 
@@ -237,7 +242,7 @@ export function AuthProvider({ children }) {
           syncPushToken();
         }
       } catch (error) {
-        console.error("Error restoring session:", error);
+        logger.error("Error restoring session:", error);
       } finally {
         setAuthReady(true);
       }
@@ -251,7 +256,7 @@ export function AuthProvider({ children }) {
     try {
       const { token: jwt, user } = await apiLogin({ email, password });
       await Promise.all([
-        AsyncStorage.setItem(AUTH_TOKEN_KEY, jwt),
+        saveStoredToken(jwt),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
       setToken(jwt);
@@ -281,7 +286,7 @@ export function AuthProvider({ children }) {
 
       const { token: jwt, user } = await apiLogin({ email, password });
       await Promise.all([
-        AsyncStorage.setItem(AUTH_TOKEN_KEY, jwt),
+        saveStoredToken(jwt),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
       setToken(jwt);
@@ -307,7 +312,7 @@ export function AuthProvider({ children }) {
     setAuthBusy(true);
     try {
       await Promise.all([
-        AsyncStorage.removeItem(AUTH_TOKEN_KEY),
+        removeStoredToken(),
         AsyncStorage.removeItem(AUTH_USER_KEY),
         AsyncStorage.removeItem(ACTIVE_ASSOC_KEY),
       ]);

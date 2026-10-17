@@ -185,7 +185,6 @@ export default function WorkshopMoreScreen({
   const {
     activeAssociation,
     activeAssociationId,
-    activeWorkshop,
     activeWorkshopId,
     memberships,
     userProfile,
@@ -230,9 +229,7 @@ export default function WorkshopMoreScreen({
   };
   const activeMembership = getPrimaryMembership(memberships, activeWorkshopId);
   const associationName =
-    activeAssociation?.nombre ||
-    activeWorkshop?.name ||
-    activeMembership?.workshopName;
+    activeAssociation?.nombre || activeMembership?.workshopName;
   const resolvedRole = activeMembership?.role || userProfile?.role || "";
   const roleLabel =
     resolvedRole === "owner"

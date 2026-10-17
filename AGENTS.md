@@ -2,9 +2,9 @@
 
 ## Stack
 
-- Expo SDK 54, React 19, React Native 0.81.
+- Expo SDK 57, React 19, React Native 0.86.
 - Autenticación JWT contra T-SAFV-API.
-- Sin Firebase.
+- Sin Firebase para datos (solo FCM para push en Android).
 - Persistencia local con AsyncStorage.
 - HTTP mixto: Axios en auth, `fetch` envuelto en `src/services/api/sdk.js` para dominio.
 
@@ -81,11 +81,9 @@ Superficies ya conectadas al backend real:
 
 ## Pitfalls
 
-- Esta variante mezcla backend real con partes heredadas mock. No asumas que todo dominio está migrado.
 - `src/services/api/apiClient.js` tiene `API_BASE_URL` fija. Si la app “falla sola”, revisa eso primero.
-- `AuthContext` todavía sintetiza `memberships` sobre un `workshop` mock para compatibilidad con pantallas heredadas. No bases nuevas reglas de negocio en ese mock si puedes usar `activeAssociation`.
-- Hay pantallas heredadas de clientes, diagnósticos, órdenes y stock todavía presentes en `src/screens/`, pero no son el flujo principal actual.
-- `TeamAccessScreen.js` ya no es la superficie principal para editar la asociación; la pantalla activa es `AssociationSettingsScreen.js`.
+- `AuthContext` todavía sintetiza una única entrada de `memberships` (con `workshopId` fijo) para compatibilidad con pantallas heredadas. No bases nuevas reglas de negocio en ella si puedes usar `activeAssociation`.
+- La pantalla para editar la asociación es `AssociationSettingsScreen.js`.
 - Si tocas invitaciones o membresías, revisa también el backend en `T-SAFV-API`, especialmente modelos de `asociacion`, `invitacion`, `export` y middleware de auth.
 
 ## Cómo trabajar aquí

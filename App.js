@@ -43,11 +43,6 @@ import FiscalFormScreen from "./src/screens/FiscalFormScreen";
 // Traza
 import TrazaScreen from "./src/screens/TrazaScreen";
 
-// Stock (disponible desde Mas)
-import StockItemsScreen from "./src/screens/StockItemsScreen";
-import StockItemFormScreen from "./src/screens/StockItemFormScreen";
-import StockMovementFormScreen from "./src/screens/StockMovementFormScreen";
-import TeamAccessScreen from "./src/screens/TeamAccessScreen";
 import AssociationSettingsScreen from "./src/screens/AssociationSettingsScreen";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 
@@ -61,11 +56,7 @@ const APP_SCREENS = {
   FISCALES: "fiscales",
   FISCAL_FORM: "fiscal-form",
   TRAZA: "traza",
-  STOCK_ITEMS: "stock-items",
-  STOCK_ITEM_FORM: "stock-item-form",
-  STOCK_MOVEMENT_FORM: "stock-movement-form",
   WORKSHOP_SETTINGS: "workshop-settings",
-  COLLABORATORS: "collaborators",
   NOTIFICATIONS: "notifications",
   MORE: "more",
 };
@@ -123,17 +114,6 @@ function AppContent() {
     memberId: null,
   });
   const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
-  const [stockItemFormContext, setStockItemFormContext] = useState({
-    stockItem: null,
-    draft: null,
-  });
-  const [stockMovementFormContext, setStockMovementFormContext] = useState({
-    stockItem: null,
-    movementType: "in",
-  });
-  const [stockItemsViewState, setStockItemsViewState] = useState({
-    selectedStockItemId: null,
-  });
   const [trazaViewState, setTrazaViewState] = useState({ unit: null });
 
   useEffect(() => {
@@ -192,9 +172,6 @@ function AppContent() {
     setFiscalRecordContext({ unit: null });
     setMemberInvitationContext({ role: "TODOS", memberId: null });
     setFiscalFormContext({ fiscal: null });
-    setStockItemFormContext({ stockItem: null, draft: null });
-    setStockMovementFormContext({ stockItem: null, movementType: "in" });
-    setStockItemsViewState({ selectedStockItemId: null });
     setTrazaViewState({ unit: null });
   }, [authUser?.id]);
 
@@ -211,15 +188,7 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.MEMBER_INVITATIONS)
       return APP_SCREENS.MORE;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
-    if (
-      [
-        APP_SCREENS.STOCK_ITEMS,
-        APP_SCREENS.STOCK_ITEM_FORM,
-        APP_SCREENS.STOCK_MOVEMENT_FORM,
-        APP_SCREENS.WORKSHOP_SETTINGS,
-        APP_SCREENS.COLLABORATORS,
-      ].includes(activeScreen)
-    )
+    if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS)
       return APP_SCREENS.MORE;
     return APP_SCREENS.HOME;
   }, [activeScreen]);
@@ -281,15 +250,7 @@ function AppContent() {
           setActiveScreen(APP_SCREENS.HOME);
           return true;
         }
-        if (
-          [
-            APP_SCREENS.STOCK_ITEMS,
-            APP_SCREENS.STOCK_ITEM_FORM,
-            APP_SCREENS.STOCK_MOVEMENT_FORM,
-            APP_SCREENS.WORKSHOP_SETTINGS,
-            APP_SCREENS.COLLABORATORS,
-          ].includes(activeScreen)
-        ) {
+        if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
           setActiveScreen(APP_SCREENS.MORE);
           return true;
         }
@@ -604,72 +565,10 @@ function AppContent() {
       );
     }
 
-    if (activeScreen === APP_SCREENS.STOCK_ITEMS) {
-      return (
-        <StockItemsScreen
-          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          onOpenStockItemForm={(stockItem, options = {}) => {
-            setStockItemFormContext({
-              stockItem: stockItem || null,
-              draft: options.seedData || null,
-            });
-            setActiveScreen(APP_SCREENS.STOCK_ITEM_FORM);
-          }}
-          onOpenStockMovementForm={(stockItem, options = {}) => {
-            setStockMovementFormContext({
-              stockItem: stockItem || null,
-              movementType: options.movementType || "in",
-            });
-            setActiveScreen(APP_SCREENS.STOCK_MOVEMENT_FORM);
-          }}
-          userProfile={userProfile}
-          viewState={stockItemsViewState}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.STOCK_ITEM_FORM) {
-      return (
-        <StockItemFormScreen
-          initialDraft={stockItemFormContext.draft}
-          initialStockItem={stockItemFormContext.stockItem}
-          onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedId) => {
-            setStockItemsViewState({ selectedStockItemId: savedId });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.STOCK_MOVEMENT_FORM) {
-      return (
-        <StockMovementFormScreen
-          initialMovementType={stockMovementFormContext.movementType}
-          initialStockItem={stockMovementFormContext.stockItem}
-          onBack={() => setActiveScreen(APP_SCREENS.STOCK_ITEMS)}
-          onSaved={(savedId) => {
-            setStockItemsViewState({ selectedStockItemId: savedId });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
-        />
-      );
-    }
-
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
       return (
         <AssociationSettingsScreen
           onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          userProfile={userProfile}
-        />
-      );
-    }
-
-    if (activeScreen === APP_SCREENS.COLLABORATORS) {
-      return (
-        <TeamAccessScreen
-          onBack={() => setActiveScreen(APP_SCREENS.MORE)}
-          screenMode="collaborators"
           userProfile={userProfile}
         />
       );
@@ -684,10 +583,6 @@ function AppContent() {
             setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
           }}
           onOpenOnboarding={() => setShowOnboarding(true)}
-          onOpenStockItems={() => {
-            setStockItemsViewState({ selectedStockItemId: null });
-            setActiveScreen(APP_SCREENS.STOCK_ITEMS);
-          }}
           onOpenWorkshopManagement={() => setActiveScreen(APP_SCREENS.MORE)}
           onOpenWorkshopSettings={() =>
             setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)

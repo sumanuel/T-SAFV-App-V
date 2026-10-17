@@ -14,7 +14,7 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 
 ## Fase 2 — Deuda técnica
 
-- [ ] **2.1 Eliminar código heredado** (App, M). `services/mock/mockStore.js`, `WorkshopSetupScreen`, `WorkshopManagementScreen`, `TeamAccessScreen`, `Stock*` (screens + `stockItemService`), `services/workshops/*`, y el "workshop" mock sintetizado en `AuthContext`.
+- [x] **2.1 Eliminar código heredado** (App, M). `services/mock/mockStore.js`, `WorkshopSetupScreen`, `WorkshopManagementScreen`, `TeamAccessScreen`, `Stock*` (screens + `stockItemService`), `services/workshops/*`, y el "workshop" mock sintetizado en `AuthContext`.
 - [ ] **2.2 Unificar cliente HTTP** (App, M). Un solo cliente (hoy: axios en auth + `fetch` en `sdk.js`) con token, timeout y manejo de 401 en un único lugar.
 - [ ] **2.3 Partir pantallas gigantes** (App, L). `WorkshopHomeScreen` (~1000 líneas), `PropietariosScreen`, `AuthScreen`: extraer hooks de datos y subcomponentes.
 - [ ] **2.4 Navegación** (App, L). Evaluar React Navigation / expo-router para reemplazar el estado manual de `App.js` y su `BackHandler`.
@@ -35,7 +35,14 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 - [ ] **5.1 Tests** (App, M). Jest + `jest-expo`; empezar por `accessControl.js`, `dateRange.js`, servicios y `AuthContext`.
 - [ ] **5.2 ESLint + Prettier** (App, S).
 - [ ] **5.3 CI** (App, S). GitHub Actions: lint + tests + `npx expo export --platform android`.
-- [ ] **5.4 Documentación al día** (App, S). `AGENTS.md` aún dice Expo SDK 54 / RN 0.81 (ahora 57 / 0.86).
+- [x] **5.4 Documentación al día** (App, S). `AGENTS.md` aún dice Expo SDK 54 / RN 0.81 (ahora 57 / 0.86).
+
+## Hallazgos pendientes (surgidos durante la ejecución)
+
+- [ ] El tile **"Asociaciones · Gestionar"** de `WorkshopMoreScreen` no hace nada (navega a la misma pantalla). Eliminarlo o conectarlo a un destino real.
+- [ ] `src/constants/accessControl.js` conserva permisos de inventario (`inventory.manage`, `canManageInventory`) que ya no tienen pantallas. Revisar y quitar.
+- [ ] `AuthContext` aún sintetiza una `membership` con `workshopId` fijo solo por compatibilidad (App.js y More la usan para el rol). Migrar esos usos a `activeAssociation` + `userProfile.role` y eliminarla.
+- Resuelto en 2.1: el botón **"Reiniciar datos de la asociación"** solo limpiaba un mock local y fallaba al leer `result.deletedDocuments`; se eliminó. Si se quiere esa función de verdad, requiere endpoint en la API.
 
 ## Notas
 

@@ -23,7 +23,6 @@ import {
   apiRegisterPushToken,
 } from "../services/auth/authService";
 import { getMyAssociations } from "../services/associations/associationService";
-import { getWorkshop } from "../services/mock/mockStore";
 import { setSessionExpiredHandler } from "../services/auth/sessionExpiry";
 import {
   getToken as getStoredToken,
@@ -35,8 +34,9 @@ import { logger } from "../utils/logger";
 
 const AuthContext = createContext();
 
-const WORKSHOP = getWorkshop();
-const MOCK_WORKSHOP_ID = WORKSHOP.id;
+// Las pantallas heredadas todavia leen `memberships` con `workshopId`; se
+// mantiene una unica membresia sintetica con este identificador fijo.
+const ASSOCIATION_CONTEXT_ID = "association";
 
 const AUTH_USER_KEY = "@auth_user";
 const ACTIVE_ASSOC_KEY = "@active_association_id";
@@ -62,16 +62,16 @@ function mapApiUserToProfile(user) {
     role,
     associationCreationAccess: user.association_creation_access || null,
     status: "active",
-    defaultWorkshopId: MOCK_WORKSHOP_ID,
+    defaultWorkshopId: ASSOCIATION_CONTEXT_ID,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 }
 
-function buildMembership(profile) {
+function buildMembership(profile, associationName) {
   return {
-    workshopId: MOCK_WORKSHOP_ID,
-    workshopName: WORKSHOP.name,
+    workshopId: ASSOCIATION_CONTEXT_ID,
+    workshopName: associationName || "Asociación",
     role: profile.role,
     status: "active",
     uid: profile.uid,
@@ -88,7 +88,6 @@ export function AuthProvider({ children }) {
   const [activeAssociationId, setActiveAssociationIdState] = useState(null);
   const [pendingInvitation, setPendingInvitation] = useState(null);
   const [associationsLoadError, setAssociationsLoadError] = useState(false);
-  const [activeWorkshop] = useState(WORKSHOP);
 
   const activeAssociation = useMemo(
     () =>
@@ -100,8 +99,8 @@ export function AuthProvider({ children }) {
 
   const memberships = useMemo(() => {
     if (!userProfile) return [];
-    return [buildMembership(userProfile)];
-  }, [userProfile]);
+    return [buildMembership(userProfile, activeAssociation?.nombre)];
+  }, [userProfile, activeAssociation]);
 
   const loadAssociations = useCallback(async (authToken) => {
     if (!authToken) return;
@@ -346,32 +345,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const switchWorkshop = async () => {};
-
-  const renameActiveWorkshop = async (name) => {
-    const { updateWorkshop } =
-      await import("../services/workshops/workshopService");
-    return updateWorkshop(MOCK_WORKSHOP_ID, { name });
-  };
-
-  const updateActiveWorkshop = async (data) => {
-    const { updateWorkshop } =
-      await import("../services/workshops/workshopService");
-    return updateWorkshop(MOCK_WORKSHOP_ID, data);
-  };
-
-  const refreshWorkshopContext = async () => {};
-
-  const activeWorkshopId = MOCK_WORKSHOP_ID;
-
   const value = useMemo(
     () => ({
       activateInvitation,
       acceptPendingInvitation,
       activeAssociation,
       activeAssociationId: activeAssociation?.id ?? null,
-      activeWorkshop,
-      activeWorkshopId,
+      activeWorkshopId: ASSOCIATION_CONTEXT_ID,
       associations,
       associationsLoadError,
       authBusy,
@@ -381,17 +361,12 @@ export function AuthProvider({ children }) {
       pendingInvitation,
       recoverPassword,
       refreshAssociations,
-      refreshWorkshopContext,
-      renameActiveWorkshop,
-      requiresWorkshopSetup: false,
       setActiveAssociationId,
       signIn,
       signOutUser,
       signUp,
       syncCurrentUserProfile,
-      switchWorkshop,
       token,
-      updateActiveWorkshop,
       userProfile,
     }),
     [

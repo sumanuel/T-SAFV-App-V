@@ -19,7 +19,6 @@ import { USER_ROLES } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { updateAssociation } from "../services/associations/associationService";
-import { resetActiveWorkshopDataForCurrentUser } from "../services/workshops/workshopResetService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 function buildAssociationForm(association) {
@@ -72,7 +71,6 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   const {
     activeAssociation,
     activeAssociationId,
-    authBusy,
     memberships,
     refreshAssociations,
     token,
@@ -83,12 +81,10 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
     currentRole === "administrator" &&
     String(activeAssociation?.creada_por) === String(userProfile?.uid);
   const canManageAssociation = isAssociationCreator;
-  const canResetAssociation = isAssociationCreator;
   const [associationForm, setAssociationForm] = useState(
     buildAssociationForm(),
   );
   const [submitting, setSubmitting] = useState(false);
-  const [resetSubmitting, setResetSubmitting] = useState(false);
 
   const logoPreview =
     associationForm.logo_data?.trim() || associationForm.logo_url.trim();
@@ -159,38 +155,6 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleResetAssociation = () => {
-    Alert.alert(
-      "Reiniciar asociación",
-      "Se eliminarán los registros operativos de la asociación activa. La identidad comercial, la asociación y los colaboradores se conservan. Esta acción no se puede deshacer.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Reiniciar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setResetSubmitting(true);
-              const result = await resetActiveWorkshopDataForCurrentUser();
-              Alert.alert(
-                "Asociación reiniciada",
-                `Se eliminaron ${result.deletedDocuments} registros operativos de la asociación activa.`,
-              );
-            } catch (error) {
-              Alert.alert(
-                "Reiniciar asociación",
-                error?.message ||
-                  "No se pudo reiniciar la data de la asociación.",
-              );
-            } finally {
-              setResetSubmitting(false);
-            }
-          },
-        },
-      ],
-    );
   };
 
   return (
@@ -479,43 +443,6 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
             </Text>
           </View>
         )}
-
-        {canResetAssociation ? (
-          <View
-            style={[
-              styles.resetPanel,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.fieldLabel, { color: colors.text }]}>
-              Reiniciar datos de la asociación
-            </Text>
-            <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-              Borra toda la data operativa de la asociación activa y conserva la
-              identidad comercial y los colaboradores.
-            </Text>
-            <Pressable
-              disabled={resetSubmitting || authBusy}
-              onPress={handleResetAssociation}
-              style={[
-                styles.dangerAction,
-                {
-                  backgroundColor: colors.cardMuted,
-                  borderColor: colors.danger,
-                },
-              ]}
-            >
-              <Text style={[styles.dangerActionText, { color: colors.danger }]}>
-                {resetSubmitting
-                  ? "Reiniciando..."
-                  : "Reiniciar datos de la asociación"}
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -663,19 +590,4 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
-  resetPanel: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  dangerAction: {
-    minHeight: rf(46),
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-  },
-  dangerActionText: { fontSize: rf(13), fontWeight: "800" },
 });

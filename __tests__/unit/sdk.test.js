@@ -5,8 +5,12 @@ jest.mock("../../src/services/auth/sessionExpiry", () => ({
   notifySessionExpired: jest.fn(),
 }));
 
-const { recoverFromUnauthorized } = require("../../src/services/auth/sessionRefresh");
-const { notifySessionExpired } = require("../../src/services/auth/sessionExpiry");
+const {
+  recoverFromUnauthorized,
+} = require("../../src/services/auth/sessionRefresh");
+const {
+  notifySessionExpired,
+} = require("../../src/services/auth/sessionExpiry");
 const sdk = require("../../src/services/api/sdk").default;
 const { API_BASE_URL } = require("../../src/services/api/config");
 
@@ -25,7 +29,9 @@ describe("sdk: peticiones autenticadas", () => {
 
     expect(res).toEqual({ status: 200, data: [{ id: 1 }] });
     const [url, options] = global.fetch.mock.calls[0];
-    expect(url.startsWith(`${API_BASE_URL}/api/notificaciones/mine`)).toBe(true);
+    expect(url.startsWith(`${API_BASE_URL}/api/notificaciones/mine`)).toBe(
+      true,
+    );
     expect(options.headers.Authorization).toBe("Bearer tok");
     expect(options.method).toBe("GET");
   });
@@ -53,14 +59,21 @@ describe("sdk: peticiones autenticadas", () => {
 
 describe("sdk: 401 y renovacion de sesion", () => {
   it("renueva el token y repite la peticion con el token nuevo", async () => {
-    global.fetch.mockResolvedValueOnce(reply(401)).mockResolvedValueOnce(reply(200, { ok: true }));
-    recoverFromUnauthorized.mockResolvedValue({ token: "nuevo", expired: false });
+    global.fetch
+      .mockResolvedValueOnce(reply(401))
+      .mockResolvedValueOnce(reply(200, { ok: true }));
+    recoverFromUnauthorized.mockResolvedValue({
+      token: "nuevo",
+      expired: false,
+    });
 
     const res = await sdk.getMyNotifications("viejo");
 
     expect(res).toEqual({ status: 200, data: { ok: true } });
     expect(recoverFromUnauthorized).toHaveBeenCalledWith("viejo");
-    expect(global.fetch.mock.calls[1][1].headers.Authorization).toBe("Bearer nuevo");
+    expect(global.fetch.mock.calls[1][1].headers.Authorization).toBe(
+      "Bearer nuevo",
+    );
     expect(notifySessionExpired).not.toHaveBeenCalled();
   });
 
@@ -87,7 +100,10 @@ describe("sdk: 401 y renovacion de sesion", () => {
 
   it("si el token renovado tambien recibe 401 la sesion expira (sin bucle)", async () => {
     global.fetch.mockResolvedValue(reply(401));
-    recoverFromUnauthorized.mockResolvedValue({ token: "nuevo", expired: false });
+    recoverFromUnauthorized.mockResolvedValue({
+      token: "nuevo",
+      expired: false,
+    });
 
     const res = await sdk.getMyNotifications("viejo");
 

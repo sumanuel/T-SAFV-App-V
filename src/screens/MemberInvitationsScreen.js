@@ -265,362 +265,374 @@ export default function MemberInvitationsScreen({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <WorkshopScreenHeader
-          onBack={onBack}
-          section="Invitaciones"
-          title="Invitaciones oficiales"
-          subtitle="Envía la activación oficial a administradores, propietarios y fiscales de la asociación activa."
-        />
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <WorkshopScreenHeader
+            onBack={onBack}
+            section="Invitaciones"
+            title="Invitaciones oficiales"
+            subtitle="Envía la activación oficial a administradores, propietarios y fiscales de la asociación activa."
+          />
 
-        <View style={styles.filterRow}>
-          {ROLE_FILTERS.map((role) => {
-            const active = role === roleFilter;
-            return (
-              <Pressable
-                key={role}
-                onPress={() => setRoleFilter(role)}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: active
-                      ? colors.primary
-                      : colors.cardBackground,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text
+          <View style={styles.filterRow}>
+            {ROLE_FILTERS.map((role) => {
+              const active = role === roleFilter;
+              return (
+                <Pressable
+                  key={role}
+                  onPress={() => setRoleFilter(role)}
                   style={[
-                    styles.filterChipText,
-                    { color: active ? colors.white : colors.text },
+                    styles.filterChip,
+                    {
+                      backgroundColor: active
+                        ? colors.primary
+                        : colors.cardBackground,
+                      borderColor: active ? colors.primary : colors.border,
+                    },
                   ]}
                 >
-                  {role === "TODOS"
-                    ? "Todos"
-                    : role === "PROPIETARIO"
-                      ? "Propietarios"
-                      : role === "FISCAL"
-                        ? "Fiscales"
-                        : "Admin"}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: active ? colors.white : colors.text },
+                    ]}
+                  >
+                    {role === "TODOS"
+                      ? "Todos"
+                      : role === "PROPIETARIO"
+                        ? "Propietarios"
+                        : role === "FISCAL"
+                          ? "Fiscales"
+                          : "Admin"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        {roleFilter === "ADMIN" && (
-          <View
-            style={[
-              styles.createCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={styles.createHeaderRow}>
-              <View style={styles.memberCardCopy}>
-                <Text style={[styles.memberTitle, { color: colors.text }]}>
-                  Nueva invitación
-                </Text>
-                <Text
-                  style={[styles.memberMeta, { color: colors.textSecondary }]}
+          {roleFilter === "ADMIN" && (
+            <View
+              style={[
+                styles.createCard,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={styles.createHeaderRow}>
+                <View style={styles.memberCardCopy}>
+                  <Text style={[styles.memberTitle, { color: colors.text }]}>
+                    Nueva invitación
+                  </Text>
+                  <Text
+                    style={[styles.memberMeta, { color: colors.textSecondary }]}
+                  >
+                    Esta invitación será para un perfil de Administrador dentro
+                    de la asociación activa.
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={loadData}
+                  style={[
+                    styles.stateBadge,
+                    {
+                      backgroundColor: colors.cardMuted,
+                      borderColor: colors.border,
+                    },
+                  ]}
                 >
-                  Esta invitación será para un perfil de Administrador dentro de
-                  la asociación activa.
-                </Text>
+                  <Text style={[styles.stateBadgeText, { color: colors.text }]}>
+                    Actualizar
+                  </Text>
+                </Pressable>
               </View>
-              <Pressable
-                onPress={loadData}
+
+              <Text
+                style={[styles.memberEyebrow, { color: colors.textSecondary }]}
+              >
+                Correo
+              </Text>
+              <TextInput
+                value={adminEmail}
+                onChangeText={setAdminEmail}
+                placeholder="correo@dominio.com"
+                placeholderTextColor={colors.textTertiary}
+                autoCapitalize="none"
+                keyboardType="email-address"
                 style={[
-                  styles.stateBadge,
+                  styles.input,
                   {
                     backgroundColor: colors.cardMuted,
                     borderColor: colors.border,
+                    color: colors.text,
                   },
                 ]}
+              />
+
+              <Text
+                style={[styles.memberEyebrow, { color: colors.textSecondary }]}
               >
-                <Text style={[styles.stateBadgeText, { color: colors.text }]}>
-                  Actualizar
-                </Text>
-              </Pressable>
-            </View>
-
-            <Text
-              style={[styles.memberEyebrow, { color: colors.textSecondary }]}
-            >
-              Correo
-            </Text>
-            <TextInput
-              value={adminEmail}
-              onChangeText={setAdminEmail}
-              placeholder="correo@dominio.com"
-              placeholderTextColor={colors.textTertiary}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.cardMuted,
-                  borderColor: colors.border,
-                  color: colors.text,
-                },
-              ]}
-            />
-
-            <Text
-              style={[styles.memberEyebrow, { color: colors.textSecondary }]}
-            >
-              Perfil operativo
-            </Text>
-            <View style={styles.filterRow}>
-              <View
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                  },
-                ]}
-              >
-                <Text style={[styles.filterChipText, { color: colors.white }]}>
-                  Administrador
-                </Text>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={handleCreateAdminInvitation}
-              disabled={creatingAdminInvite}
-              style={[styles.inviteButton, { backgroundColor: colors.primary }]}
-            >
-              {creatingAdminInvite ? (
-                <ActivityIndicator color={colors.white} size="small" />
-              ) : (
-                <>
-                  <Ionicons
-                    name="mail-outline"
-                    size={rf(18)}
-                    color={colors.white}
-                  />
+                Perfil operativo
+              </Text>
+              <View style={styles.filterRow}>
+                <View
+                  style={[
+                    styles.filterChip,
+                    {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
                   <Text
-                    style={[styles.inviteButtonText, { color: colors.white }]}
+                    style={[styles.filterChipText, { color: colors.white }]}
                   >
-                    Enviar invitación
+                    Administrador
                   </Text>
-                </>
-              )}
-            </Pressable>
-          </View>
-        )}
+                </View>
+              </View>
 
-        {loading ? (
-          <ActivityIndicator
-            color={colors.primary}
-            style={{ marginTop: spacing.lg }}
-          />
-        ) : rows.length ? (
-          rows.map((row) => {
-            const state = getInvitationMeta(row.status, colors);
-            const isMember = row.kind === "member";
-            const member = row.member;
-            const invitation = row.invitation;
-            const isSending =
-              String(sendingId) ===
-              String(isMember ? member.membresia_id || member.id : row.key);
-            const isAssociationCreatorMember =
-              isMember &&
-              String(member.id) === String(activeAssociation?.creada_por);
-
-            return (
-              <View
-                key={row.key}
+              <Pressable
+                onPress={handleCreateAdminInvitation}
+                disabled={creatingAdminInvite}
                 style={[
-                  styles.memberCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                  },
+                  styles.inviteButton,
+                  { backgroundColor: colors.primary },
                 ]}
               >
-                <View style={styles.memberCardHeader}>
-                  <View style={styles.memberCardCopy}>
-                    <Text
-                      style={[styles.memberEyebrow, { color: colors.primary }]}
-                    >
-                      {row.role === "PROPIETARIO"
-                        ? "Propietario"
-                        : row.role === "FISCAL"
-                          ? "Fiscal"
-                          : "Administrador"}
-                    </Text>
-                    <Text style={[styles.memberTitle, { color: colors.text }]}>
-                      {row.displayName || "Sin nombre"}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.stateBadge,
-                      {
-                        backgroundColor: colors.cardMuted,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.stateBadgeText, { color: state.color }]}
-                    >
-                      {state.label}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={[styles.memberMeta, { color: colors.text }]}>
-                  <Text style={styles.memberMetaStrong}>Correo:</Text>{" "}
-                  {isMember
-                    ? member.email || "Sin correo"
-                    : invitation.email_invitado}
-                </Text>
-
-                {isMember ? (
-                  <>
-                    <Text style={[styles.memberMeta, { color: colors.text }]}>
-                      <Text style={styles.memberMetaStrong}>Teléfono:</Text>{" "}
-                      {member.telefono || "Sin teléfono"}
-                    </Text>
-                    {member.rol === "FISCAL" ? (
-                      <Text style={[styles.memberMeta, { color: colors.text }]}>
-                        <Text style={styles.memberMetaStrong}>
-                          Punto de control:
-                        </Text>{" "}
-                        {member.punto_control || "Sin punto de control"}
-                      </Text>
-                    ) : null}
-                  </>
-                ) : null}
-
-                {isMember ? (
-                  <View style={styles.actionColumn}>
-                    {member.estado_invitacion !== "ACEPTADA" &&
-                    member.email &&
-                    !isAssociationCreatorMember ? (
-                      <Pressable
-                        onPress={() => handleSendInvitation(member)}
-                        disabled={isSending}
-                        style={[
-                          styles.inviteButton,
-                          { backgroundColor: colors.accent },
-                        ]}
-                      >
-                        {isSending ? (
-                          <ActivityIndicator
-                            color={colors.white}
-                            size="small"
-                          />
-                        ) : (
-                          <>
-                            <Ionicons
-                              name="mail-outline"
-                              size={rf(18)}
-                              color={colors.white}
-                            />
-                            <Text
-                              style={[
-                                styles.inviteButtonText,
-                                { color: colors.white },
-                              ]}
-                            >
-                              Enviar invitación
-                            </Text>
-                          </>
-                        )}
-                      </Pressable>
-                    ) : null}
-
-                    {!isAssociationCreatorMember ? (
-                      <Pressable
-                        onPress={() => handleRemoveMember(member)}
-                        style={[
-                          styles.secondaryButton,
-                          {
-                            borderColor: colors.border,
-                            backgroundColor: colors.cardMuted,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={rf(18)}
-                          color={colors.textSecondary}
-                        />
-                        <Text
-                          style={[
-                            styles.secondaryButtonText,
-                            { color: colors.textSecondary },
-                          ]}
-                        >
-                          Dar de baja
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
+                {creatingAdminInvite ? (
+                  <ActivityIndicator color={colors.white} size="small" />
                 ) : (
-                  <Pressable
-                    onPress={() => handleCancelInvitation(invitation)}
-                    style={[
-                      styles.secondaryButton,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.cardMuted,
-                      },
-                    ]}
-                  >
+                  <>
                     <Ionicons
-                      name="close-circle-outline"
+                      name="mail-outline"
                       size={rf(18)}
-                      color={colors.textSecondary}
+                      color={colors.white}
                     />
                     <Text
+                      style={[styles.inviteButtonText, { color: colors.white }]}
+                    >
+                      Enviar invitación
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          )}
+
+          {loading ? (
+            <ActivityIndicator
+              color={colors.primary}
+              style={{ marginTop: spacing.lg }}
+            />
+          ) : rows.length ? (
+            rows.map((row) => {
+              const state = getInvitationMeta(row.status, colors);
+              const isMember = row.kind === "member";
+              const member = row.member;
+              const invitation = row.invitation;
+              const isSending =
+                String(sendingId) ===
+                String(isMember ? member.membresia_id || member.id : row.key);
+              const isAssociationCreatorMember =
+                isMember &&
+                String(member.id) === String(activeAssociation?.creada_por);
+
+              return (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.memberCard,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.memberCardHeader}>
+                    <View style={styles.memberCardCopy}>
+                      <Text
+                        style={[
+                          styles.memberEyebrow,
+                          { color: colors.primary },
+                        ]}
+                      >
+                        {row.role === "PROPIETARIO"
+                          ? "Propietario"
+                          : row.role === "FISCAL"
+                            ? "Fiscal"
+                            : "Administrador"}
+                      </Text>
+                      <Text
+                        style={[styles.memberTitle, { color: colors.text }]}
+                      >
+                        {row.displayName || "Sin nombre"}
+                      </Text>
+                    </View>
+                    <View
                       style={[
-                        styles.secondaryButtonText,
-                        { color: colors.textSecondary },
+                        styles.stateBadge,
+                        {
+                          backgroundColor: colors.cardMuted,
+                          borderColor: colors.border,
+                        },
                       ]}
                     >
-                      Anular invitación
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            );
-          })
-        ) : (
-          <View
-            style={[
-              styles.emptyBlock,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Ionicons
-              name="mail-open-outline"
-              size={rf(32)}
-              color={colors.textTertiary}
-            />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              Sin miembros para gestionar
-            </Text>
-            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
-              No hay miembros o invitaciones para el filtro seleccionado.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+                      <Text
+                        style={[styles.stateBadgeText, { color: state.color }]}
+                      >
+                        {state.label}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.memberMeta, { color: colors.text }]}>
+                    <Text style={styles.memberMetaStrong}>Correo:</Text>{" "}
+                    {isMember
+                      ? member.email || "Sin correo"
+                      : invitation.email_invitado}
+                  </Text>
+
+                  {isMember ? (
+                    <>
+                      <Text style={[styles.memberMeta, { color: colors.text }]}>
+                        <Text style={styles.memberMetaStrong}>Teléfono:</Text>{" "}
+                        {member.telefono || "Sin teléfono"}
+                      </Text>
+                      {member.rol === "FISCAL" ? (
+                        <Text
+                          style={[styles.memberMeta, { color: colors.text }]}
+                        >
+                          <Text style={styles.memberMetaStrong}>
+                            Punto de control:
+                          </Text>{" "}
+                          {member.punto_control || "Sin punto de control"}
+                        </Text>
+                      ) : null}
+                    </>
+                  ) : null}
+
+                  {isMember ? (
+                    <View style={styles.actionColumn}>
+                      {member.estado_invitacion !== "ACEPTADA" &&
+                      member.email &&
+                      !isAssociationCreatorMember ? (
+                        <Pressable
+                          onPress={() => handleSendInvitation(member)}
+                          disabled={isSending}
+                          style={[
+                            styles.inviteButton,
+                            { backgroundColor: colors.accent },
+                          ]}
+                        >
+                          {isSending ? (
+                            <ActivityIndicator
+                              color={colors.white}
+                              size="small"
+                            />
+                          ) : (
+                            <>
+                              <Ionicons
+                                name="mail-outline"
+                                size={rf(18)}
+                                color={colors.white}
+                              />
+                              <Text
+                                style={[
+                                  styles.inviteButtonText,
+                                  { color: colors.white },
+                                ]}
+                              >
+                                Enviar invitación
+                              </Text>
+                            </>
+                          )}
+                        </Pressable>
+                      ) : null}
+
+                      {!isAssociationCreatorMember ? (
+                        <Pressable
+                          onPress={() => handleRemoveMember(member)}
+                          style={[
+                            styles.secondaryButton,
+                            {
+                              borderColor: colors.border,
+                              backgroundColor: colors.cardMuted,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={rf(18)}
+                            color={colors.textSecondary}
+                          />
+                          <Text
+                            style={[
+                              styles.secondaryButtonText,
+                              { color: colors.textSecondary },
+                            ]}
+                          >
+                            Dar de baja
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ) : (
+                    <Pressable
+                      onPress={() => handleCancelInvitation(invitation)}
+                      style={[
+                        styles.secondaryButton,
+                        {
+                          borderColor: colors.border,
+                          backgroundColor: colors.cardMuted,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="close-circle-outline"
+                        size={rf(18)}
+                        color={colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.secondaryButtonText,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Anular invitación
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })
+          ) : (
+            <View
+              style={[
+                styles.emptyBlock,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Ionicons
+                name="mail-open-outline"
+                size={rf(32)}
+                color={colors.textTertiary}
+              />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                Sin miembros para gestionar
+              </Text>
+              <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
+                No hay miembros o invitaciones para el filtro seleccionado.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

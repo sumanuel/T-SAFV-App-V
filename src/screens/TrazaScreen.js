@@ -24,10 +24,6 @@ import {
 } from "../services/traza/trazaService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
-function normalizeDateInput(value) {
-  return value.replace(/[^0-9-]/g, "").slice(0, 10);
-}
-
 function formatInputDate(value = new Date()) {
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, "0");

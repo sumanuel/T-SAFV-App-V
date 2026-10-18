@@ -39,7 +39,7 @@ npm run android        # expo start --android
 npx expo export --platform android --output-dir .expo-export-check
 ```
 
-No hay suite de tests ni lint configurados todavía (ver [MEJORAS.md](MEJORAS.md)).
+También: `npm test`, `npm run lint` y `npm run format:check` (los mismos pasos que corre la CI). Plan de mejoras en [MEJORAS.md](MEJORAS.md).
 
 ## Builds (EAS)
 

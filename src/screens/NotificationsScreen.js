@@ -51,7 +51,8 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
   const load = useCallback(
     async (isRefresh = false) => {
       if (!token) return;
-      isRefresh ? setRefreshing(true) : setLoading(true);
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
       try {
         const result = await getMyNotifications(token);
         setNotifications(result.notificaciones || []);
@@ -62,7 +63,8 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
           error?.message || "No se pudieron cargar las notificaciones.",
         );
       } finally {
-        isRefresh ? setRefreshing(false) : setLoading(false);
+        if (isRefresh) setRefreshing(false);
+        else setLoading(false);
       }
     },
     [token, onUnreadCountChange],
@@ -84,7 +86,7 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
     );
     try {
       await markNotificationRead(token, notification.id);
-    } catch (error) {
+    } catch {
       // Revertir si falla
       setNotifications((current) =>
         current.map((item) =>
@@ -97,7 +99,9 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
   const handleMarkAllRead = async () => {
     const hadUnread = notifications.some((item) => !item.leida);
     if (!hadUnread) return;
-    setNotifications((current) => current.map((item) => ({ ...item, leida: true })));
+    setNotifications((current) =>
+      current.map((item) => ({ ...item, leida: true })),
+    );
     onUnreadCountChange?.(0);
     try {
       await markAllNotificationsRead(token);
@@ -180,7 +184,10 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load(true)}
+          />
         }
       >
         <WorkshopScreenHeader
@@ -220,7 +227,10 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
           <View
             style={[
               styles.emptyBlock,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
             ]}
           >
             <Ionicons
@@ -274,7 +284,10 @@ export default function NotificationsScreen({ onBack, onUnreadCountChange }) {
                     </Text>
                     {!item.leida ? (
                       <View
-                        style={[styles.dot, { backgroundColor: colors.primary }]}
+                        style={[
+                          styles.dot,
+                          { backgroundColor: colors.primary },
+                        ]}
                       />
                     ) : null}
                   </View>

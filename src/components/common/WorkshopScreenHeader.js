@@ -107,10 +107,15 @@ export default function WorkshopScreenHeader({
                 />
                 {rightAction.badgeCount > 0 ? (
                   <View
-                    style={[styles.badge, { borderColor: headerTone.colors[0] }]}
+                    style={[
+                      styles.badge,
+                      { borderColor: headerTone.colors[0] },
+                    ]}
                   >
                     <Text style={styles.badgeText}>
-                      {rightAction.badgeCount > 9 ? "9+" : rightAction.badgeCount}
+                      {rightAction.badgeCount > 9
+                        ? "9+"
+                        : rightAction.badgeCount}
                     </Text>
                   </View>
                 ) : null}

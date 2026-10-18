@@ -1,6 +1,6 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, AppState, BackHandler, StyleSheet, View } from "react-native";
+import { AppState, BackHandler, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
@@ -191,8 +191,7 @@ function AppContent() {
     if (activeScreen === APP_SCREENS.MEMBER_INVITATIONS)
       return APP_SCREENS.MORE;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
-    if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS)
-      return APP_SCREENS.MORE;
+    if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) return APP_SCREENS.MORE;
     return APP_SCREENS.HOME;
   }, [activeScreen]);
 
@@ -428,7 +427,9 @@ function AppContent() {
     }
 
     if (activeScreen === APP_SCREENS.NOTIFICATIONS) {
-      return <NotificationsScreen onBack={() => setActiveScreen(APP_SCREENS.HOME)} />;
+      return (
+        <NotificationsScreen onBack={() => setActiveScreen(APP_SCREENS.HOME)} />
+      );
     }
 
     if (activeScreen === APP_SCREENS.PROPIETARIOS) {

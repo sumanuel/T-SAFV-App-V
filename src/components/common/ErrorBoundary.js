@@ -10,7 +10,9 @@ function ErrorFallback({ onRetry }) {
   const { colors } = useTheme();
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
       <View style={styles.container}>
         <Ionicons name="alert-circle-outline" size={56} color={colors.danger} />
         <Text style={[styles.title, { color: colors.text }]}>

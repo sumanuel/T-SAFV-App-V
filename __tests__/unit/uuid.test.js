@@ -1,11 +1,15 @@
 import { uuidv4 } from "../../src/utils/uuid";
 
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const UUID_V4 =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe("uuidv4", () => {
   const original = globalThis.crypto;
   afterEach(() => {
-    Object.defineProperty(globalThis, "crypto", { value: original, configurable: true });
+    Object.defineProperty(globalThis, "crypto", {
+      value: original,
+      configurable: true,
+    });
   });
 
   const withCrypto = (value) =>

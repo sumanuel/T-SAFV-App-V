@@ -17,7 +17,10 @@ function loadSecureStore() {
         const SecureStore = require("expo-secure-store");
         return (await SecureStore.isAvailableAsync()) ? SecureStore : null;
       } catch (error) {
-        logger.warn("[tokenStorage] SecureStore no disponible:", error?.message);
+        logger.warn(
+          "[tokenStorage] SecureStore no disponible:",
+          error?.message,
+        );
         return null;
       }
     })();

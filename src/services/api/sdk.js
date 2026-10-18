@@ -12,7 +12,8 @@ const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH"]);
 
 async function attempt(method, path, body, token) {
   const headers = {};
-  if (METHODS_WITH_BODY.has(method)) headers["Content-Type"] = "application/json";
+  if (METHODS_WITH_BODY.has(method))
+    headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const options = { method, headers };

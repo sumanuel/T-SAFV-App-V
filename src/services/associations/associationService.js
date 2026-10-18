@@ -11,7 +11,9 @@ function resolveError(res, fallback) {
 export async function getMyAssociations(token) {
   const res = await sdk.getMyAssociations(token);
   if (res.status !== 200) {
-    throw new Error(resolveError(res, "No se pudieron cargar las asociaciones."));
+    throw new Error(
+      resolveError(res, "No se pudieron cargar las asociaciones."),
+    );
   }
   return res.data || [];
 }

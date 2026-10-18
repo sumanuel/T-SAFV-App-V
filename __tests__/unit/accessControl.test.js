@@ -22,7 +22,12 @@ describe("permisos por rol (flujo activo)", () => {
   it("el fiscal registra fiscalizaciones pero no administra la asociacion", () => {
     expect(hasPermission(USER_ROLES.FISCAL, "fiscalRecords.manage")).toBe(true);
     expect(hasPermission(USER_ROLES.FISCAL, "traza.view")).toBe(true);
-    for (const permission of ["owners.manage", "fiscales.manage", "invitations.manage", "settings.manage"]) {
+    for (const permission of [
+      "owners.manage",
+      "fiscales.manage",
+      "invitations.manage",
+      "settings.manage",
+    ]) {
       expect(hasPermission(USER_ROLES.FISCAL, permission)).toBe(false);
     }
   });
@@ -30,7 +35,12 @@ describe("permisos por rol (flujo activo)", () => {
   it("el propietario solo gestiona lo suyo y ve traza", () => {
     expect(hasPermission(USER_ROLES.OWNER, "vehicles.self.manage")).toBe(true);
     expect(hasPermission(USER_ROLES.OWNER, "traza.view")).toBe(true);
-    for (const permission of ["fiscalRecords.manage", "owners.manage", "fiscales.manage", "settings.manage"]) {
+    for (const permission of [
+      "fiscalRecords.manage",
+      "owners.manage",
+      "fiscales.manage",
+      "settings.manage",
+    ]) {
       expect(hasPermission(USER_ROLES.OWNER, permission)).toBe(false);
     }
   });

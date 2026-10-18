@@ -57,7 +57,7 @@ const slides = [
 ];
 
 export default function OnboardingScreen({ onComplete }) {
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const scrollRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 

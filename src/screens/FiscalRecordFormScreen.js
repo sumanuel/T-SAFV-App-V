@@ -75,10 +75,11 @@ export default function FiscalRecordFormScreen({
     const load = async () => {
       setLoading(true);
       try {
-        const { units: data, fromCache, failed } = await listVehiclesWithCache(
-          token,
-          asociacionId,
-        );
+        const {
+          units: data,
+          fromCache,
+          failed,
+        } = await listVehiclesWithCache(token, asociacionId);
         setUnits(data);
         setUnitsFromCache(fromCache);
         setSelectedUnitId(

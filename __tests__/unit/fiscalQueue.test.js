@@ -10,12 +10,23 @@ const AsyncStorage = require("@react-native-async-storage/async-storage");
 const sdk = require("../../src/services/api/sdk").default;
 const queue = require("../../src/services/offline/fiscalQueue");
 
-const payload = { unidad_id: 3, asociacion_id: 1, chofer: "Pedro", destino: "Caracas" };
+const payload = {
+  unidad_id: 3,
+  asociacion_id: 1,
+  chofer: "Pedro",
+  destino: "Caracas",
+};
 const WHEN = "2026-10-18T10:00:00.000Z";
 const reply = (status, data = {}) => ({ status, data });
 
 const add = (id, userId = 7, extra = {}) =>
-  queue.enqueueFiscalRecord({ id, userId, payload, capturedAt: WHEN, ...extra });
+  queue.enqueueFiscalRecord({
+    id,
+    userId,
+    payload,
+    capturedAt: WHEN,
+    ...extra,
+  });
 
 beforeEach(async () => {
   jest.clearAllMocks();
@@ -26,9 +37,12 @@ describe("isRetryableStatus", () => {
   it.each([0, 401, 408, 429, 500, 502, 503])("%i se reintenta", (status) => {
     expect(queue.isRetryableStatus(status)).toBe(true);
   });
-  it.each([200, 201, 400, 403, 404, 409, 422])("%i NO se reintenta", (status) => {
-    expect(queue.isRetryableStatus(status)).toBe(false);
-  });
+  it.each([200, 201, 400, 403, 404, 409, 422])(
+    "%i NO se reintenta",
+    (status) => {
+      expect(queue.isRetryableStatus(status)).toBe(false);
+    },
+  );
 });
 
 describe("enqueue / discard", () => {
@@ -36,14 +50,24 @@ describe("enqueue / discard", () => {
     await add("a");
 
     const [item] = await queue.getQueue();
-    expect(item).toMatchObject({ id: "a", userId: "7", capturedAt: WHEN, status: "pending", attempts: 0 });
+    expect(item).toMatchObject({
+      id: "a",
+      userId: "7",
+      capturedAt: WHEN,
+      status: "pending",
+      attempts: 0,
+    });
     expect(item.payload).toEqual(payload);
   });
 
   it("varios enqueue seguidos no se pisan entre si", async () => {
     await Promise.all([add("a"), add("b"), add("c")]);
 
-    expect((await queue.getQueue()).map((i) => i.id).sort()).toEqual(["a", "b", "c"]);
+    expect((await queue.getQueue()).map((i) => i.id).sort()).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
   });
 
   it("discard elimina solo ese registro", async () => {
@@ -85,7 +109,12 @@ describe("flushFiscalQueue", () => {
 
     const summary = await queue.flushFiscalQueue({ token: "tok", userId: 7 });
 
-    expect(summary).toMatchObject({ sent: 1, failed: 0, remaining: 0, stopped: false });
+    expect(summary).toMatchObject({
+      sent: 1,
+      failed: 0,
+      remaining: 0,
+      stopped: false,
+    });
     expect(sdk.createFiscalRecord).toHaveBeenCalledWith("tok", {
       ...payload,
       client_request_id: "a",
@@ -140,12 +169,19 @@ describe("flushFiscalQueue", () => {
     await add("a");
     await add("b");
     sdk.createFiscalRecord
-      .mockResolvedValueOnce(reply(403, { message: "No eres fiscal de esta asociación" }))
+      .mockResolvedValueOnce(
+        reply(403, { message: "No eres fiscal de esta asociación" }),
+      )
       .mockResolvedValueOnce(reply(201));
 
     const summary = await queue.flushFiscalQueue({ token: "tok", userId: 7 });
 
-    expect(summary).toMatchObject({ sent: 1, failed: 1, remaining: 0, stopped: false });
+    expect(summary).toMatchObject({
+      sent: 1,
+      failed: 1,
+      remaining: 0,
+      stopped: false,
+    });
     const [failed] = await queue.getQueue();
     expect(failed).toMatchObject({
       id: "a",
@@ -156,7 +192,9 @@ describe("flushFiscalQueue", () => {
 
   it("los fallidos no se reenvian en el siguiente intento", async () => {
     await add("a");
-    sdk.createFiscalRecord.mockResolvedValueOnce(reply(400, { message: "mal" }));
+    sdk.createFiscalRecord.mockResolvedValueOnce(
+      reply(400, { message: "mal" }),
+    );
     await queue.flushFiscalQueue({ token: "tok", userId: 7 });
     sdk.createFiscalRecord.mockClear();
 
@@ -173,14 +211,18 @@ describe("flushFiscalQueue", () => {
     await queue.flushFiscalQueue({ token: "tok", userId: 7 });
 
     expect(sdk.createFiscalRecord).toHaveBeenCalledTimes(1);
-    expect(sdk.createFiscalRecord.mock.calls[0][1].client_request_id).toBe("mio");
+    expect(sdk.createFiscalRecord.mock.calls[0][1].client_request_id).toBe(
+      "mio",
+    );
     expect((await queue.getQueue()).map((i) => i.id)).toEqual(["ajeno"]);
   });
 
   it("llamadas simultaneas comparten una sola ejecucion (sin envios duplicados)", async () => {
     await add("a");
     let release;
-    sdk.createFiscalRecord.mockReturnValue(new Promise((resolve) => (release = resolve)));
+    sdk.createFiscalRecord.mockReturnValue(
+      new Promise((resolve) => (release = resolve)),
+    );
 
     const first = queue.flushFiscalQueue({ token: "tok", userId: 7 });
     const second = queue.flushFiscalQueue({ token: "tok", userId: 7 });
@@ -195,8 +237,12 @@ describe("flushFiscalQueue", () => {
   it("sin token o usuario no hace nada", async () => {
     await add("a");
 
-    expect(await queue.flushFiscalQueue({ token: null, userId: 7 })).toMatchObject({ sent: 0 });
-    expect(await queue.flushFiscalQueue({ token: "tok", userId: undefined })).toMatchObject({ sent: 0 });
+    expect(
+      await queue.flushFiscalQueue({ token: null, userId: 7 }),
+    ).toMatchObject({ sent: 0 });
+    expect(
+      await queue.flushFiscalQueue({ token: "tok", userId: undefined }),
+    ).toMatchObject({ sent: 0 });
     expect(sdk.createFiscalRecord).not.toHaveBeenCalled();
   });
 });

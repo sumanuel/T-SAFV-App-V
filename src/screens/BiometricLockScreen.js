@@ -41,7 +41,10 @@ export default function BiometricLockScreen({ onUnlock, onSignOut }) {
         <View
           style={[
             styles.logoWrap,
-            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+            },
           ]}
         >
           <Image
@@ -65,10 +68,17 @@ export default function BiometricLockScreen({ onUnlock, onSignOut }) {
           onPress={tryUnlock}
           style={[
             styles.unlockBtn,
-            { backgroundColor: colors.primary, opacity: authenticating ? 0.7 : 1 },
+            {
+              backgroundColor: colors.primary,
+              opacity: authenticating ? 0.7 : 1,
+            },
           ]}
         >
-          <Ionicons name="finger-print-outline" size={rf(26)} color={colors.white} />
+          <Ionicons
+            name="finger-print-outline"
+            size={rf(26)}
+            color={colors.white}
+          />
           <Text style={[styles.unlockBtnText, { color: colors.white }]}>
             {authenticating ? "Verificando..." : "Desbloquear"}
           </Text>

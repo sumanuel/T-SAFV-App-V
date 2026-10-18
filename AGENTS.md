@@ -14,10 +14,13 @@ Comandos útiles:
 npm install
 npm run start
 npm run android
+npm test              # Jest (jest-expo)
+npm run lint          # ESLint (eslint-config-expo)
+npm run format:check  # Prettier (usa `npm run format` para corregir)
 npx expo export --platform android --output-dir .expo-export-check
 ```
 
-Usa el export de Expo como validación principal de frontend. No hay test suite, lint ni typecheck configurados.
+La CI (`.github/workflows/ci.yml`) corre lint, formato, tests y el export de Expo en cada push/PR a `main` y `develop`. No hay typecheck (el proyecto es JavaScript).
 
 ## Documentación
 

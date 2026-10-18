@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -205,7 +205,10 @@ export default function WorkshopHomeScreen({
               }}
               style={[
                 styles.createAssocBtn,
-                { backgroundColor: colors.primary, opacity: retrying ? 0.7 : 1 },
+                {
+                  backgroundColor: colors.primary,
+                  opacity: retrying ? 0.7 : 1,
+                },
               ]}
             >
               {retrying ? (
@@ -217,7 +220,9 @@ export default function WorkshopHomeScreen({
                   color={colors.white}
                 />
               )}
-              <Text style={[styles.createAssocBtnText, { color: colors.white }]}>
+              <Text
+                style={[styles.createAssocBtnText, { color: colors.white }]}
+              >
                 Reintentar
               </Text>
             </Pressable>
@@ -236,336 +241,341 @@ export default function WorkshopHomeScreen({
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-          <WorkshopScreenHeader
-            section="Fiscalización"
-            title="T-SAFV"
-            subtitle="Sistema operativo para control y fiscalización de unidades."
-          />
-          {!showCreateForm ? (
-            <View
-              style={[
-                styles.noAssocBlock,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Ionicons
-                name="business-outline"
-                size={rf(40)}
-                color={colors.textTertiary}
-              />
-              <Text style={[styles.noAssocTitle, { color: colors.text }]}>
-                Sin asociacion registrada
-              </Text>
-              <Text
-                style={[styles.noAssocMsg, { color: colors.textSecondary }]}
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+          >
+            <WorkshopScreenHeader
+              section="Fiscalización"
+              title="T-SAFV"
+              subtitle="Sistema operativo para control y fiscalización de unidades."
+            />
+            {!showCreateForm ? (
+              <View
+                style={[
+                  styles.noAssocBlock,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
-                {associationCreationAccess?.message ||
-                  "Para comenzar necesitas crear una asociación. Solo se permite una por cuenta y el acceso depende de pago o período de prueba."}
-              </Text>
-              {canCreateAssociation ? (
-                <Pressable
-                  onPress={() => setShowCreateForm(true)}
-                  style={[
-                    styles.createAssocBtn,
-                    { backgroundColor: colors.primary },
-                  ]}
+                <Ionicons
+                  name="business-outline"
+                  size={rf(40)}
+                  color={colors.textTertiary}
+                />
+                <Text style={[styles.noAssocTitle, { color: colors.text }]}>
+                  Sin asociacion registrada
+                </Text>
+                <Text
+                  style={[styles.noAssocMsg, { color: colors.textSecondary }]}
                 >
-                  <Ionicons
-                    name={
-                      canStartTrial ? "flask-outline" : "add-circle-outline"
-                    }
-                    size={rf(18)}
-                    color={colors.white}
-                  />
-                  <Text
-                    style={[styles.createAssocBtnText, { color: colors.white }]}
-                  >
-                    {canStartTrial
-                      ? "Crear asociación y activar prueba"
-                      : "Crear asociación"}
-                  </Text>
-                </Pressable>
-              ) : (
-                <View
-                  style={[
-                    styles.blockedBadge,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={rf(18)}
-                    color={colors.warning}
-                  />
-                  <Text
+                  {associationCreationAccess?.message ||
+                    "Para comenzar necesitas crear una asociación. Solo se permite una por cuenta y el acceso depende de pago o período de prueba."}
+                </Text>
+                {canCreateAssociation ? (
+                  <Pressable
+                    onPress={() => setShowCreateForm(true)}
                     style={[
-                      styles.blockedBadgeText,
-                      { color: colors.textSecondary },
+                      styles.createAssocBtn,
+                      { backgroundColor: colors.primary },
                     ]}
                   >
-                    Creación bloqueada hasta resolver el estado de invitación o
-                    licencia.
-                  </Text>
-                </View>
-              )}
-
-              {pendingInvitation ? (
-                <Pressable
-                  onPress={async () => {
-                    try {
-                      await acceptPendingInvitation();
-                    } catch (error) {
-                      Alert.alert(
-                        "Invitación",
-                        error?.message || "No se pudo aceptar la invitación.",
-                      );
-                    }
-                  }}
-                  style={[
-                    styles.invitationCard,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name="mail-open-outline"
-                    size={rf(18)}
-                    color={colors.primary}
-                  />
-                  <View style={styles.invitationCopy}>
-                    <Text
-                      style={[styles.invitationTitle, { color: colors.text }]}
-                    >
-                      Invitación pendiente
-                    </Text>
+                    <Ionicons
+                      name={
+                        canStartTrial ? "flask-outline" : "add-circle-outline"
+                      }
+                      size={rf(18)}
+                      color={colors.white}
+                    />
                     <Text
                       style={[
-                        styles.invitationText,
+                        styles.createAssocBtnText,
+                        { color: colors.white },
+                      ]}
+                    >
+                      {canStartTrial
+                        ? "Crear asociación y activar prueba"
+                        : "Crear asociación"}
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <View
+                    style={[
+                      styles.blockedBadge,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={rf(18)}
+                      color={colors.warning}
+                    />
+                    <Text
+                      style={[
+                        styles.blockedBadgeText,
                         { color: colors.textSecondary },
                       ]}
                     >
-                      Acepta la invitación de{" "}
-                      {pendingInvitation.rol_invitado?.toLowerCase?.() ||
-                        "miembro"}{" "}
-                      para entrar a la asociación asignada.
+                      Creación bloqueada hasta resolver el estado de invitación
+                      o licencia.
                     </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={rf(18)}
-                    color={colors.textTertiary}
-                  />
-                </Pressable>
-              ) : null}
-            </View>
-          ) : (
-            <View
-              style={[
-                styles.formCard,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.formTitle, { color: colors.text }]}>
-                Nueva asociacion
-              </Text>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Nombre *
-                </Text>
-                <TextInput
-                  value={newAsocName}
-                  onChangeText={setNewAsocName}
-                  placeholder="Nombre de la asociacion"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="words"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
+                )}
+
+                {pendingInvitation ? (
+                  <Pressable
+                    onPress={async () => {
+                      try {
+                        await acceptPendingInvitation();
+                      } catch (error) {
+                        Alert.alert(
+                          "Invitación",
+                          error?.message || "No se pudo aceptar la invitación.",
+                        );
+                      }
+                    }}
+                    style={[
+                      styles.invitationCard,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail-open-outline"
+                      size={rf(18)}
+                      color={colors.primary}
+                    />
+                    <View style={styles.invitationCopy}>
+                      <Text
+                        style={[styles.invitationTitle, { color: colors.text }]}
+                      >
+                        Invitación pendiente
+                      </Text>
+                      <Text
+                        style={[
+                          styles.invitationText,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Acepta la invitación de{" "}
+                        {pendingInvitation.rol_invitado?.toLowerCase?.() ||
+                          "miembro"}{" "}
+                        para entrar a la asociación asignada.
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={rf(18)}
+                      color={colors.textTertiary}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  RIF *
+            ) : (
+              <View
+                style={[
+                  styles.formCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.formTitle, { color: colors.text }]}>
+                  Nueva asociacion
                 </Text>
-                <TextInput
-                  value={newAsocRif}
-                  onChangeText={setNewAsocRif}
-                  placeholder="J-12345678-9"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="characters"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Dirección fiscal *
-                </Text>
-                <TextInput
-                  value={newAsocAddress}
-                  onChangeText={setNewAsocAddress}
-                  placeholder="Dirección fiscal"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="sentences"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Correo *
-                </Text>
-                <TextInput
-                  value={newAsocEmail}
-                  onChangeText={setNewAsocEmail}
-                  placeholder="correo@asociacion.com"
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Teléfonos *
-                </Text>
-                <TextInput
-                  value={newAsocPhones}
-                  onChangeText={setNewAsocPhones}
-                  placeholder="0414-0000000 / 0212-0000000"
-                  placeholderTextColor={colors.textTertiary}
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Logo URL
-                </Text>
-                <TextInput
-                  value={newAsocLogoUrl}
-                  onChangeText={setNewAsocLogoUrl}
-                  placeholder="https://..."
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="none"
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Redes sociales JSON
-                </Text>
-                <TextInput
-                  value={newAsocSocialText}
-                  onChangeText={setNewAsocSocialText}
-                  placeholder='{"instagram":"@mi_asociacion"}'
-                  placeholderTextColor={colors.textTertiary}
-                  autoCapitalize="none"
-                  multiline
-                  style={[
-                    styles.input,
-                    styles.multilineInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={styles.formActions}>
-                <Pressable
-                  onPress={() => setShowCreateForm(false)}
-                  style={[
-                    styles.cancelBtn,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.cancelBtnText, { color: colors.text }]}>
-                    Cancelar
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Nombre *
                   </Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleCreateAssociation}
-                  disabled={creating}
-                  style={[
-                    styles.confirmBtn,
-                    {
-                      backgroundColor: creating
-                        ? colors.border
-                        : colors.primary,
-                    },
-                  ]}
-                >
-                  {creating ? (
-                    <ActivityIndicator color={colors.white} size="small" />
-                  ) : (
+                  <TextInput
+                    value={newAsocName}
+                    onChangeText={setNewAsocName}
+                    placeholder="Nombre de la asociacion"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="words"
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    RIF *
+                  </Text>
+                  <TextInput
+                    value={newAsocRif}
+                    onChangeText={setNewAsocRif}
+                    placeholder="J-12345678-9"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="characters"
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Dirección fiscal *
+                  </Text>
+                  <TextInput
+                    value={newAsocAddress}
+                    onChangeText={setNewAsocAddress}
+                    placeholder="Dirección fiscal"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="sentences"
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Correo *
+                  </Text>
+                  <TextInput
+                    value={newAsocEmail}
+                    onChangeText={setNewAsocEmail}
+                    placeholder="correo@asociacion.com"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Teléfonos *
+                  </Text>
+                  <TextInput
+                    value={newAsocPhones}
+                    onChangeText={setNewAsocPhones}
+                    placeholder="0414-0000000 / 0212-0000000"
+                    placeholderTextColor={colors.textTertiary}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Logo URL
+                  </Text>
+                  <TextInput
+                    value={newAsocLogoUrl}
+                    onChangeText={setNewAsocLogoUrl}
+                    placeholder="https://..."
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="none"
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.fieldWrap}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>
+                    Redes sociales JSON
+                  </Text>
+                  <TextInput
+                    value={newAsocSocialText}
+                    onChangeText={setNewAsocSocialText}
+                    placeholder='{"instagram":"@mi_asociacion"}'
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="none"
+                    multiline
+                    style={[
+                      styles.input,
+                      styles.multilineInput,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.formActions}>
+                  <Pressable
+                    onPress={() => setShowCreateForm(false)}
+                    style={[
+                      styles.cancelBtn,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
                     <Text
-                      style={[styles.confirmBtnText, { color: colors.white }]}
+                      style={[styles.cancelBtnText, { color: colors.text }]}
                     >
-                      {canStartTrial ? "Crear y activar prueba" : "Crear"}
+                      Cancelar
                     </Text>
-                  )}
-                </Pressable>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleCreateAssociation}
+                    disabled={creating}
+                    style={[
+                      styles.confirmBtn,
+                      {
+                        backgroundColor: creating
+                          ? colors.border
+                          : colors.primary,
+                      },
+                    ]}
+                  >
+                    {creating ? (
+                      <ActivityIndicator color={colors.white} size="small" />
+                    ) : (
+                      <Text
+                        style={[styles.confirmBtnText, { color: colors.white }]}
+                      >
+                        {canStartTrial ? "Crear y activar prueba" : "Crear"}
+                      </Text>
+                    )}
+                  </Pressable>
+                </View>
               </View>
-            </View>
-          )}
-        </ScrollView>
+            )}
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     );

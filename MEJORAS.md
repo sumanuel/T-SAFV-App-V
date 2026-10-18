@@ -38,10 +38,12 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 
 ## Fase 5 — Calidad y proceso
 
-- [ ] **5.1 Tests** (App, M). Jest + `jest-expo`; empezar por `accessControl.js`, `dateRange.js`, servicios y `AuthContext`.
+- [x] **5.1 Tests** (App, M). Jest + `jest-expo`; empezar por `accessControl.js`, `dateRange.js`, servicios y `AuthContext`.
   - Hecho: infraestructura (`npm test`) y pruebas de tokenStorage, sessionRefresh, sdk, fiscalQueue, caché de unidades, uuid, accessControl y dateRange. Falta `AuthContext` y componentes. API: `npm test` corre los unitarios; los de integración (`npm run test:integration`) escriben en la BD real del `.env`.
-- [ ] **5.2 ESLint + Prettier** (App, S).
-- [ ] **5.3 CI** (App, S). GitHub Actions: lint + tests + `npx expo export --platform android`.
+- [x] **5.2 ESLint + Prettier** (App, S).
+  - `npm run lint` (0 errores; quedan ~30 avisos de patrones de hooks heredados, que desaparecen al partir las pantallas, ver 2.3) y `npm run format:check`. Las reglas nuevas de React Compiler (`set-state-in-effect`, `refs`, `immutability`) están como aviso, no como error.
+- [x] **5.3 CI** (App, S). GitHub Actions: lint + tests + `npx expo export --platform android`.
+  - `.github/workflows/ci.yml`. No se pudo ejecutar localmente: la primera corrida en GitHub confirmará que `expo export` funciona sin `google-services.json`.
 - [x] **5.4 Documentación al día** (App, S). `AGENTS.md` aún dice Expo SDK 54 / RN 0.81 (ahora 57 / 0.86).
 
 ## Hallazgos pendientes (surgidos durante la ejecución)

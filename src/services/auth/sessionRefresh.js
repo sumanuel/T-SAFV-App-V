@@ -54,7 +54,10 @@ async function requestRefresh() {
   const data = await response.json().catch(() => null);
   if (!data?.token || !data?.refresh_token) return { status: "offline" };
 
-  await Promise.all([setToken(data.token), setRefreshToken(data.refresh_token)]);
+  await Promise.all([
+    setToken(data.token),
+    setRefreshToken(data.refresh_token),
+  ]);
   onRefreshed?.({ token: data.token, user: data.user });
   return { status: "ok", token: data.token };
 }
@@ -70,7 +73,10 @@ function remember(staleToken, freshToken) {
 // Resultado: { status: "ok", token } | { status: "expired" } | { status: "offline" }
 export function refreshAccessToken(staleToken) {
   if (staleToken && replacedTokens.has(staleToken)) {
-    return Promise.resolve({ status: "ok", token: replacedTokens.get(staleToken) });
+    return Promise.resolve({
+      status: "ok",
+      token: replacedTokens.get(staleToken),
+    });
   }
 
   if (!inFlight) {

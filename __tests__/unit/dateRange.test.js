@@ -32,7 +32,9 @@ describe("normalizeDateRange", () => {
   it("deja pasar rangos incompletos sin lanzar", () => {
     expect(normalizeDateRange({ start: new Date(2025, 0, 1) }).end).toBeNull();
     expect(normalizeDateRange(undefined)).toEqual({ start: null, end: null });
-    expect(normalizeDateRange({ start: "no-es-fecha", end: new Date() }).start).toBeNull();
+    expect(
+      normalizeDateRange({ start: "no-es-fecha", end: new Date() }).start,
+    ).toBeNull();
   });
 });
 
@@ -56,20 +58,29 @@ describe("rangos predefinidos", () => {
 
   it("la semana de un domingo arranca el lunes anterior", () => {
     jest.setSystemTime(new Date(2025, 9, 19, 9, 0, 0));
-    expect(createCurrentWeekRange().start).toEqual(new Date(2025, 9, 13, 0, 0, 0, 0));
+    expect(createCurrentWeekRange().start).toEqual(
+      new Date(2025, 9, 13, 0, 0, 0, 0),
+    );
   });
 
   it("el mes empieza el dia 1", () => {
-    expect(createCurrentMonthRange().start).toEqual(new Date(2025, 9, 1, 0, 0, 0, 0));
+    expect(createCurrentMonthRange().start).toEqual(
+      new Date(2025, 9, 1, 0, 0, 0, 0),
+    );
   });
 });
 
 describe("isWithinDateRange", () => {
-  const range = normalizeDateRange({ start: new Date(2025, 9, 1), end: new Date(2025, 9, 31) });
+  const range = normalizeDateRange({
+    start: new Date(2025, 9, 1),
+    end: new Date(2025, 9, 31),
+  });
 
   it("incluye los extremos del rango", () => {
     expect(isWithinDateRange(new Date(2025, 9, 1, 0, 0, 0), range)).toBe(true);
-    expect(isWithinDateRange(new Date(2025, 9, 31, 23, 59, 0), range)).toBe(true);
+    expect(isWithinDateRange(new Date(2025, 9, 31, 23, 59, 0), range)).toBe(
+      true,
+    );
   });
 
   it("excluye fuera de rango y valores invalidos", () => {
@@ -79,7 +90,9 @@ describe("isWithinDateRange", () => {
   });
 
   it("acepta timestamps numericos y sin rango acepta todo", () => {
-    expect(isWithinDateRange(new Date(2025, 9, 10).getTime(), range)).toBe(true);
+    expect(isWithinDateRange(new Date(2025, 9, 10).getTime(), range)).toBe(
+      true,
+    );
     expect(isWithinDateRange(new Date(2020, 0, 1), undefined)).toBe(true);
   });
 });

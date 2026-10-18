@@ -5,7 +5,8 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 function mockSecureStore({ available = true, importFails = false } = {}) {
   const store = new Map();
   jest.doMock("expo-secure-store", () => {
-    if (importFails) throw new Error("Cannot find native module 'ExpoSecureStore'");
+    if (importFails)
+      throw new Error("Cannot find native module 'ExpoSecureStore'");
     return {
       isAvailableAsync: async () => available,
       getItemAsync: async (key) => store.get(key) ?? null,
@@ -93,8 +94,14 @@ describe("con SecureStore disponible", () => {
 describe("sin SecureStore (plataforma no soportada)", () => {
   it("cae a AsyncStorage", async () => {
     mockSecureStore({ available: false });
-    const { setToken, getToken, setRefreshToken, getRefreshToken, removeRefreshToken, AsyncStorage } =
-      load();
+    const {
+      setToken,
+      getToken,
+      setRefreshToken,
+      getRefreshToken,
+      removeRefreshToken,
+      AsyncStorage,
+    } = load();
 
     await setToken("abc");
     await setRefreshToken("ref");

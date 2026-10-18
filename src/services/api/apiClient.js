@@ -44,10 +44,9 @@ apiClient.interceptors.response.use(
     if (error?.response?.status === 401 && original && !isAuthRoute) {
       if (!original._retried) {
         original._retried = true;
-        const staleToken = String(original.headers?.Authorization || "").replace(
-          /^Bearer /,
-          "",
-        );
+        const staleToken = String(
+          original.headers?.Authorization || "",
+        ).replace(/^Bearer /, "");
         const { token, expired } = await recoverFromUnauthorized(staleToken);
         if (token) {
           original.headers.Authorization = `Bearer ${token}`;

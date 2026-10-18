@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
-import { USER_ROLES } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { updateAssociation } from "../services/associations/associationService";
@@ -166,64 +165,18 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <WorkshopScreenHeader
-          onBack={onBack}
-          section="Configuración"
-          title="Datos de la asociación"
-          subtitle="Identidad comercial, contexto activo y mantenimiento operativo de la asociación."
-        />
-
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={[styles.panelTitle, { color: colors.text }]}>
-            Asociación activa
-          </Text>
-          <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-            Identidad y contexto operativo de la asociación seleccionada.
-          </Text>
+          <WorkshopScreenHeader
+            onBack={onBack}
+            section="Configuración"
+            title="Datos de la asociación"
+            subtitle="Identidad comercial, contexto activo y mantenimiento operativo de la asociación."
+          />
 
-          <View
-            style={[
-              styles.summaryCard,
-              {
-                backgroundColor: colors.cardMuted,
-                borderColor: colors.primary,
-              },
-            ]}
-          >
-            <View style={styles.summaryCopy}>
-              <Text style={[styles.summaryTitle, { color: colors.text }]}>
-                {activeAssociation?.nombre || "Sin asociación activa"}
-              </Text>
-              <Text
-                style={[styles.summaryMeta, { color: colors.textSecondary }]}
-              >
-                {activeAssociation?.rif || "Sin RIF"}
-              </Text>
-            </View>
-            <View
-              style={[styles.activeBadge, { backgroundColor: colors.primary }]}
-            >
-              <Text style={[styles.activeBadgeText, { color: colors.white }]}>
-                Activa
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {canManageAssociation ? (
           <View
             style={[
               styles.panel,
@@ -234,217 +187,269 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
             ]}
           >
             <Text style={[styles.panelTitle, { color: colors.text }]}>
-              Editar asociación
+              Asociación activa
             </Text>
             <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-              Actualiza nombre, RIF, dirección fiscal, contacto, logo y redes
-              sociales de la asociación activa.
+              Identidad y contexto operativo de la asociación seleccionada.
             </Text>
 
-            <Field
-              colors={colors}
-              label="Nombre"
-              value={associationForm.nombre}
-              onChangeText={(value) => updateField("nombre", value)}
-            />
-            <Field
-              colors={colors}
-              label="RIF"
-              value={associationForm.rif}
-              onChangeText={(value) => updateField("rif", value)}
-            />
-            <Field
-              colors={colors}
-              label="Dirección fiscal"
-              value={associationForm.direccion_fiscal}
-              onChangeText={(value) => updateField("direccion_fiscal", value)}
-              multiline
-            />
-            <Field
-              colors={colors}
-              label="Correo"
-              value={associationForm.email}
-              onChangeText={(value) => updateField("email", value)}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <Field
-              colors={colors}
-              label="Teléfonos"
-              value={associationForm.telefonos}
-              onChangeText={(value) => updateField("telefonos", value)}
-            />
-            <Field
-              colors={colors}
-              label="Logo URL"
-              value={associationForm.logo_url}
-              onChangeText={(value) => updateField("logo_url", value)}
-              autoCapitalize="none"
-            />
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.text }]}>
-                Logo de la asociación
-              </Text>
-              <View style={styles.logoActionsRow}>
-                <Pressable
-                  onPress={handlePickLogo}
-                  style={[
-                    styles.secondaryFilledAction,
-                    styles.logoActionButton,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: colors.cardMuted,
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
+              <View style={styles.summaryCopy}>
+                <Text style={[styles.summaryTitle, { color: colors.text }]}>
+                  {activeAssociation?.nombre || "Sin asociación activa"}
+                </Text>
+                <Text
+                  style={[styles.summaryMeta, { color: colors.textSecondary }]}
                 >
-                  <Text
-                    style={[
-                      styles.secondaryFilledActionText,
-                      { color: colors.text },
-                    ]}
-                  >
-                    Seleccionar logo
-                  </Text>
-                </Pressable>
-                <Pressable
-                  disabled={!logoPreview}
-                  onPress={() => {
-                    updateField("logo_data", "");
-                    updateField("logo_url", "");
-                  }}
-                  style={[
-                    styles.secondaryAction,
-                    styles.logoActionButton,
-                    {
-                      borderColor: colors.borderStrong,
-                      backgroundColor: colors.cardBackground,
-                    },
-                    !logoPreview ? styles.disabledAction : null,
-                  ]}
-                >
-                  <Text
-                    style={[styles.secondaryActionText, { color: colors.text }]}
-                  >
-                    Quitar logo
-                  </Text>
-                </Pressable>
+                  {activeAssociation?.rif || "Sin RIF"}
+                </Text>
               </View>
+              <View
+                style={[
+                  styles.activeBadge,
+                  { backgroundColor: colors.primary },
+                ]}
+              >
+                <Text style={[styles.activeBadgeText, { color: colors.white }]}>
+                  Activa
+                </Text>
+              </View>
+            </View>
+          </View>
 
-              {logoPreview ? (
-                <View
-                  style={[
-                    styles.logoPreviewCard,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Image
-                    source={{ uri: logoPreview }}
-                    style={styles.logoPreviewImage}
-                  />
-                  <Text
+          {canManageAssociation ? (
+            <View
+              style={[
+                styles.panel,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.panelTitle, { color: colors.text }]}>
+                Editar asociación
+              </Text>
+              <Text style={[styles.panelText, { color: colors.textSecondary }]}>
+                Actualiza nombre, RIF, dirección fiscal, contacto, logo y redes
+                sociales de la asociación activa.
+              </Text>
+
+              <Field
+                colors={colors}
+                label="Nombre"
+                value={associationForm.nombre}
+                onChangeText={(value) => updateField("nombre", value)}
+              />
+              <Field
+                colors={colors}
+                label="RIF"
+                value={associationForm.rif}
+                onChangeText={(value) => updateField("rif", value)}
+              />
+              <Field
+                colors={colors}
+                label="Dirección fiscal"
+                value={associationForm.direccion_fiscal}
+                onChangeText={(value) => updateField("direccion_fiscal", value)}
+                multiline
+              />
+              <Field
+                colors={colors}
+                label="Correo"
+                value={associationForm.email}
+                onChangeText={(value) => updateField("email", value)}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <Field
+                colors={colors}
+                label="Teléfonos"
+                value={associationForm.telefonos}
+                onChangeText={(value) => updateField("telefonos", value)}
+              />
+              <Field
+                colors={colors}
+                label="Logo URL"
+                value={associationForm.logo_url}
+                onChangeText={(value) => updateField("logo_url", value)}
+                autoCapitalize="none"
+              />
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.fieldLabel, { color: colors.text }]}>
+                  Logo de la asociación
+                </Text>
+                <View style={styles.logoActionsRow}>
+                  <Pressable
+                    onPress={handlePickLogo}
                     style={[
-                      styles.logoPreviewText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    Vista previa del logo de la asociación.
-                  </Text>
-                </View>
-              ) : (
-                <View
-                  style={[
-                    styles.logoPlaceholderCard,
-                    {
-                      backgroundColor: colors.cardMuted,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.logoPlaceholderBadge,
+                      styles.secondaryFilledAction,
+                      styles.logoActionButton,
                       {
-                        backgroundColor: colors.cardBackground,
+                        backgroundColor: colors.cardMuted,
                         borderColor: colors.border,
                       },
                     ]}
                   >
                     <Text
                       style={[
-                        styles.logoPlaceholderInitials,
+                        styles.secondaryFilledActionText,
+                        { color: colors.text },
+                      ]}
+                    >
+                      Seleccionar logo
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    disabled={!logoPreview}
+                    onPress={() => {
+                      updateField("logo_data", "");
+                      updateField("logo_url", "");
+                    }}
+                    style={[
+                      styles.secondaryAction,
+                      styles.logoActionButton,
+                      {
+                        borderColor: colors.borderStrong,
+                        backgroundColor: colors.cardBackground,
+                      },
+                      !logoPreview ? styles.disabledAction : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.secondaryActionText,
+                        { color: colors.text },
+                      ]}
+                    >
+                      Quitar logo
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {logoPreview ? (
+                  <View
+                    style={[
+                      styles.logoPreviewCard,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: logoPreview }}
+                      style={styles.logoPreviewImage}
+                    />
+                    <Text
+                      style={[
+                        styles.logoPreviewText,
                         { color: colors.textSecondary },
                       ]}
                     >
-                      LOGO
+                      Vista previa del logo de la asociación.
                     </Text>
                   </View>
-                  <Text
-                    style={[styles.logoPreviewText, { color: colors.text }]}
+                ) : (
+                  <View
+                    style={[
+                      styles.logoPlaceholderCard,
+                      {
+                        backgroundColor: colors.cardMuted,
+                        borderColor: colors.border,
+                      },
+                    ]}
                   >
-                    Aún no hay logo cargado
-                  </Text>
+                    <View
+                      style={[
+                        styles.logoPlaceholderBadge,
+                        {
+                          backgroundColor: colors.cardBackground,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.logoPlaceholderInitials,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        LOGO
+                      </Text>
+                    </View>
+                    <Text
+                      style={[styles.logoPreviewText, { color: colors.text }]}
+                    >
+                      Aún no hay logo cargado
+                    </Text>
+                    <Text
+                      style={[styles.rowMeta, { color: colors.textSecondary }]}
+                    >
+                      Selecciona una imagen o usa una URL para mostrar el logo
+                      de la asociación.
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <Field
+                colors={colors}
+                label="Redes sociales (JSON)"
+                value={associationForm.redes_sociales}
+                onChangeText={(value) => updateField("redes_sociales", value)}
+                multiline
+                placeholder='{"instagram":"@mi_asociacion"}'
+              />
+
+              <Pressable
+                disabled={submitting || authBusy || !activeAssociationId}
+                onPress={handleSave}
+                style={[
+                  styles.primaryAction,
+                  { backgroundColor: colors.primary },
+                ]}
+              >
+                {submitting ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
                   <Text
-                    style={[styles.rowMeta, { color: colors.textSecondary }]}
+                    style={[styles.primaryActionText, { color: colors.white }]}
                   >
-                    Selecciona una imagen o usa una URL para mostrar el logo de
-                    la asociación.
+                    Guardar datos de la asociación
                   </Text>
-                </View>
-              )}
+                )}
+              </Pressable>
             </View>
-
-            <Field
-              colors={colors}
-              label="Redes sociales (JSON)"
-              value={associationForm.redes_sociales}
-              onChangeText={(value) => updateField("redes_sociales", value)}
-              multiline
-              placeholder='{"instagram":"@mi_asociacion"}'
-            />
-
-            <Pressable
-              disabled={submitting || authBusy || !activeAssociationId}
-              onPress={handleSave}
+          ) : (
+            <View
               style={[
-                styles.primaryAction,
-                { backgroundColor: colors.primary },
+                styles.accessNotice,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
               ]}
             >
-              {submitting ? (
-                <ActivityIndicator color={colors.white} size="small" />
-              ) : (
-                <Text
-                  style={[styles.primaryActionText, { color: colors.white }]}
-                >
-                  Guardar datos de la asociación
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.accessNotice,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.panelTitle, { color: colors.text }]}>
-              Gestión de la asociación restringida
-            </Text>
-            <Text style={[styles.panelText, { color: colors.textSecondary }]}>
-              Tu perfil puede operar el flujo diario, pero no cambiar la
-              identidad comercial ni el contacto de la asociación.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+              <Text style={[styles.panelTitle, { color: colors.text }]}>
+                Gestión de la asociación restringida
+              </Text>
+              <Text style={[styles.panelText, { color: colors.textSecondary }]}>
+                Tu perfil puede operar el flujo diario, pero no cambiar la
+                identidad comercial ni el contacto de la asociación.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

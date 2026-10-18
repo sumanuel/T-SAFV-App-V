@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AuthContext.js
  * JWT-based auth usando T-SAFV-API para login/registro.
  * Expone token, asociaciones y asociacion activa para los modulos del dominio.
@@ -121,7 +121,9 @@ export function AuthProvider({ children }) {
       ]);
       setAssociationsLoadError(false);
       const hasAssociations = Boolean(data && data.length > 0);
-      const hasPendingInvitation = Boolean(invitations && invitations.length > 0);
+      const hasPendingInvitation = Boolean(
+        invitations && invitations.length > 0,
+      );
       setAssociations(data || []);
       setPendingInvitation((invitations || [])[0] || null);
       setUserProfile((current) =>
@@ -131,7 +133,8 @@ export function AuthProvider({ children }) {
               associationCreationAccess: access || null,
               // Sin asociaciones activas pero con invitacion pendiente: mostrar
               // AccessStatusScreen para que el usuario la vea y pueda aceptarla.
-              status: !hasAssociations && hasPendingInvitation ? "missing" : "active",
+              status:
+                !hasAssociations && hasPendingInvitation ? "missing" : "active",
             }
           : current,
       );
@@ -238,7 +241,9 @@ export function AuthProvider({ children }) {
     setSessionRefreshedHandler(({ token: freshToken, user }) => {
       setToken(freshToken);
       if (user) {
-        AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)).catch(() => {});
+        AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)).catch(
+          () => {},
+        );
       }
     });
     return () => setSessionRefreshedHandler(null);

@@ -1,0 +1,7 @@
+dist/
+.expo/
+node_modules/
+package-lock.json
+*.md
+assets/
+.expo-export-check/

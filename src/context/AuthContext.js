@@ -43,10 +43,6 @@ import { logger } from "../utils/logger";
 
 const AuthContext = createContext();
 
-// Las pantallas heredadas todavia leen `memberships` con `workshopId`; se
-// mantiene una unica membresia sintetica con este identificador fijo.
-const ASSOCIATION_CONTEXT_ID = "association";
-
 const AUTH_USER_KEY = "@auth_user";
 const ACTIVE_ASSOC_KEY = "@active_association_id";
 
@@ -55,8 +51,6 @@ function mapApiUserToProfile(user) {
   let role = "administrator";
   if (rawRol === "owner" || rawRol === "propietario") role = "owner";
   else if (rawRol === "fiscal") role = "fiscal";
-  else if (rawRol === "mechanic" || rawRol === "mecanico") role = "mechanic";
-  else if (rawRol === "reception" || rawRol === "recepcion") role = "reception";
 
   const fullName = [user.nombre, user.apellido]
     .filter(Boolean)
@@ -71,19 +65,8 @@ function mapApiUserToProfile(user) {
     role,
     associationCreationAccess: user.association_creation_access || null,
     status: "active",
-    defaultWorkshopId: ASSOCIATION_CONTEXT_ID,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
-}
-
-function buildMembership(profile, associationName) {
-  return {
-    workshopId: ASSOCIATION_CONTEXT_ID,
-    workshopName: associationName || "Asociación",
-    role: profile.role,
-    status: "active",
-    uid: profile.uid,
   };
 }
 
@@ -105,11 +88,6 @@ export function AuthProvider({ children }) {
       null,
     [associations, activeAssociationId],
   );
-
-  const memberships = useMemo(() => {
-    if (!userProfile) return [];
-    return [buildMembership(userProfile, activeAssociation?.nombre)];
-  }, [userProfile, activeAssociation]);
 
   const loadAssociations = useCallback(async (authToken) => {
     if (!authToken) return;
@@ -394,13 +372,11 @@ export function AuthProvider({ children }) {
       acceptPendingInvitation,
       activeAssociation,
       activeAssociationId: activeAssociation?.id ?? null,
-      activeWorkshopId: ASSOCIATION_CONTEXT_ID,
       associations,
       associationsLoadError,
       authBusy,
       authReady,
       authUser,
-      memberships,
       pendingInvitation,
       recoverPassword,
       refreshAssociations,
@@ -419,7 +395,6 @@ export function AuthProvider({ children }) {
       authBusy,
       authReady,
       authUser,
-      memberships,
       pendingInvitation,
       refreshAssociations,
       setActiveAssociationId,

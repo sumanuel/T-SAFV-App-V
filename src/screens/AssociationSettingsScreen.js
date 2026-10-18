@@ -71,12 +71,10 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
     activeAssociation,
     activeAssociationId,
     authBusy,
-    memberships,
     refreshAssociations,
     token,
   } = useAuth();
-  const activeMembership = memberships[0] || null;
-  const currentRole = activeMembership?.role || userProfile?.role;
+  const currentRole = userProfile?.role;
   const isAssociationCreator =
     currentRole === "administrator" &&
     String(activeAssociation?.creada_por) === String(userProfile?.uid);

@@ -41,25 +41,8 @@ const administrativeItems = [
   },
 ];
 
-function getPrimaryMembership(memberships, activeWorkshopId) {
-  return (
-    memberships.find((item) => item.workshopId === activeWorkshopId) ||
-    memberships[0] ||
-    null
-  );
-}
-
-function resolveActionState(
-  itemKey,
-  userProfile,
-  memberships,
-  activeWorkshopId,
-  activeAssociation,
-) {
-  const currentRole =
-    memberships.find((item) => item.workshopId === activeWorkshopId)?.role ||
-    userProfile?.role ||
-    "";
+function resolveActionState(itemKey, userProfile, activeAssociation) {
+  const currentRole = userProfile?.role || "";
   const isAssociationCreator =
     currentRole === "administrator" &&
     String(activeAssociation?.creada_por) === String(userProfile?.uid);
@@ -96,15 +79,11 @@ function renderActionRow({
   colors,
   onPress,
   userProfile,
-  memberships,
-  activeWorkshopId,
   activeAssociation,
 }) {
   const actionState = resolveActionState(
     item.key,
     userProfile,
-    memberships,
-    activeWorkshopId,
     activeAssociation,
   );
 
@@ -175,20 +154,14 @@ export default function WorkshopMoreScreen({
   onBack,
   onOpenCollaborators,
   onOpenOnboarding,
-  onOpenWorkshopManagement,
   onOpenWorkshopSettings,
   onSignOut,
   onToggleTheme,
   themeLabel,
 }) {
   const { colors } = useTheme();
-  const {
-    activeAssociation,
-    activeAssociationId,
-    activeWorkshopId,
-    memberships,
-    userProfile,
-  } = useAuth();
+  const { activeAssociation, activeAssociationId, associations, userProfile } =
+    useAuth();
   const appVersion = Constants?.expoConfig?.version || "-";
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -227,10 +200,8 @@ export default function WorkshopMoreScreen({
       setBiometricBusy(false);
     }
   };
-  const activeMembership = getPrimaryMembership(memberships, activeWorkshopId);
-  const associationName =
-    activeAssociation?.nombre || activeMembership?.workshopName;
-  const resolvedRole = activeMembership?.role || userProfile?.role || "";
+  const associationName = activeAssociation?.nombre;
+  const resolvedRole = userProfile?.role || "";
   const roleLabel =
     resolvedRole === "owner"
       ? "Propietario"
@@ -238,11 +209,7 @@ export default function WorkshopMoreScreen({
         ? "Fiscal"
         : resolvedRole === "administrator"
           ? "Administrador"
-          : resolvedRole === "reception"
-            ? "Recepcion"
-            : resolvedRole === "mechanic"
-              ? "Mecanico"
-              : "Sin rol";
+          : "Sin rol";
   const isAssociationCreator =
     resolvedRole === "administrator" &&
     String(activeAssociation?.creada_por) === String(userProfile?.uid);
@@ -299,8 +266,7 @@ export default function WorkshopMoreScreen({
           </View>
 
           <View style={styles.heroStats}>
-            <Pressable
-              onPress={onOpenWorkshopManagement}
+            <View
               style={[
                 styles.heroStat,
                 {
@@ -310,17 +276,14 @@ export default function WorkshopMoreScreen({
               ]}
             >
               <Text style={[styles.heroStatValue, { color: colors.text }]}>
-                {memberships.length}
+                {associations.length}
               </Text>
               <Text
                 style={[styles.heroStatLabel, { color: colors.textSecondary }]}
               >
-                Asociaciones
+                {associations.length === 1 ? "Asociación" : "Asociaciones"}
               </Text>
-              <Text style={[styles.heroStatAction, { color: colors.primary }]}>
-                Gestionar
-              </Text>
-            </Pressable>
+            </View>
             <View
               style={[
                 styles.heroStat,
@@ -370,8 +333,6 @@ export default function WorkshopMoreScreen({
                       ? onOpenWorkshopSettings
                       : onOpenCollaborators,
                   userProfile,
-                  memberships,
-                  activeWorkshopId,
                   activeAssociation,
                 }),
               )}
@@ -633,11 +594,6 @@ const styles = StyleSheet.create({
   heroStatLabel: {
     fontSize: rf(12),
     fontWeight: "600",
-  },
-  heroStatAction: {
-    fontSize: rf(11),
-    fontWeight: "800",
-    marginTop: 2,
   },
   aboutCard: {
     borderWidth: 1,

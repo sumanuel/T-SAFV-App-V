@@ -46,8 +46,6 @@ const roleLabels = {
   administrator: "Administrador",
   fiscal: "Fiscal",
   owner: "Propietario",
-  reception: "Recepcion",
-  mechanic: "Mecanico",
 };
 
 export default function AccessStatusScreen({

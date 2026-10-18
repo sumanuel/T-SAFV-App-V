@@ -75,10 +75,8 @@ function AppContent() {
   const { isDarkMode, toggleTheme } = useTheme();
   const {
     acceptPendingInvitation,
-    activeWorkshopId,
     authUser,
     authReady,
-    memberships,
     pendingInvitation,
     signOutUser,
     syncCurrentUserProfile,
@@ -196,10 +194,7 @@ function AppContent() {
   }, [activeScreen]);
 
   const profileStatus = userProfile?.status;
-  const activeMembership = memberships.find(
-    (m) => m.workshopId === activeWorkshopId,
-  );
-  const currentRole = activeMembership?.role || userProfile?.role || "";
+  const currentRole = userProfile?.role || "";
   const isFiscalUser = currentRole === "fiscal";
   const visibleTabs = isFiscalUser
     ? [
@@ -597,7 +592,6 @@ function AppContent() {
             setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
           }}
           onOpenOnboarding={() => setShowOnboarding(true)}
-          onOpenWorkshopManagement={() => setActiveScreen(APP_SCREENS.MORE)}
           onOpenWorkshopSettings={() =>
             setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)
           }

@@ -11,6 +11,13 @@ module.exports = {
     orientation: "default",
     icon: "./assets/icon.png",
     userInterfaceStyle: "automatic",
+    // OTA: una actualizacion solo se aplica a builds con el mismo runtimeVersion.
+    // La politica "appVersion" exige subir `version` cada vez que cambie codigo
+    // nativo (modulos nuevos, SDK, plugins); ver MEJORAS.md 4.3.
+    runtimeVersion: { policy: "appVersion" },
+    updates: {
+      url: "https://u.expo.dev/6c51b720-e22b-4293-9d0f-f21f6865ee25",
+    },
     ios: {
       supportsTablet: true,
       infoPlist: {

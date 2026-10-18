@@ -34,7 +34,9 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 - [x] **4.2 Modo offline para fiscalizaciones** (App, L). Cola local de registros de fiscalización, sincronizada al recuperar conexión (con indicador de pendientes).
   - Requiere la migración `0010_registros_idempotencia.sql` en la API (idempotencia por `client_request_id`; sin ella un reintento perdido podría duplicar el registro). La app reenvía al abrir, al volver a primer plano y cada 45 s; guarda en caché la última lista de unidades para poder registrar sin red.
   - Limitación: no hay detección de red nativa (`NetInfo` exige un build nuevo); se reintenta por tiempo y eventos de la app.
-- [ ] **4.3 OTA updates** (App, S). `expo-updates` para publicar cambios de JS sin nuevo `eas build`.
+- [x] **4.3 OTA updates** (App, S). `expo-updates` para publicar cambios de JS sin nuevo `eas build`.
+  - Configurado (`runtimeVersion` por `appVersion`, URL de actualizaciones y canales `development`/`preview`/`production` en `eas.json`). **No se pudo probar**: requiere un `eas build` nuevo y publicar con `eas update`. Los builds anteriores no reciben OTA.
+  - Regla: cada vez que cambie código nativo (módulos nuevos, SDK, plugins) hay que subir `version` en `app.config.js` y hacer un build nuevo; si no, una actualización de JS podría llegar a un build que no tiene sus módulos nativos.
 
 ## Fase 5 — Calidad y proceso
 

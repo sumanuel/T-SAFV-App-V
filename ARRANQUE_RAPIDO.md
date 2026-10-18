@@ -50,6 +50,14 @@ eas build --profile development --platform android
 - `google-services.json` no está en git: EAS lo inyecta con la variable de entorno `GOOGLE_SERVICES_JSON` (ver `app.config.js`).
 - Cambios en íconos, splash o módulos nativos solo se ven tras un build nuevo.
 
+### Actualizaciones OTA (solo JavaScript y assets)
+
+```bash
+eas update --channel production --message "descripción del cambio"
+```
+
+El canal debe coincidir con el del build instalado (`eas.json`). Si el cambio toca código nativo, sube `version` en `app.config.js` y haz un build nuevo en lugar de publicar una OTA.
+
 ## Estructura
 
 ```

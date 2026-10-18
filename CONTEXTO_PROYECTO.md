@@ -14,7 +14,7 @@ T-SAFV-App-V es la aplicación móvil React Native del ecosistema T-SAFV, diseñ
 - **Autenticación**: JWT vía T-SAFV-API
 - **Persistencia**: AsyncStorage para token y usuario
 - **Navegación**: Manual (sin React Navigation), controlada por estado en App.js
-- **Comunicación**: Axios + fetch (SDK unificado en `src/services/api/sdk.js`)
+- **Comunicación**: `fetch` (SDK en `src/services/api/sdk.js`; sin Axios)
 
 ## Propósito del proyecto
 
@@ -123,7 +123,7 @@ T-SAFV-App-V/
 │   │   └── dateRange.js            # Utilidades de fechas
 │   ├── services/
 │   │   ├── api/
-│   │   │   ├── apiClient.js        # Axios client con JWT interceptor
+│   │   │   ├── apiClient.js        # Cliente de auth sobre el request del SDK
 │   │   │   └── sdk.js              # SDK unificado (fetch wrapper)
 │   │   ├── auth/
 │   │   │   └── authService.js      # apiLogin(), apiRegister()
@@ -191,11 +191,12 @@ T-SAFV-App-V/
 
 ### apiClient.js
 
-Cliente Axios con:
+Cliente delgado para login, registro, recuperación de contraseña e invitaciones. Usa el mismo `request` del SDK:
 
-- Interceptor para adjuntar JWT en headers
-- Base URL configurable (`API_BASE_URL`)
-- Timeout de 10 segundos
+- Adjunta el JWT guardado (salvo en rutas públicas de auth)
+- Ante un 401 renueva la sesión con el refresh token y reintenta
+- Lanza errores con `response.data` (o `"Network Error"` sin respuesta)
+- La URL base (`API_BASE_URL`) vive en `src/services/api/config.js`
 
 ### sdk.js
 

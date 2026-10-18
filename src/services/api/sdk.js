@@ -10,6 +10,9 @@ import { recoverFromUnauthorized } from "../auth/sessionRefresh";
 
 const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH"]);
 
+// Cubre tambien la subida de imagenes en base64 (hasta 12 MB) en redes lentas.
+const REQUEST_TIMEOUT_MS = 30000;
+
 async function attempt(method, path, body, token) {
   const headers = {};
   if (METHODS_WITH_BODY.has(method))
@@ -19,19 +22,35 @@ async function attempt(method, path, body, token) {
   const options = { method, headers };
   if (METHODS_WITH_BODY.has(method)) options.body = JSON.stringify(body);
 
-  const res = await fetch(`${API_BASE_URL}${path}`, options);
-  const data = await res.json().catch(() => null);
-  return { status: res.status, data };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => null);
+    return { status: res.status, data };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // Ante un 401 intenta renovar la sesion con el refresh token y repite la
 // peticion una vez. Solo se considera vencida si la renovacion falla de forma
-// definitiva (no por falta de red).
-async function request(method, path, body, token) {
+// definitiva (no por falta de red). Con { authRecovery: false } (rutas
+// publicas como login) un 401 no toca la sesion.
+export async function request(
+  method,
+  path,
+  body,
+  token,
+  { authRecovery = true } = {},
+) {
   try {
     let result = await attempt(method, path, body, token);
 
-    if (result.status === 401) {
+    if (result.status === 401 && authRecovery) {
       const { token: freshToken, expired } = token
         ? await recoverFromUnauthorized(token)
         : { token: null, expired: true };

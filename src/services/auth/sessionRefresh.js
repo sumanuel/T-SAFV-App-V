@@ -16,6 +16,7 @@ import {
 } from "./tokenStorage";
 
 const MAX_REMEMBERED_REPLACEMENTS = 8;
+const REFRESH_TIMEOUT_MS = 15000;
 
 let inFlight = null;
 let onRefreshed = null;
@@ -35,14 +36,19 @@ async function requestRefresh() {
   if (!refreshToken) return { status: "expired" };
 
   let response;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
   try {
     response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
+      signal: controller.signal,
     });
   } catch {
     return { status: "offline" };
+  } finally {
+    clearTimeout(timer);
   }
 
   if (response.status === 400 || response.status === 401) {

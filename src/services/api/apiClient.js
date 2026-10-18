@@ -1,64 +1,48 @@
 /**
  * apiClient.js
- * Axios client apuntando a T-SAFV-API.
- * La URL base vive en ./config.js.
+ * Cliente para los servicios de autenticacion (login, registro, recuperacion
+ * de contrasena, invitaciones). Usa el mismo `request` que el SDK, asi que el
+ * token, el timeout y la renovacion de sesion se manejan en un solo lugar.
+ *
+ * Mantiene la forma que ya esperaban los servicios: `await client.post(...)`
+ * devuelve `{ data }` y un fallo lanza un error con `response.data` (o
+ * `message === "Network Error"` si no hubo respuesta).
  */
-import axios from "axios";
-import { notifySessionExpired } from "../auth/sessionExpiry";
-import { recoverFromUnauthorized } from "../auth/sessionRefresh";
 import { getToken } from "../auth/tokenStorage";
 import { API_BASE_URL } from "./config";
+import { request } from "./sdk";
 
 export { API_BASE_URL };
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+// Rutas sin sesion: un 401 aqui no significa que la sesion haya vencido.
+const PUBLIC_AUTH_ROUTE =
+  /^\/api\/auth\/(login|register|refresh|logout|forgot-password|verify-reset-code|reset-password)/;
 
-// Interceptor: agrega el token JWT a cada request si existe
-apiClient.interceptors.request.use(async (config) => {
-  try {
-    const token = await getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  } catch (_) {
-    // ignore storage errors
+async function call(method, path, body) {
+  const isPublic = PUBLIC_AUTH_ROUTE.test(path);
+  const token = isPublic ? null : await getToken().catch(() => null);
+
+  const res = await request(method, path, body, token, {
+    authRecovery: !isPublic,
+  });
+
+  if (res.status >= 200 && res.status < 300) {
+    return { status: res.status, data: res.data };
   }
-  return config;
-});
 
-// Interceptor: ante un 401 intenta renovar la sesion con el refresh token y
-// repite la peticion una vez; solo si no se puede renovar la sesion se
-// considera vencida.
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const original = error?.config;
-    const isAuthRoute = String(original?.url || "").startsWith("/api/auth/");
+  const error = new Error(
+    res.status === 0
+      ? "Network Error"
+      : `Request failed with status code ${res.status}`,
+  );
+  if (res.status !== 0) error.response = { status: res.status, data: res.data };
+  throw error;
+}
 
-    if (error?.response?.status === 401 && original && !isAuthRoute) {
-      if (!original._retried) {
-        original._retried = true;
-        const staleToken = String(
-          original.headers?.Authorization || "",
-        ).replace(/^Bearer /, "");
-        const { token, expired } = await recoverFromUnauthorized(staleToken);
-        if (token) {
-          original.headers.Authorization = `Bearer ${token}`;
-          return apiClient(original);
-        }
-        if (expired) notifySessionExpired();
-      } else {
-        notifySessionExpired();
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+const apiClient = {
+  get: (path) => call("GET", path),
+  post: (path, body) => call("POST", path, body),
+  patch: (path, body) => call("PATCH", path, body),
+};
 
 export default apiClient;

@@ -47,7 +47,7 @@ T-SAFV-App-V es una aplicación móvil React Native construida con Expo que impl
 │                    │                                       │
 │  ┌─────────────────┼────────────────────────────────────┐ │
 │  │ HTTP Layer      │                                    │ │
-│  │ • apiClient.js (Axios with JWT interceptor)        │ │
+│  │ • sdk.js (fetch + JWT + refresh de sesión)         │ │
 │  │ • sdk.js (Fetch wrapper)                           │ │
 │  └─────────────────┼────────────────────────────────────┘ │
 │                    │                                       │
@@ -81,7 +81,7 @@ T-SAFV-App-V/
 │   │   └── dateRange.js                # Utilidades de fechas
 │   ├── services/
 │   │   ├── api/
-│   │   │   ├── apiClient.js            # Axios client
+│   │   │   ├── apiClient.js            # Cliente de auth sobre request()
 │   │   │   └── sdk.js                  # Fetch wrapper
 │   │   ├── auth/
 │   │   │   └── authService.js          # Login/Register
@@ -313,136 +313,17 @@ export const propietarioService = {
 
 **Responsabilidad**: Gestionar comunicación HTTP con backend.
 
-#### apiClient.js (Axios)
+#### sdk.js (fetch)
 
-```js
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+`request(method, path, body, token)` es el único punto de salida HTTP:
 
-export const API_BASE_URL = "http://10.0.2.2:3000"; // Configurar según entorno
+- Envía `Authorization: Bearer <token>` y aborta a los 30 s (devuelve `status: 0`).
+- Ante un 401 pide una renovación a `sessionRefresh.js` (una sola en vuelo) y repite la petición una vez; solo si la renovación falla de forma definitiva notifica la sesión vencida (`sessionExpiry.js`).
+- Siempre responde `{ status, data }`; nunca lanza.
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+#### apiClient.js
 
-// Interceptor para adjuntar JWT
-apiClient.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem("@auth_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Interceptor para manejar errores
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expirado - logout
-      AsyncStorage.multiRemove(["@auth_token", "@auth_user"]);
-    }
-    return Promise.reject(error);
-  },
-);
-
-export default apiClient;
-```
-
-#### sdk.js (Fetch wrapper)
-
-```js
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "./apiClient";
-
-async function request(endpoint, options = {}) {
-  const token = await AsyncStorage.getItem("@auth_token");
-
-  const headers = {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Error en la solicitud");
-  }
-
-  return response.json();
-}
-
-export const sdk = {
-  // Asociaciones
-  fetchAssociations: () => request("/api/asociaciones/mine"),
-  fetchAssociationSummary: (id) => request(`/api/asociaciones/${id}/resumen`),
-  updateAssociation: (id, data) =>
-    request(`/api/asociaciones/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-
-  // Propietarios
-  fetchPropietarios: (associationId) =>
-    request(`/api/propietario/asociacion/${associationId}`),
-  createPropietario: (data) =>
-    request(`/api/asociaciones/${data.asociacion_id}/miembros`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  // Fiscales
-  fetchFiscales: (associationId) =>
-    request(`/api/fiscal/asociacion/${associationId}`),
-
-  // Unidades
-  fetchUnidades: (associationId) =>
-    request(`/api/unidades/asociaciones/${associationId}/unidades`),
-  createUnidad: (associationId, data) =>
-    request(`/api/unidades/asociaciones/${associationId}/unidades`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  // Registros fiscales
-  fetchRegistrosFiscales: (associationId, filters = {}) => {
-    const query = new URLSearchParams(filters).toString();
-    return request(
-      `/api/fiscal/registros/asociacion/${associationId}?${query}`,
-    );
-  },
-  createRegistroFiscal: (data) =>
-    request("/api/fiscal/registros", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  // Invitaciones
-  fetchInvitations: (associationId) =>
-    request(`/api/invitaciones/asociacion/${associationId}`),
-  createInvitation: (data) =>
-    request("/api/invitaciones", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  acceptInvitation: (token) =>
-    request(`/api/invitaciones/${token}/aceptar`, {
-      method: "POST",
-    }),
-
-  // Traza
-  fetchTraza: (unidadId) => request(`/api/unidades/${unidadId}/traza`),
-};
-```
+Cliente delgado (`get/post/patch`) sobre el mismo `request` para los servicios de autenticación; toma el token de `tokenStorage.js` (SecureStore) y lanza errores con `response.data` o `"Network Error"`. La URL base está en `config.js`.
 
 ### 6. Capa de Persistencia (AsyncStorage)
 

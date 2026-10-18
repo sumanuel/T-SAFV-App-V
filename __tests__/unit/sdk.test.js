@@ -57,6 +57,36 @@ describe("sdk: peticiones autenticadas", () => {
   });
 });
 
+describe("sdk: timeout", () => {
+  afterEach(() => jest.useRealTimers());
+
+  it("una peticion colgada se aborta a los 30 s y se devuelve status 0", async () => {
+    jest.useFakeTimers();
+    global.fetch.mockImplementation(
+      (_url, { signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () =>
+            reject(new Error("AbortError")),
+          );
+        }),
+    );
+
+    const pending = sdk.getMyNotifications("tok");
+    await jest.advanceTimersByTimeAsync(30000);
+
+    await expect(pending).resolves.toMatchObject({ status: 0 });
+    expect(notifySessionExpired).not.toHaveBeenCalled();
+  });
+
+  it("no aborta una peticion que responde a tiempo", async () => {
+    global.fetch.mockResolvedValue(reply(200, []));
+
+    await sdk.getMyNotifications("tok");
+
+    expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(false);
+  });
+});
+
 describe("sdk: 401 y renovacion de sesion", () => {
   it("renueva el token y repite la peticion con el token nuevo", async () => {
     global.fetch

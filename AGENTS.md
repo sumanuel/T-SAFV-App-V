@@ -6,7 +6,7 @@
 - Autenticación JWT contra T-SAFV-API.
 - Sin Firebase para datos (solo FCM para push en Android).
 - Persistencia local con AsyncStorage.
-- HTTP mixto: Axios en auth, `fetch` envuelto en `src/services/api/sdk.js` para dominio.
+- HTTP: `fetch` envuelto en `src/services/api/sdk.js` (token, timeout de 30 s y renovación de sesión con refresh token). `apiClient.js` es un cliente delgado sobre el mismo `request` para los servicios de autenticación.
 
 Comandos útiles:
 

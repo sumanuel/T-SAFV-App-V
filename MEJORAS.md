@@ -15,8 +15,8 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 ## Fase 2 — Deuda técnica
 
 - [x] **2.1 Eliminar código heredado** (App, M). `services/mock/mockStore.js`, `WorkshopSetupScreen`, `WorkshopManagementScreen`, `TeamAccessScreen`, `Stock*` (screens + `stockItemService`), `services/workshops/*`, y el "workshop" mock sintetizado en `AuthContext`.
-- [ ] **2.2 Unificar cliente HTTP** (App, M). Un solo cliente (hoy: axios en auth + `fetch` en `sdk.js`) con token, timeout y manejo de 401 en un único lugar.
-  - Avance: el manejo de 401 + renovación de sesión ya es común (`sessionRefresh.js`) y los 5 helpers de `sdk.js` son uno solo. Falta fusionar axios y fetch.
+- [x] **2.2 Unificar cliente HTTP** (App, M). Un solo cliente (hoy: axios en auth + `fetch` en `sdk.js`) con token, timeout y manejo de 401 en un único lugar.
+  - Hecho: todo pasa por `request()` de `sdk.js` (token, 401 + renovación de sesión, timeout de 30 s). `apiClient.js` es un cliente delgado sobre él y se eliminó la dependencia `axios`.
 - [ ] **2.3 Partir pantallas gigantes** (App, L). `WorkshopHomeScreen` (~1000 líneas), `PropietariosScreen`, `AuthScreen`: extraer hooks de datos y subcomponentes.
 - [ ] **2.4 Navegación** (App, L). Evaluar React Navigation / expo-router para reemplazar el estado manual de `App.js` y su `BackHandler`.
 

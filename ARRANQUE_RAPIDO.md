@@ -7,7 +7,7 @@
 - Expo SDK 57, React 19, React Native 0.86.
 - Autenticación JWT contra **T-SAFV-API**; sin Firebase para datos (Firebase solo se usa para FCM/push en Android).
 - Token JWT en `expo-secure-store`; usuario y asociación activa en AsyncStorage.
-- Axios en auth y `fetch` envuelto en `src/services/api/sdk.js` para el resto del dominio.
+- HTTP con `fetch` (`src/services/api/sdk.js`): timeout de 30 s y renovación automática de la sesión; sin Axios.
 
 ## URL de la API
 
@@ -59,7 +59,7 @@ src/
   constants/accessControl.js
   utils/                  # responsive.js, dateRange.js, logger.js
   services/
-    api/                  # apiClient.js (axios), sdk.js (fetch de dominio)
+    api/                  # config.js (URL), sdk.js (fetch + refresh), apiClient.js (auth)
     auth/                 # authService, tokenStorage (SecureStore), sessionExpiry
     associations/ propietarios/ fiscales/ vehicles/ traza/
     notifications/        # notificaciones in-app y push

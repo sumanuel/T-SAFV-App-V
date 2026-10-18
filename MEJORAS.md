@@ -28,10 +28,12 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 
 ## Fase 3 — Rendimiento y escala
 
-- [ ] **3.1 Paginación en API** (API, M). `limit`/`offset` (o cursor) en listados de propietarios, fiscales, unidades y traza/export.
-  - Pendiente de decisión: la traza ya se acota por rango de fechas (hoy por defecto) y sus filtros, el total de pasajeros y la exportación se calculan en el cliente sobre la lista completa. Paginar en servidor exige moverlos al backend.
+- [~] **3.1 Paginación en API** — *diferido: no hace falta con el volumen actual* (API, M). `limit`/`offset` (o cursor) en listados de propietarios, fiscales, unidades y traza/export.
+  - **Volumen medido en producción (2026-10-18, solo conteos):** 13 registros de traza en total, 2 asociaciones, como máximo 9 registros acumulados, 3 en un día y 2 unidades / 2 propietarios en una asociación. Paginar hoy sería código sin uso.
+  - **Reabrir cuando** una asociación pase de ~2.000 registros acumulados, o de ~300 en el rango de fechas que se consulta, o de ~500 unidades/propietarios. Medirlo con las mismas consultas de conteo (`registros_fiscalizacion` agrupado por `asociacion_id`).
+  - Contexto: la traza ya se acota por rango de fechas (hoy por defecto) y sus filtros, el total de pasajeros y la exportación se calculan en el cliente sobre la lista completa. Paginar en servidor exige moverlos al backend.
   - **Propuesta de contrato** (aditiva, sin romper versiones anteriores de la app): `GET /api/asociaciones/:id/trazabilidad?fecha_inicio&fecha_fin&fiscal_id&q&limit&cursor` → `{ items, next_cursor, totales: { registros, pasajeros } }` cuando se envía `limit`; sin `limit` responde la lista de siempre. La exportación CSV pasaría a un endpoint propio que recorre todas las páginas. Antes de implementarlo conviene confirmar cuántos registros por rango se ven en producción.
-- [ ] **3.2 Listas virtualizadas** (App, M). Pasar `ScrollView + .map` a `FlatList` en Traza, Propietarios, Fiscales, Notificaciones, consumiendo la paginación de 3.1.
+- [x] **3.2 Listas virtualizadas** (App, M). Pasar `ScrollView + .map` a `FlatList` en Traza, Propietarios, Fiscales, Notificaciones, consumiendo la paginación de 3.1.
   - Hecho: Traza, Inicio (unidades) y Propietarios. Fiscales y Notificaciones se dejan como están: son listas acotadas (las notificaciones se piden con límite de 30) y el cambio no justifica el riesgo.
 
 ## Fase 4 — Producto

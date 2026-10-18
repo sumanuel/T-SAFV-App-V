@@ -1,5 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,38 +7,31 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { borderRadius, hs, rf, s, spacing, vs } from "../utils/responsive";
+import {
+  validateLoginForm,
+  validateRegisterForm,
+} from "../utils/authValidation";
+import { borderRadius, rf, s, spacing, vs } from "../utils/responsive";
+import AuthHero from "./auth/AuthHero";
+import LoginForm from "./auth/LoginForm";
+import ModeSwitch from "./auth/ModeSwitch";
+import { buildAuthPalette } from "./auth/palette";
+import RegisterForm from "./auth/RegisterForm";
 
-const modes = {
-  login: "login",
-  register: "register",
-  recovery: "recovery",
-};
+const MODES = { login: "login", register: "register" };
+const AUTH_ERROR_FALLBACK = "Error de autenticacion. Intenta de nuevo.";
 
 export default function AuthScreen({ onNavigate }) {
-  const { authBusy, recoverPassword, signIn, signUp } = useAuth();
+  const { authBusy, signIn, signUp } = useAuth();
   const { colors, isDarkMode } = useTheme();
   const scrollRef = useRef(null);
-  const emailInputRef = useRef(null);
-  const passwordInputRef = useRef(null);
-  const registerNameInputRef = useRef(null);
-  const registerPhoneInputRef = useRef(null);
-  const registerEmailInputRef = useRef(null);
-  const registerPasswordInputRef = useRef(null);
-  const registerConfirmPasswordInputRef = useRef(null);
-  const [mode, setMode] = useState(modes.login);
-  const [feedback, setFeedback] = useState(null);
+  const [mode, setMode] = useState(MODES.login);
   const [error, setError] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] =
-    useState(false);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
     fullName: "",
@@ -49,65 +40,12 @@ export default function AuthScreen({ onNavigate }) {
     password: "",
     confirmPassword: "",
   });
-  const [recoveryEmail, setRecoveryEmail] = useState("");
 
-  const isLogin = mode === modes.login;
-  const isRegister = mode === modes.register;
-
+  const isRegister = mode === MODES.register;
   const palette = useMemo(
-    () => ({
-      page: colors.background,
-      surface: colors.cardBackground,
-      surfaceAlt: colors.cardMuted,
-      // Mismo azul que el header (WorkshopScreenHeader) para mantener
-      // consistencia visual entre pantallas.
-      accent: isDarkMode ? "#1350a7" : "#0f5fd2",
-      accentStrong: colors.primaryStrong,
-      accentSoft: isDarkMode
-        ? "rgba(255,255,255,0.12)"
-        : "rgba(255,255,255,0.16)",
-      text: colors.text,
-      muted: colors.textSecondary,
-      placeholder: colors.textTertiary,
-      border: colors.border,
-      borderStrong: colors.borderStrong,
-      danger: colors.danger,
-      info: colors.primaryStrong,
-      white: colors.white,
-      shadow: colors.shadow,
-    }),
+    () => buildAuthPalette(colors, isDarkMode),
     [colors, isDarkMode],
   );
-
-  const headline = useMemo(() => {
-    if (mode === modes.recovery) {
-      return {
-        kicker: "Recuperación segura",
-        title: "Recuperar acceso",
-        subtitle:
-          "Enviaremos el enlace de recuperación al correo operativo asociado a tu acceso en la asociación.",
-        pills: ["Correo seguro", "Acceso validado"],
-      };
-    }
-
-    if (mode === modes.register) {
-      return {
-        kicker: "Registro operativo",
-        title: "Crear cuenta",
-        subtitle:
-          "Registra tu acceso para entrar al panel de fiscalización y sincronizar tu información desde el primer inicio.",
-        pills: ["Cuenta nueva", "Perfil", "Sincronización"],
-      };
-    }
-
-    return {
-      kicker: "Acceso seguro",
-      title: "T-SAFV",
-      subtitle:
-        "Inicia sesión para cargar tu espacio de trabajo y sincronizar tus datos de asociación.",
-      pills: ["Seguridad", "JWT", "Tu sistema"],
-    };
-  }, [mode]);
 
   const scrollToFocusedInput = (y) => {
     requestAnimationFrame(() => {
@@ -115,74 +53,29 @@ export default function AuthScreen({ onNavigate }) {
     });
   };
 
-  const resetMessages = () => {
-    setFeedback(null);
+  const changeMode = (nextMode) => {
     setError(null);
+    setMode(nextMode);
   };
 
-  const handleLogin = async () => {
-    resetMessages();
+  const submit = async (validate, form, action) => {
+    setError(null);
 
-    if (!loginForm.email.trim() || !loginForm.password.trim()) {
-      setError("Debes completar correo y contrasena.");
+    const validationError = validate(form);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
-      await signIn(loginForm);
+      await action(form);
     } catch (authError) {
-      setError(
-        authError?.message || "Error de autenticacion. Intenta de nuevo.",
-      );
+      setError(authError?.message || AUTH_ERROR_FALLBACK);
     }
   };
 
-  const handleSignUp = async () => {
-    resetMessages();
-
-    if (
-      !registerForm.fullName.trim() ||
-      !registerForm.email.trim() ||
-      !registerForm.password.trim() ||
-      !registerForm.confirmPassword.trim()
-    ) {
-      setError("Completa los datos obligatorios para crear la cuenta.");
-      return;
-    }
-
-    if (registerForm.password !== registerForm.confirmPassword) {
-      setError("La confirmacion de contrasena no coincide.");
-      return;
-    }
-
-    try {
-      await signUp(registerForm);
-    } catch (authError) {
-      setError(
-        authError?.message || "Error de autenticacion. Intenta de nuevo.",
-      );
-    }
-  };
-
-  const handleRecovery = async () => {
-    resetMessages();
-
-    if (!recoveryEmail.trim()) {
-      setError("Indica el correo del usuario.");
-      return;
-    }
-
-    try {
-      await recoverPassword(recoveryEmail);
-      setFeedback(
-        "Se envió el correo de recuperación si la cuenta existe y está habilitada.",
-      );
-    } catch (authError) {
-      setError(
-        authError?.message || "Error de autenticacion. Intenta de nuevo.",
-      );
-    }
-  };
+  const handleLogin = () => submit(validateLoginForm, loginForm, signIn);
+  const handleSignUp = () => submit(validateRegisterForm, registerForm, signUp);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.page }]}>
@@ -197,42 +90,7 @@ export default function AuthScreen({ onNavigate }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <LinearGradient
-            colors={
-              isDarkMode
-                ? ["#1C5FB8", "#0E366E", "#09111A"]
-                : ["#1C5FB8", "#124B97", "#0D2E62"]
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.heroCard,
-              { shadowColor: palette.shadow, borderColor: palette.border },
-            ]}
-          >
-            <Text style={styles.heroEyebrow}>{headline.kicker}</Text>
-            <Text style={styles.heroTitle}>{headline.title}</Text>
-            <Text style={styles.heroSubtitle}>{headline.subtitle}</Text>
-
-            <View style={styles.heroHighlights}>
-              {headline.pills.map((pill, index) => (
-                <View
-                  key={`${pill}-${index}`}
-                  style={[
-                    styles.heroHighlightPill,
-                    { backgroundColor: palette.accentSoft },
-                  ]}
-                >
-                  <Ionicons
-                    color={palette.white}
-                    name={resolveHeroIcon(mode, index)}
-                    size={rf(16)}
-                  />
-                  <Text style={styles.heroHighlightText}>{pill}</Text>
-                </View>
-              ))}
-            </View>
-          </LinearGradient>
+          <AuthHero mode={mode} palette={palette} isDarkMode={isDarkMode} />
 
           <View
             style={[
@@ -240,363 +98,26 @@ export default function AuthScreen({ onNavigate }) {
               { backgroundColor: palette.surface, shadowColor: palette.shadow },
             ]}
           >
-            {mode !== modes.recovery && (
-              <View
-                style={[
-                  styles.modeSwitch,
-                  { backgroundColor: palette.surfaceAlt },
-                ]}
-              >
-                <Pressable
-                  onPress={() => {
-                    resetMessages();
-                    setMode(modes.login);
-                  }}
-                  style={({ pressed }) => [
-                    styles.modeButton,
-                    isLogin && [
-                      styles.modeButtonActive,
-                      { backgroundColor: palette.accent },
-                    ],
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modeButtonText,
-                      { color: palette.muted },
-                      isLogin && [
-                        styles.modeButtonTextActive,
-                        { color: palette.white },
-                      ],
-                    ]}
-                  >
-                    Iniciar sesion
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    resetMessages();
-                    setMode(modes.register);
-                  }}
-                  style={({ pressed }) => [
-                    styles.modeButton,
-                    isRegister && [
-                      styles.modeButtonActive,
-                      { backgroundColor: palette.accent },
-                    ],
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modeButtonText,
-                      { color: palette.muted },
-                      isRegister && [
-                        styles.modeButtonTextActive,
-                        { color: palette.white },
-                      ],
-                    ]}
-                  >
-                    Registrarme
-                  </Text>
-                </Pressable>
-              </View>
+            <ModeSwitch mode={mode} palette={palette} onChange={changeMode} />
+
+            {isRegister ? (
+              <RegisterForm
+                palette={palette}
+                form={registerForm}
+                onChange={setRegisterForm}
+                onSubmit={handleSignUp}
+                onFocusScroll={scrollToFocusedInput}
+              />
+            ) : (
+              <LoginForm
+                palette={palette}
+                form={loginForm}
+                onChange={setLoginForm}
+                onSubmit={handleLogin}
+                onFocusScroll={scrollToFocusedInput}
+              />
             )}
 
-            {isLogin && (
-              <>
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Correo
-                </Text>
-                <TextInput
-                  ref={emailInputRef}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={loginForm.email}
-                  onChangeText={(value) =>
-                    setLoginForm((current) => ({ ...current, email: value }))
-                  }
-                  placeholder="correo@dominio.com"
-                  placeholderTextColor={palette.placeholder}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onFocus={() => scrollToFocusedInput(vs(180))}
-                  onSubmitEditing={() => passwordInputRef.current?.focus()}
-                />
-
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Contrasena
-                </Text>
-                <View
-                  style={[
-                    styles.passwordField,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                    },
-                  ]}
-                >
-                  <TextInput
-                    ref={passwordInputRef}
-                    style={[styles.passwordInput, { color: palette.text }]}
-                    value={loginForm.password}
-                    onChangeText={(value) =>
-                      setLoginForm((current) => ({
-                        ...current,
-                        password: value,
-                      }))
-                    }
-                    placeholder="Minimo 6 caracteres"
-                    placeholderTextColor={palette.placeholder}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    returnKeyType="done"
-                    onFocus={() => scrollToFocusedInput(vs(240))}
-                    onSubmitEditing={handleLogin}
-                  />
-                  <Pressable
-                    onPress={() => setShowPassword((current) => !current)}
-                    style={({ pressed }) => [
-                      styles.passwordEyeButton,
-                      pressed && styles.linkButtonPressed,
-                    ]}
-                  >
-                    <Ionicons
-                      color={palette.muted}
-                      name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={rf(19)}
-                    />
-                  </Pressable>
-                </View>
-              </>
-            )}
-
-            {isRegister && (
-              <>
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Nombre
-                </Text>
-                <TextInput
-                  ref={registerNameInputRef}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={registerForm.fullName}
-                  onChangeText={(value) =>
-                    setRegisterForm((current) => ({
-                      ...current,
-                      fullName: value,
-                    }))
-                  }
-                  placeholder="Nombre del usuario"
-                  placeholderTextColor={palette.placeholder}
-                  returnKeyType="next"
-                  onFocus={() => scrollToFocusedInput(vs(150))}
-                  onSubmitEditing={() => registerPhoneInputRef.current?.focus()}
-                />
-
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Telefono
-                </Text>
-                <TextInput
-                  ref={registerPhoneInputRef}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={registerForm.phone}
-                  onChangeText={(value) =>
-                    setRegisterForm((current) => ({ ...current, phone: value }))
-                  }
-                  placeholder="Numero de contacto"
-                  placeholderTextColor={palette.placeholder}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                  onFocus={() => scrollToFocusedInput(vs(210))}
-                  onSubmitEditing={() => registerEmailInputRef.current?.focus()}
-                />
-
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Correo
-                </Text>
-                <TextInput
-                  ref={registerEmailInputRef}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={registerForm.email}
-                  onChangeText={(value) =>
-                    setRegisterForm((current) => ({ ...current, email: value }))
-                  }
-                  placeholder="correo@dominio.com"
-                  placeholderTextColor={palette.placeholder}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onFocus={() => scrollToFocusedInput(vs(270))}
-                  onSubmitEditing={() =>
-                    registerPasswordInputRef.current?.focus()
-                  }
-                />
-
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Contrasena
-                </Text>
-                <View
-                  style={[
-                    styles.passwordField,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                    },
-                  ]}
-                >
-                  <TextInput
-                    ref={registerPasswordInputRef}
-                    style={[styles.passwordInput, { color: palette.text }]}
-                    value={registerForm.password}
-                    onChangeText={(value) =>
-                      setRegisterForm((current) => ({
-                        ...current,
-                        password: value,
-                      }))
-                    }
-                    placeholder="Minimo 6 caracteres"
-                    placeholderTextColor={palette.placeholder}
-                    secureTextEntry={!showRegisterPassword}
-                    autoCapitalize="none"
-                    returnKeyType="next"
-                    onFocus={() => scrollToFocusedInput(vs(340))}
-                    onSubmitEditing={() =>
-                      registerConfirmPasswordInputRef.current?.focus()
-                    }
-                  />
-                  <Pressable
-                    onPress={() =>
-                      setShowRegisterPassword((current) => !current)
-                    }
-                    style={({ pressed }) => [
-                      styles.passwordEyeButton,
-                      pressed && styles.linkButtonPressed,
-                    ]}
-                  >
-                    <Ionicons
-                      color={palette.muted}
-                      name={
-                        showRegisterPassword ? "eye-off-outline" : "eye-outline"
-                      }
-                      size={rf(19)}
-                    />
-                  </Pressable>
-                </View>
-
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Confirmar contrasena
-                </Text>
-                <View
-                  style={[
-                    styles.passwordField,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                    },
-                  ]}
-                >
-                  <TextInput
-                    ref={registerConfirmPasswordInputRef}
-                    style={[styles.passwordInput, { color: palette.text }]}
-                    value={registerForm.confirmPassword}
-                    onChangeText={(value) =>
-                      setRegisterForm((current) => ({
-                        ...current,
-                        confirmPassword: value,
-                      }))
-                    }
-                    placeholder="Repite la contrasena"
-                    placeholderTextColor={palette.placeholder}
-                    secureTextEntry={!showRegisterConfirmPassword}
-                    autoCapitalize="none"
-                    returnKeyType="done"
-                    onFocus={() => scrollToFocusedInput(vs(410))}
-                    onSubmitEditing={handleSignUp}
-                  />
-                  <Pressable
-                    onPress={() =>
-                      setShowRegisterConfirmPassword((current) => !current)
-                    }
-                    style={({ pressed }) => [
-                      styles.passwordEyeButton,
-                      pressed && styles.linkButtonPressed,
-                    ]}
-                  >
-                    <Ionicons
-                      color={palette.muted}
-                      name={
-                        showRegisterConfirmPassword
-                          ? "eye-off-outline"
-                          : "eye-outline"
-                      }
-                      size={rf(19)}
-                    />
-                  </Pressable>
-                </View>
-              </>
-            )}
-
-            {mode === modes.recovery && (
-              <>
-                <Text style={[styles.label, { color: palette.text }]}>
-                  Correo del usuario
-                </Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: palette.border,
-                      backgroundColor: palette.surfaceAlt,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={recoveryEmail}
-                  onChangeText={setRecoveryEmail}
-                  placeholder="correo@dominio.com"
-                  placeholderTextColor={palette.placeholder}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </>
-            )}
-
-            {!!feedback && (
-              <Text style={[styles.infoText, { color: palette.accent }]}>
-                {feedback}
-              </Text>
-            )}
             {!!error && (
               <Text style={[styles.errorText, { color: palette.danger }]}>
                 {error}
@@ -604,13 +125,7 @@ export default function AuthScreen({ onNavigate }) {
             )}
 
             <Pressable
-              onPress={
-                mode === modes.recovery
-                  ? handleRecovery
-                  : isRegister
-                    ? handleSignUp
-                    : handleLogin
-              }
+              onPress={isRegister ? handleSignUp : handleLogin}
               disabled={authBusy}
               style={({ pressed }) => [
                 styles.submitButton,
@@ -623,25 +138,19 @@ export default function AuthScreen({ onNavigate }) {
                 <ActivityIndicator color={palette.white} size="small" />
               ) : (
                 <Text style={styles.submitButtonText}>
-                  {mode === modes.recovery
-                    ? "Enviar enlace"
-                    : isRegister
-                      ? "Crear cuenta"
-                      : "Entrar"}
+                  {isRegister ? "Crear cuenta" : "Entrar"}
                 </Text>
               )}
             </Pressable>
 
-            {isLogin && (
+            {!isRegister && (
               <View style={styles.secondaryLinks}>
                 <Pressable
-                  onPress={() => {
-                    if (onNavigate) {
-                      onNavigate("ForgotPasswordScreen", {
-                        email: loginForm.email,
-                      });
-                    }
-                  }}
+                  onPress={() =>
+                    onNavigate?.("ForgotPasswordScreen", {
+                      email: loginForm.email,
+                    })
+                  }
                   style={({ pressed }) => [
                     styles.linkButton,
                     pressed && styles.linkButtonPressed,
@@ -656,23 +165,6 @@ export default function AuthScreen({ onNavigate }) {
               </View>
             )}
 
-            {mode === modes.recovery && (
-              <Pressable
-                onPress={() => {
-                  resetMessages();
-                  setMode(modes.login);
-                }}
-                style={({ pressed }) => [
-                  styles.linkButton,
-                  pressed && styles.linkButtonPressed,
-                ]}
-              >
-                <Text style={[styles.linkButtonText, { color: palette.info }]}>
-                  Volver al login
-                </Text>
-              </Pressable>
-            )}
-
             <Text style={[styles.securityHint, { color: palette.muted }]}>
               {isRegister
                 ? "Si tu correo tiene una invitacion pendiente, la app la detectara despues del login para que aceptes el acceso desde tu estado de cuenta."
@@ -682,28 +174,6 @@ export default function AuthScreen({ onNavigate }) {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-function resolveHeroIcon(mode, index) {
-  if (mode === modes.register) {
-    return (
-      ["person-add-outline", "document-text-outline", "cloud-upload-outline"][
-        index
-      ] || "ellipse-outline"
-    );
-  }
-
-  if (mode === modes.recovery) {
-    return (
-      ["mail-open-outline", "lock-closed-outline"][index] || "ellipse-outline"
-    );
-  }
-
-  return (
-    ["cloud-done-outline", "shield-checkmark-outline", "car-sport-outline"][
-      index
-    ] || "ellipse-outline"
   );
 }
 
@@ -721,53 +191,6 @@ const styles = StyleSheet.create({
     paddingBottom: vs(48),
     gap: vs(18),
   },
-  heroCard: {
-    borderRadius: borderRadius.xl,
-    borderCurve: "continuous",
-    padding: spacing.xl,
-    gap: vs(10),
-    shadowOffset: { width: 0, height: s(8) },
-    shadowOpacity: 0.12,
-    shadowRadius: s(18),
-    elevation: 10,
-  },
-  heroEyebrow: {
-    color: "rgba(255,255,255,0.74)",
-    fontSize: rf(12),
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  heroTitle: {
-    color: "#ffffff",
-    fontSize: rf(26),
-    fontWeight: "800",
-  },
-  heroSubtitle: {
-    color: "rgba(255,255,255,0.88)",
-    fontSize: rf(14),
-    lineHeight: vs(20),
-  },
-  heroHighlights: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: hs(10),
-    marginTop: vs(8),
-  },
-  heroHighlightPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: hs(6),
-    borderRadius: borderRadius.xl,
-    borderCurve: "continuous",
-    paddingHorizontal: hs(12),
-    paddingVertical: vs(8),
-  },
-  heroHighlightText: {
-    color: "#ffffff",
-    fontSize: rf(12),
-    fontWeight: "700",
-  },
   formCard: {
     borderRadius: borderRadius.xl,
     borderCurve: "continuous",
@@ -778,70 +201,7 @@ const styles = StyleSheet.create({
     shadowRadius: s(18),
     elevation: 8,
   },
-  modeSwitch: {
-    flexDirection: "row",
-    borderRadius: borderRadius.lg,
-    borderCurve: "continuous",
-    padding: s(4),
-    marginBottom: vs(8),
-  },
-  modeButton: {
-    flex: 1,
-    borderRadius: borderRadius.md,
-    borderCurve: "continuous",
-    paddingVertical: vs(12),
-    alignItems: "center",
-  },
-  modeButtonActive: {
-    backgroundColor: "#000000",
-  },
-  modeButtonText: {
-    fontSize: rf(14),
-    fontWeight: "700",
-  },
-  modeButtonTextActive: {
-    color: "#ffffff",
-  },
-  label: {
-    fontSize: rf(13),
-    fontWeight: "700",
-    marginTop: vs(4),
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    borderCurve: "continuous",
-    paddingHorizontal: hs(14),
-    paddingVertical: vs(14),
-    fontSize: rf(15),
-  },
-  passwordField: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    borderCurve: "continuous",
-    paddingLeft: hs(14),
-    paddingRight: hs(6),
-  },
-  passwordInput: {
-    flex: 1,
-    paddingVertical: vs(14),
-    fontSize: rf(15),
-  },
-  passwordEyeButton: {
-    width: s(38),
-    height: s(38),
-    borderRadius: s(19),
-    alignItems: "center",
-    justifyContent: "center",
-  },
   errorText: {
-    fontSize: rf(13),
-    fontWeight: "600",
-    marginTop: vs(4),
-  },
-  infoText: {
     fontSize: rf(13),
     fontWeight: "600",
     marginTop: vs(4),

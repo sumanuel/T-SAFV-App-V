@@ -314,15 +314,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const recoverPassword = async (email) => {
-    setAuthBusy(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
   const signOutUser = async () => {
     setAuthBusy(true);
     try {
@@ -378,7 +369,6 @@ export function AuthProvider({ children }) {
       authReady,
       authUser,
       pendingInvitation,
-      recoverPassword,
       refreshAssociations,
       setActiveAssociationId,
       signIn,

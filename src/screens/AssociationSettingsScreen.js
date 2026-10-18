@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
-import * as ImagePicker from "expo-image-picker";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,52 +15,17 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { updateAssociation } from "../services/associations/associationService";
+import { pickAssociationLogo } from "../services/media/logoPicker";
+import { parseSocialLinks } from "../utils/associationDraft";
+import { isAssociationCreator } from "../utils/associationAccess";
+import {
+  buildAssociationForm,
+  buildAssociationUpdatePayload,
+  getLogoPreview,
+} from "../utils/associationForm";
 import { borderRadius, rf, spacing } from "../utils/responsive";
-
-function buildAssociationForm(association) {
-  return {
-    nombre: association?.nombre || "",
-    rif: association?.rif || "",
-    direccion_fiscal: association?.direccion_fiscal || "",
-    email: association?.email || "",
-    telefonos: association?.telefonos || "",
-    logo_url: association?.logo_url || "",
-    logo_data: association?.logo_data || "",
-    redes_sociales: association?.redes_sociales
-      ? JSON.stringify(association.redes_sociales, null, 2)
-      : "",
-  };
-}
-
-async function pickAssociationLogo() {
-  const permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-  if (!permissionResult.granted) {
-    throw new Error(
-      "Debes permitir acceso a la galería para seleccionar el logo de la asociación.",
-    );
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    allowsEditing: true,
-    aspect: [1, 1],
-    base64: true,
-    mediaTypes: ["images"],
-    quality: 0.55,
-  });
-
-  if (result.canceled || !result.assets?.length) {
-    return "";
-  }
-
-  const [asset] = result.assets;
-  if (!asset?.base64) {
-    throw new Error("No se pudo preparar la imagen seleccionada.");
-  }
-
-  return `data:${asset.mimeType || "image/jpeg"};base64,${asset.base64}`;
-}
+import LabeledField from "./associationSettings/LabeledField";
+import LogoEditor from "./associationSettings/LogoEditor";
 
 export default function AssociationSettingsScreen({ onBack, userProfile }) {
   const { colors } = useTheme();
@@ -74,21 +36,16 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
     refreshAssociations,
     token,
   } = useAuth();
-  const currentRole = userProfile?.role;
-  const isAssociationCreator =
-    currentRole === "administrator" &&
-    String(activeAssociation?.creada_por) === String(userProfile?.uid);
-  const canManageAssociation = isAssociationCreator;
-  const [associationForm, setAssociationForm] = useState(
-    buildAssociationForm(),
+  const canManageAssociation = isAssociationCreator(
+    userProfile,
+    activeAssociation,
   );
+  const [form, setForm] = useState(buildAssociationForm());
   const [submitting, setSubmitting] = useState(false);
-
-  const logoPreview =
-    associationForm.logo_data?.trim() || associationForm.logo_url.trim();
+  const logoPreview = getLogoPreview(form);
 
   useEffect(() => {
-    setAssociationForm(buildAssociationForm(activeAssociation));
+    setForm(buildAssociationForm(activeAssociation));
   }, [
     activeAssociation?.direccion_fiscal,
     activeAssociation?.email,
@@ -101,15 +58,18 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   ]);
 
   const updateField = (key, value) => {
-    setAssociationForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => ({ ...current, [key]: value }));
   };
 
   const handlePickLogo = async () => {
     try {
       const nextLogo = await pickAssociationLogo();
       if (!nextLogo) return;
-      updateField("logo_data", nextLogo);
-      updateField("logo_url", "");
+      setForm((current) => ({
+        ...current,
+        logo_data: nextLogo,
+        logo_url: "",
+      }));
     } catch (error) {
       Alert.alert(
         "Asociaciones",
@@ -119,27 +79,27 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   };
 
   const handleSave = async () => {
-    if (!associationForm.nombre.trim()) {
+    if (!form.nombre.trim()) {
       Alert.alert("Asociaciones", "Ingresa el nombre de la asociación activa.");
+      return;
+    }
+
+    const social = parseSocialLinks(form.redes_sociales);
+    if (!social.ok) {
+      Alert.alert(
+        "Redes sociales inválidas",
+        'Si indicas redes sociales, usa un JSON válido. Ejemplo: {"instagram":"@mi_asociacion"}',
+      );
       return;
     }
 
     try {
       setSubmitting(true);
-      const redesSociales = associationForm.redes_sociales.trim()
-        ? JSON.parse(associationForm.redes_sociales)
-        : undefined;
-
-      await updateAssociation(token, activeAssociationId, {
-        nombre: associationForm.nombre,
-        rif: associationForm.rif,
-        direccion_fiscal: associationForm.direccion_fiscal,
-        email: associationForm.email,
-        telefonos: associationForm.telefonos,
-        logo_url: associationForm.logo_url,
-        logo_data: associationForm.logo_data,
-        redes_sociales: redesSociales,
-      });
+      await updateAssociation(
+        token,
+        activeAssociationId,
+        buildAssociationUpdatePayload(form, social.value),
+      );
       await refreshAssociations();
       Alert.alert(
         "Asociaciones",
@@ -241,169 +201,56 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
                 sociales de la asociación activa.
               </Text>
 
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Nombre"
-                value={associationForm.nombre}
+                value={form.nombre}
                 onChangeText={(value) => updateField("nombre", value)}
               />
-              <Field
-                colors={colors}
+              <LabeledField
                 label="RIF"
-                value={associationForm.rif}
+                value={form.rif}
                 onChangeText={(value) => updateField("rif", value)}
               />
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Dirección fiscal"
-                value={associationForm.direccion_fiscal}
+                value={form.direccion_fiscal}
                 onChangeText={(value) => updateField("direccion_fiscal", value)}
                 multiline
               />
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Correo"
-                value={associationForm.email}
+                value={form.email}
                 onChangeText={(value) => updateField("email", value)}
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Teléfonos"
-                value={associationForm.telefonos}
+                value={form.telefonos}
                 onChangeText={(value) => updateField("telefonos", value)}
               />
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Logo URL"
-                value={associationForm.logo_url}
+                value={form.logo_url}
                 onChangeText={(value) => updateField("logo_url", value)}
                 autoCapitalize="none"
               />
 
-              <View style={styles.formGroup}>
-                <Text style={[styles.fieldLabel, { color: colors.text }]}>
-                  Logo de la asociación
-                </Text>
-                <View style={styles.logoActionsRow}>
-                  <Pressable
-                    onPress={handlePickLogo}
-                    style={[
-                      styles.secondaryFilledAction,
-                      styles.logoActionButton,
-                      {
-                        backgroundColor: colors.cardMuted,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.secondaryFilledActionText,
-                        { color: colors.text },
-                      ]}
-                    >
-                      Seleccionar logo
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    disabled={!logoPreview}
-                    onPress={() => {
-                      updateField("logo_data", "");
-                      updateField("logo_url", "");
-                    }}
-                    style={[
-                      styles.secondaryAction,
-                      styles.logoActionButton,
-                      {
-                        borderColor: colors.borderStrong,
-                        backgroundColor: colors.cardBackground,
-                      },
-                      !logoPreview ? styles.disabledAction : null,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.secondaryActionText,
-                        { color: colors.text },
-                      ]}
-                    >
-                      Quitar logo
-                    </Text>
-                  </Pressable>
-                </View>
+              <LogoEditor
+                logoPreview={logoPreview}
+                onPick={handlePickLogo}
+                onClear={() =>
+                  setForm((current) => ({
+                    ...current,
+                    logo_data: "",
+                    logo_url: "",
+                  }))
+                }
+              />
 
-                {logoPreview ? (
-                  <View
-                    style={[
-                      styles.logoPreviewCard,
-                      {
-                        backgroundColor: colors.cardMuted,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={{ uri: logoPreview }}
-                      style={styles.logoPreviewImage}
-                    />
-                    <Text
-                      style={[
-                        styles.logoPreviewText,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Vista previa del logo de la asociación.
-                    </Text>
-                  </View>
-                ) : (
-                  <View
-                    style={[
-                      styles.logoPlaceholderCard,
-                      {
-                        backgroundColor: colors.cardMuted,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.logoPlaceholderBadge,
-                        {
-                          backgroundColor: colors.cardBackground,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.logoPlaceholderInitials,
-                          { color: colors.textSecondary },
-                        ]}
-                      >
-                        LOGO
-                      </Text>
-                    </View>
-                    <Text
-                      style={[styles.logoPreviewText, { color: colors.text }]}
-                    >
-                      Aún no hay logo cargado
-                    </Text>
-                    <Text
-                      style={[styles.rowMeta, { color: colors.textSecondary }]}
-                    >
-                      Selecciona una imagen o usa una URL para mostrar el logo
-                      de la asociación.
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Field
-                colors={colors}
+              <LabeledField
                 label="Redes sociales (JSON)"
-                value={associationForm.redes_sociales}
+                value={form.redes_sociales}
                 onChangeText={(value) => updateField("redes_sociales", value)}
                 multiline
                 placeholder='{"instagram":"@mi_asociacion"}'
@@ -453,29 +300,6 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   );
 }
 
-function Field({ colors, label, multiline = false, ...props }) {
-  return (
-    <View style={styles.formGroup}>
-      <Text style={[styles.fieldLabel, { color: colors.text }]}>{label}</Text>
-      <TextInput
-        placeholderTextColor={colors.textTertiary}
-        style={[
-          styles.input,
-          multiline ? styles.notesInput : null,
-          {
-            backgroundColor: colors.inputBackground,
-            borderColor: colors.border,
-            color: colors.text,
-          },
-        ]}
-        multiline={multiline}
-        textAlignVertical={multiline ? "top" : "center"}
-        {...props}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
@@ -509,58 +333,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   activeBadgeText: { fontSize: rf(12), fontWeight: "800" },
-  formGroup: { gap: spacing.xs },
-  fieldLabel: {
-    fontSize: rf(12),
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: rf(14),
-    minHeight: rf(44),
-  },
-  notesInput: { minHeight: rf(96) },
-  logoActionsRow: { flexDirection: "row", gap: spacing.sm },
-  logoActionButton: { flex: 1 },
-  logoPreviewCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
-    alignItems: "center",
-  },
-  logoPreviewImage: {
-    width: rf(120),
-    height: rf(120),
-    borderRadius: borderRadius.lg,
-  },
-  logoPreviewText: {
-    fontSize: rf(12),
-    lineHeight: rf(18),
-    textAlign: "center",
-  },
-  logoPlaceholderCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
-    alignItems: "center",
-  },
-  logoPlaceholderBadge: {
-    width: rf(64),
-    height: rf(64),
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoPlaceholderInitials: { fontSize: rf(11), fontWeight: "800" },
-  rowMeta: { fontSize: rf(12), lineHeight: rf(18), textAlign: "center" },
   primaryAction: {
     minHeight: rf(48),
     borderRadius: borderRadius.xl,
@@ -569,25 +341,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   primaryActionText: { fontSize: rf(14), fontWeight: "800" },
-  secondaryFilledAction: {
-    minHeight: rf(44),
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.md,
-  },
-  secondaryFilledActionText: { fontSize: rf(13), fontWeight: "700" },
-  secondaryAction: {
-    minHeight: rf(44),
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.md,
-  },
-  secondaryActionText: { fontSize: rf(13), fontWeight: "700" },
-  disabledAction: { opacity: 0.45 },
   accessNotice: {
     borderWidth: 1,
     borderRadius: borderRadius.xl,

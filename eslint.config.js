@@ -30,6 +30,7 @@ module.exports = defineConfig([
         afterEach: "readonly",
         beforeAll: "readonly",
         afterAll: "readonly",
+        __dirname: "readonly",
       },
     },
   },

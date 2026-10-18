@@ -71,6 +71,7 @@ export default function AssociationSettingsScreen({ onBack, userProfile }) {
   const {
     activeAssociation,
     activeAssociationId,
+    authBusy,
     memberships,
     refreshAssociations,
     token,

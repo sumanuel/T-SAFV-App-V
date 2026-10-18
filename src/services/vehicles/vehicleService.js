@@ -1,6 +1,7 @@
 /**
  * vehicleService.js � API real para unidades de la asociacion
  */
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import sdk from "../api/sdk";
 
 function resolveError(res, fallback) {
@@ -12,6 +13,46 @@ export async function listVehicles(token, asociacionId) {
   const res = await sdk.getAssociationUnits(token, asociacionId);
   if (res.status !== 200) return [];
   return res.data || [];
+}
+
+const UNITS_CACHE_PREFIX = "@units_cache_";
+const unitsCacheKey = (asociacionId) => `${UNITS_CACHE_PREFIX}${asociacionId}`;
+
+// Se llama al cerrar sesion: la lista incluye datos de choferes/propietarios.
+export async function clearUnitsCache() {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const mine = keys.filter((key) => key.startsWith(UNITS_CACHE_PREFIX));
+    if (mine.length) await AsyncStorage.multiRemove(mine);
+  } catch {
+    // best-effort
+  }
+}
+
+// Unidades de la asociacion con respaldo local: si no hay conexion se usa la
+// ultima lista descargada, para poder seguir registrando fiscalizaciones.
+export async function listVehiclesWithCache(token, asociacionId) {
+  if (!asociacionId) return { units: [], fromCache: false, failed: false };
+
+  const res = await sdk.getAssociationUnits(token, asociacionId);
+  if (res.status === 200) {
+    const units = res.data || [];
+    AsyncStorage.setItem(
+      unitsCacheKey(asociacionId),
+      JSON.stringify(units),
+    ).catch(() => {});
+    return { units, fromCache: false, failed: false };
+  }
+
+  try {
+    const cached = await AsyncStorage.getItem(unitsCacheKey(asociacionId));
+    if (cached) {
+      return { units: JSON.parse(cached), fromCache: true, failed: false };
+    }
+  } catch {
+    // cache ilegible: se trata como sin cache
+  }
+  return { units: [], fromCache: false, failed: true };
 }
 
 export async function listMyVehicles(token, asociacionId) {

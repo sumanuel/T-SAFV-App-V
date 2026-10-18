@@ -38,6 +38,7 @@ import {
   setToken as saveStoredToken,
 } from "../services/auth/tokenStorage";
 import { registerForPushNotificationsAsync } from "../services/notifications/pushNotificationService";
+import { clearUnitsCache } from "../services/vehicles/vehicleService";
 import { logger } from "../utils/logger";
 
 const AuthContext = createContext();
@@ -346,6 +347,7 @@ export function AuthProvider({ children }) {
       if (refreshJwt) apiLogout(refreshJwt);
       resetSessionRefresh();
       await Promise.all([
+        clearUnitsCache(),
         removeStoredToken(),
         removeRefreshToken(),
         AsyncStorage.removeItem(AUTH_USER_KEY),

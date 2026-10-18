@@ -17,7 +17,12 @@ import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import sdk from "../services/api/sdk";
-import { listVehicles } from "../services/vehicles/vehicleService";
+import {
+  enqueueFiscalRecord,
+  isRetryableStatus,
+  newRequestId,
+} from "../services/offline/fiscalQueue";
+import { listVehiclesWithCache } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
 function getUnitLabel(unit) {
@@ -33,9 +38,10 @@ export default function FiscalRecordFormScreen({
   onSaved,
 }) {
   const { colors } = useTheme();
-  const { token, activeAssociation } = useAuth();
+  const { token, activeAssociation, authUser } = useAuth();
   const asociacionId = activeAssociation?.id;
   const [units, setUnits] = useState([]);
+  const [unitsFromCache, setUnitsFromCache] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState(initialUnit?.id || null);
@@ -69,11 +75,21 @@ export default function FiscalRecordFormScreen({
     const load = async () => {
       setLoading(true);
       try {
-        const data = await listVehicles(token, asociacionId);
+        const { units: data, fromCache, failed } = await listVehiclesWithCache(
+          token,
+          asociacionId,
+        );
         setUnits(data);
+        setUnitsFromCache(fromCache);
         setSelectedUnitId(
           (current) => current || initialUnit?.id || data[0]?.id || null,
         );
+        if (failed && !initialUnit) {
+          Alert.alert(
+            "Fiscalización",
+            "No se pudieron cargar las unidades activas.",
+          );
+        }
       } catch {
         Alert.alert(
           "Fiscalización",
@@ -104,19 +120,41 @@ export default function FiscalRecordFormScreen({
 
     setSubmitting(true);
     try {
-      const res = await sdk.createFiscalRecord(token, {
+      const payload = {
         unidad_id: Number(selectedUnitId),
         asociacion_id: Number(asociacionId),
         chofer: chofer.trim(),
         origen: origen.trim(),
         destino: destino.trim(),
         pasajeros: pasajeros ? Number(pasajeros) : undefined,
+      };
+      // El id y la hora se fijan ahora: si hay que reenviar el registro, la API
+      // no lo duplica y conserva la hora real de la fiscalización.
+      const requestId = newRequestId();
+      const capturedAt = new Date().toISOString();
+
+      const res = await sdk.createFiscalRecord(token, {
+        ...payload,
+        client_request_id: requestId,
+        fecha_hora_registro: capturedAt,
       });
 
       if (res.status === 201 || res.status === 200) {
         Alert.alert(
           "Fiscalización registrada",
           "La traza operativa fue guardada correctamente.",
+        );
+        onSaved?.();
+      } else if (isRetryableStatus(res.status)) {
+        await enqueueFiscalRecord({
+          id: requestId,
+          userId: authUser?.id,
+          payload,
+          capturedAt,
+        });
+        Alert.alert(
+          "Guardada en el teléfono",
+          "No se pudo enviar ahora. La fiscalización quedó guardada y se enviará automáticamente cuando haya conexión.",
         );
         onSaved?.();
       } else {
@@ -154,6 +192,12 @@ export default function FiscalRecordFormScreen({
             title="Registrar fiscalización"
             subtitle={activeAssociation?.nombre || "Sin asociación activa"}
           />
+
+          {unitsFromCache ? (
+            <Text style={[styles.offlineNotice, { color: colors.warning }]}>
+              Sin conexión: se muestran las unidades guardadas la última vez.
+            </Text>
+          ) : null}
 
           <View
             style={[
@@ -390,6 +434,7 @@ function Field({ colors, label, inputRef, ...props }) {
 }
 
 const styles = StyleSheet.create({
+  offlineNotice: { fontSize: rf(12), fontWeight: "600" },
   safe: { flex: 1 },
   container: {
     padding: spacing.md,

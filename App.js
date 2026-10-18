@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { getBiometricLockEnabled } from "./src/services/security/biometricAuthService";
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
+import PendingSyncBanner from "./src/components/common/PendingSyncBanner";
+import { useFiscalQueue } from "./src/hooks/useFiscalQueue";
 
 // Pantallas de autenticacion y navegacion
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
@@ -80,6 +82,7 @@ function AppContent() {
     pendingInvitation,
     signOutUser,
     syncCurrentUserProfile,
+    token,
     userProfile,
   } = useAuth();
 
@@ -272,6 +275,16 @@ function AppContent() {
 
     return () => subscription.remove();
   }, [activeScreen, authReady, authUser, profileStatus, userProfile]);
+
+  // Fiscalizaciones guardadas sin conexion: se reenvian solas y se avisa si
+  // quedan pendientes.
+  const fiscalQueue = useFiscalQueue({
+    token,
+    userId: authUser?.id,
+    enabled: Boolean(
+      authUser && token && isFiscalUser && profileStatus === "active",
+    ),
+  });
 
   if (!authReady || !onboardingReady) {
     return (
@@ -616,6 +629,15 @@ function AppContent() {
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View style={styles.shell}>
         <View style={styles.content}>{renderScreen()}</View>
+        {isFiscalUser ? (
+          <PendingSyncBanner
+            pending={fiscalQueue.pending}
+            failed={fiscalQueue.failed}
+            syncing={fiscalQueue.syncing}
+            onRetry={fiscalQueue.flush}
+            onDiscard={fiscalQueue.discard}
+          />
+        ) : null}
         <WorkshopTabBar
           activeTab={activeTab}
           onChange={handleTabChange}

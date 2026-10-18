@@ -18,14 +18,20 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 - [x] **2.2 Unificar cliente HTTP** (App, M). Un solo cliente (hoy: axios en auth + `fetch` en `sdk.js`) con token, timeout y manejo de 401 en un único lugar.
   - Hecho: todo pasa por `request()` de `sdk.js` (token, 401 + renovación de sesión, timeout de 30 s). `apiClient.js` es un cliente delgado sobre él y se eliminó la dependencia `axios`.
 - [ ] **2.3 Partir pantallas gigantes** (App, L). `WorkshopHomeScreen` (~1000 líneas), `PropietariosScreen`, `AuthScreen`: extraer hooks de datos y subcomponentes.
+  - Hecho: `WorkshopHomeScreen` 1005 → 330 líneas, `PropietariosScreen` 916 → 432, `AuthScreen` 889 → 249 (utilidades puras con pruebas, hooks `useUnits`/`useUnreadNotifications` y componentes en `screens/home`, `screens/propietarios`, `screens/auth`). En el camino se eliminó la recuperación de contraseña falsa de `AuthScreen`.
+  - Pendiente (mismo método): `MemberInvitationsScreen` (736), `WorkshopMoreScreen` (726), `VehicleFormScreen` (726), `TrazaScreen` (693), `AssociationSettingsScreen` (681).
+  - Red de seguridad: `__tests__/unit/styleReferences.test.js` verifica que todo `styles.X` exista en su `StyleSheet` (en React Native un estilo faltante se ignora sin aviso al mover JSX entre archivos).
 - [ ] **2.4 Navegación** (App, L). Evaluar React Navigation / expo-router para reemplazar el estado manual de `App.js` y su `BackHandler`.
+  - **Evaluación (sin migrar):** hoy `App.js` mantiene ~12 estados de contexto y una cadena de `if` para el botón atrás, y cada pantalla recibe `onBack`/`onOpenX` por props. React Navigation (stack nativo dentro de tabs) aportaría atrás por gesto, transiciones y deep links (p. ej. abrir la traza desde una notificación push). Costo: toca todas las pantallas y exige probar cada flujo en dispositivo.
+  - **Recomendación:** hacerlo después de terminar 2.3 y con un dispositivo de pruebas, migrando una pantalla a la vez con un envoltorio de compatibilidad (los `onBack` siguen funcionando mientras tanto). No es urgente: no bloquea ninguna función.
 
 ## Fase 3 — Rendimiento y escala
 
 - [ ] **3.1 Paginación en API** (API, M). `limit`/`offset` (o cursor) en listados de propietarios, fiscales, unidades y traza/export.
-  - Pendiente de decisión: la traza ya se acota por rango de fechas (hoy por defecto) y sus filtros, el total de pasajeros y la exportación se calculan en el cliente sobre la lista completa. Paginar en servidor exige moverlos al backend (búsqueda, filtro por fiscal, totales y export completo).
+  - Pendiente de decisión: la traza ya se acota por rango de fechas (hoy por defecto) y sus filtros, el total de pasajeros y la exportación se calculan en el cliente sobre la lista completa. Paginar en servidor exige moverlos al backend.
+  - **Propuesta de contrato** (aditiva, sin romper versiones anteriores de la app): `GET /api/asociaciones/:id/trazabilidad?fecha_inicio&fecha_fin&fiscal_id&q&limit&cursor` → `{ items, next_cursor, totales: { registros, pasajeros } }` cuando se envía `limit`; sin `limit` responde la lista de siempre. La exportación CSV pasaría a un endpoint propio que recorre todas las páginas. Antes de implementarlo conviene confirmar cuántos registros por rango se ven en producción.
 - [ ] **3.2 Listas virtualizadas** (App, M). Pasar `ScrollView + .map` a `FlatList` en Traza, Propietarios, Fiscales, Notificaciones, consumiendo la paginación de 3.1.
-  - Hecho: Traza (la lista que más crece). Falta Propietarios, Fiscales y Notificaciones (estas dos últimas están acotadas en tamaño).
+  - Hecho: Traza, Inicio (unidades) y Propietarios. Fiscales y Notificaciones se dejan como están: son listas acotadas (las notificaciones se piden con límite de 30) y el cambio no justifica el riesgo.
 
 ## Fase 4 — Producto
 
@@ -41,7 +47,7 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 ## Fase 5 — Calidad y proceso
 
 - [x] **5.1 Tests** (App, M). Jest + `jest-expo`; empezar por `accessControl.js`, `dateRange.js`, servicios y `AuthContext`.
-  - Hecho: infraestructura (`npm test`) y pruebas de tokenStorage, sessionRefresh, sdk, fiscalQueue, caché de unidades, uuid, accessControl y dateRange. Falta `AuthContext` y componentes. API: `npm test` corre los unitarios; los de integración (`npm run test:integration`) escriben en la BD real del `.env`.
+  - Hecho: infraestructura (`npm test`) y pruebas de tokenStorage, sessionRefresh, sdk, apiClient, fiscalQueue, caché de unidades, uuid, accessControl, dateRange, validación de acceso, utilidades de Inicio/Propietarios y la verificación de estilos. Falta `AuthContext` y pruebas de componentes (requieren `@testing-library/react-native`). API: `npm test` corre los unitarios; los de integración (`npm run test:integration`) escriben en la BD real del `.env`.
 - [x] **5.2 ESLint + Prettier** (App, S).
   - `npm run lint` (0 errores; quedan ~30 avisos de patrones de hooks heredados, que desaparecen al partir las pantallas, ver 2.3) y `npm run format:check`. Las reglas nuevas de React Compiler (`set-state-in-effect`, `refs`, `immutability`) están como aviso, no como error.
 - [x] **5.3 CI** (App, S). GitHub Actions: lint + tests + `npx expo export --platform android`.

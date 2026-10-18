@@ -1,30 +1,19 @@
 import Constants from "expo-constants";
-import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
-import { hasPermission } from "../constants/accessControl";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import {
-  authenticateWithBiometrics,
-  getBiometricLockEnabled,
-  isBiometricHardwareAvailable,
-  setBiometricLockEnabled,
-} from "../services/security/biometricAuthService";
-import { borderRadius, rf, spacing } from "../utils/responsive";
+import { useBiometricLock } from "../hooks/useBiometricLock";
+import { getVisibleAdminItems } from "../utils/associationAccess";
+import { spacing } from "../utils/responsive";
+import AboutCard from "./more/AboutCard";
+import AdminActionRow from "./more/AdminActionRow";
+import AppSettingsList from "./more/AppSettingsList";
+import AssociationHeroCard from "./more/AssociationHeroCard";
+import SectionCard from "./more/SectionCard";
 
-const administrativeItems = [
+const ADMIN_ITEMS = [
   {
     key: "workshop-settings",
     title: "Datos de la asociación",
@@ -41,115 +30,6 @@ const administrativeItems = [
   },
 ];
 
-function resolveActionState(itemKey, userProfile, activeAssociation) {
-  const currentRole = userProfile?.role || "";
-  const isAssociationCreator =
-    currentRole === "administrator" &&
-    String(activeAssociation?.creada_por) === String(userProfile?.uid);
-
-  if (itemKey === "workshop-settings") {
-    return isAssociationCreator
-      ? {
-          iconColor: "primary",
-          stateLabel: "Editable",
-          stateTone: "primary",
-        }
-      : {
-          iconColor: "textSecondary",
-          stateLabel: "Solo lectura",
-          stateTone: "textSecondary",
-        };
-  }
-
-  return hasPermission(currentRole, "invitations.manage")
-    ? {
-        iconColor: "accent",
-        stateLabel: "Gestion activa",
-        stateTone: "accent",
-      }
-    : {
-        iconColor: "warning",
-        stateLabel: "Vista limitada",
-        stateTone: "warning",
-      };
-}
-
-function renderActionRow({
-  item,
-  colors,
-  onPress,
-  userProfile,
-  activeAssociation,
-}) {
-  const actionState = resolveActionState(
-    item.key,
-    userProfile,
-    activeAssociation,
-  );
-
-  return (
-    <Pressable
-      key={item.key}
-      onPress={onPress}
-      style={[
-        styles.row,
-        {
-          backgroundColor: colors.cardMuted,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <View
-        style={[styles.iconBadge, { backgroundColor: colors.cardBackground }]}
-      >
-        <Ionicons
-          color={colors[actionState.iconColor]}
-          name={item.icon}
-          size={rf(20)}
-        />
-      </View>
-
-      <View style={styles.rowCopy}>
-        <View style={styles.rowTopMeta}>
-          <Text style={[styles.rowEyebrow, { color: colors.primary }]}>
-            {item.eyebrow}
-          </Text>
-          <View
-            style={[
-              styles.stateBadge,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.stateBadgeText,
-                { color: colors[actionState.stateTone] },
-              ]}
-            >
-              {actionState.stateLabel}
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.rowTitle, { color: colors.text }]}>
-          {item.title}
-        </Text>
-        <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
-          {item.subtitle}
-        </Text>
-      </View>
-
-      <Ionicons
-        color={colors.textTertiary}
-        name="chevron-forward"
-        size={rf(18)}
-      />
-    </Pressable>
-  );
-}
-
 export default function WorkshopMoreScreen({
   onBack,
   onOpenCollaborators,
@@ -162,69 +42,13 @@ export default function WorkshopMoreScreen({
   const { colors } = useTheme();
   const { activeAssociation, activeAssociationId, associations, userProfile } =
     useAuth();
+  const biometric = useBiometricLock();
   const appVersion = Constants?.expoConfig?.version || "-";
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [biometricBusy, setBiometricBusy] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const [available, enabled] = await Promise.all([
-        isBiometricHardwareAvailable(),
-        getBiometricLockEnabled(),
-      ]);
-      setBiometricAvailable(available);
-      setBiometricEnabled(available && enabled);
-    })();
-  }, []);
-
-  const handleToggleBiometric = async (value) => {
-    if (biometricBusy) return;
-    setBiometricBusy(true);
-    try {
-      if (value) {
-        const confirmed = await authenticateWithBiometrics(
-          "Confirma tu huella o Face ID para activar el desbloqueo",
-        );
-        if (!confirmed) {
-          Alert.alert(
-            "Desbloqueo con huella",
-            "No se pudo verificar tu identidad. Intenta de nuevo.",
-          );
-          return;
-        }
-      }
-      await setBiometricLockEnabled(value);
-      setBiometricEnabled(value);
-    } finally {
-      setBiometricBusy(false);
-    }
-  };
-  const associationName = activeAssociation?.nombre;
-  const resolvedRole = userProfile?.role || "";
-  const roleLabel =
-    resolvedRole === "owner"
-      ? "Propietario"
-      : resolvedRole === "fiscal"
-        ? "Fiscal"
-        : resolvedRole === "administrator"
-          ? "Administrador"
-          : "Sin rol";
-  const isAssociationCreator =
-    resolvedRole === "administrator" &&
-    String(activeAssociation?.creada_por) === String(userProfile?.uid);
-  const canManageInvitations = resolvedRole === "administrator";
-  const visibleAdministrativeItems = administrativeItems.filter((item) => {
-    if (item.key === "workshop-settings") {
-      return isAssociationCreator;
-    }
-
-    if (item.key === "team") {
-      return canManageInvitations;
-    }
-
-    return false;
-  });
+  const visibleAdminItems = getVisibleAdminItems(
+    ADMIN_ITEMS,
+    userProfile,
+    activeAssociation,
+  );
 
   return (
     <SafeAreaView
@@ -241,305 +65,55 @@ export default function WorkshopMoreScreen({
           title="Mas opciones"
         />
 
-        <View
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.heroCopy}>
-            <Text style={[styles.heroEyebrow, { color: colors.primary }]}>
-              Centro de la asociación
-            </Text>
-            <Text style={[styles.heroTitle, { color: colors.text }]}>
-              {associationName || "Asociación activa"}
-            </Text>
-            <Text
-              style={[styles.heroSubtitle, { color: colors.textSecondary }]}
-            >
-              {userProfile?.fullName || userProfile?.email || "Usuario activo"}{" "}
-              · {roleLabel}
-            </Text>
-          </View>
+        <AssociationHeroCard
+          associationName={activeAssociation?.nombre}
+          userProfile={userProfile}
+          associationCount={associations.length}
+          hasActiveAssociation={Boolean(activeAssociationId)}
+        />
 
-          <View style={styles.heroStats}>
-            <View
-              style={[
-                styles.heroStat,
-                {
-                  backgroundColor: colors.cardMuted,
-                  borderColor: colors.primary,
-                },
-              ]}
-            >
-              <Text style={[styles.heroStatValue, { color: colors.text }]}>
-                {associations.length}
-              </Text>
-              <Text
-                style={[styles.heroStatLabel, { color: colors.textSecondary }]}
-              >
-                {associations.length === 1 ? "Asociación" : "Asociaciones"}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.heroStat,
-                {
-                  backgroundColor: colors.cardMuted,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.heroStatValue, { color: colors.text }]}>
-                {activeAssociationId ? "Activa" : "Sin sesión"}
-              </Text>
-              <Text
-                style={[styles.heroStatLabel, { color: colors.textSecondary }]}
-              >
-                Contexto
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {visibleAdministrativeItems.length ? (
-          <View
-            style={[
-              styles.sectionCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.border,
-              },
-            ]}
+        {visibleAdminItems.length ? (
+          <SectionCard
+            title="Administracion"
+            subtitle="Configuración de la asociación, miembros e invitaciones."
           >
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Administracion
-            </Text>
-            <Text
-              style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
-            >
-              Configuración de la asociación, miembros e invitaciones.
-            </Text>
             <View style={styles.listWrap}>
-              {visibleAdministrativeItems.map((item) =>
-                renderActionRow({
-                  item,
-                  colors,
-                  onPress:
+              {visibleAdminItems.map((item) => (
+                <AdminActionRow
+                  key={item.key}
+                  item={item}
+                  userProfile={userProfile}
+                  activeAssociation={activeAssociation}
+                  onPress={
                     item.key === "workshop-settings"
                       ? onOpenWorkshopSettings
-                      : onOpenCollaborators,
-                  userProfile,
-                  activeAssociation,
-                }),
-              )}
+                      : onOpenCollaborators
+                  }
+                />
+              ))}
             </View>
-          </View>
+          </SectionCard>
         ) : null}
 
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
+        <SectionCard
+          title="Aplicacion"
+          subtitle="Preferencias visuales y acciones de sesion para este dispositivo."
         >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Aplicacion
-          </Text>
-          <Text
-            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
-          >
-            Preferencias visuales y acciones de sesion para este dispositivo.
-          </Text>
-          <View style={styles.actionList}>
-            <Pressable
-              onPress={onOpenOnboarding}
-              style={[
-                styles.actionRow,
-                {
-                  borderBottomColor: colors.border,
-                  backgroundColor: colors.cardMuted,
-                },
-              ]}
-            >
-              <View style={styles.actionCopy}>
-                <Text style={[styles.actionLabel, { color: colors.text }]}>
-                  Ver onboarding
-                </Text>
-                <Text
-                  style={[styles.actionMeta, { color: colors.textSecondary }]}
-                >
-                  Recorre otra vez la introduccion operativa de la app.
-                </Text>
-              </View>
-              <Ionicons
-                color={colors.textTertiary}
-                name="play-circle-outline"
-                size={rf(18)}
-              />
-            </Pressable>
+          <AppSettingsList
+            themeLabel={themeLabel}
+            biometric={biometric}
+            onOpenOnboarding={onOpenOnboarding}
+            onToggleTheme={onToggleTheme}
+            onSignOut={onSignOut}
+          />
+        </SectionCard>
 
-            <Pressable
-              onPress={onToggleTheme}
-              style={[
-                styles.actionRow,
-                {
-                  borderBottomColor: colors.border,
-                  backgroundColor: colors.cardMuted,
-                },
-              ]}
-            >
-              <View style={styles.actionCopy}>
-                <Text style={[styles.actionLabel, { color: colors.text }]}>
-                  Apariencia
-                </Text>
-                <Text
-                  style={[styles.actionMeta, { color: colors.textSecondary }]}
-                >
-                  {themeLabel}
-                </Text>
-              </View>
-              <Ionicons
-                color={colors.textTertiary}
-                name="contrast-outline"
-                size={rf(18)}
-              />
-            </Pressable>
-
-            {biometricAvailable ? (
-              <View
-                style={[
-                  styles.actionRow,
-                  {
-                    borderBottomColor: colors.border,
-                    backgroundColor: colors.cardMuted,
-                  },
-                ]}
-              >
-                <View style={styles.actionCopy}>
-                  <Text style={[styles.actionLabel, { color: colors.text }]}>
-                    Desbloquear con huella
-                  </Text>
-                  <Text
-                    style={[styles.actionMeta, { color: colors.textSecondary }]}
-                  >
-                    Pide huella o Face ID cada vez que abres la app.
-                  </Text>
-                </View>
-                <Switch
-                  disabled={biometricBusy}
-                  onValueChange={handleToggleBiometric}
-                  value={biometricEnabled}
-                  trackColor={{ true: colors.primary }}
-                />
-              </View>
-            ) : null}
-
-            <Pressable
-              onPress={onSignOut}
-              style={[styles.actionRow, { backgroundColor: colors.cardMuted }]}
-            >
-              <View style={styles.actionCopy}>
-                <Text style={[styles.actionLabel, { color: colors.danger }]}>
-                  Cerrar sesion
-                </Text>
-                <Text
-                  style={[styles.actionMeta, { color: colors.textSecondary }]}
-                >
-                  Finaliza la sesion del usuario actual en este equipo.
-                </Text>
-              </View>
-              <Ionicons
-                color={colors.danger}
-                name="log-out-outline"
-                size={rf(18)}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
+        <SectionCard
+          title="Acerca de"
+          subtitle="Identidad visual y versión actual del centro operativo de la asociación."
         >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Acerca de
-          </Text>
-          <Text
-            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
-          >
-            Identidad visual y versión actual del centro operativo de la
-            asociación.
-          </Text>
-
-          <View
-            style={[
-              styles.aboutCard,
-              {
-                backgroundColor: colors.cardMuted,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.aboutLogoWrap,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Image
-                source={require("../../assets/icon.png")}
-                resizeMode="contain"
-                style={styles.aboutLogo}
-              />
-            </View>
-
-            <View style={styles.aboutCopy}>
-              <Text style={[styles.aboutEyebrow, { color: colors.primary }]}>
-                T-SAFV
-              </Text>
-              <Text style={[styles.aboutTitle, { color: colors.text }]}>
-                Centro operativo de la asociación
-              </Text>
-              <Text
-                style={[
-                  styles.aboutDescription,
-                  { color: colors.textSecondary },
-                ]}
-              >
-                Version {appVersion}
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.versionBadge,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.versionBadgeText, { color: colors.text }]}>
-                v{appVersion}
-              </Text>
-            </View>
-          </View>
-        </View>
+          <AboutCard appVersion={appVersion} />
+        </SectionCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -552,175 +126,5 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl * 2,
     gap: spacing.md,
   },
-  heroCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  heroCopy: {
-    gap: spacing.xs,
-  },
-  heroEyebrow: {
-    fontSize: rf(11),
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.9,
-  },
-  heroTitle: {
-    fontSize: rf(24),
-    fontWeight: "900",
-    letterSpacing: -0.7,
-  },
-  heroSubtitle: {
-    fontSize: rf(13),
-    lineHeight: rf(19),
-  },
-  heroStats: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  heroStat: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    gap: 2,
-  },
-  heroStatValue: {
-    fontSize: rf(16),
-    fontWeight: "800",
-  },
-  heroStatLabel: {
-    fontSize: rf(12),
-    fontWeight: "600",
-  },
-  aboutCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  aboutLogoWrap: {
-    width: rf(92),
-    height: rf(92),
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xs,
-  },
-  aboutLogo: {
-    width: "100%",
-    height: "100%",
-    borderRadius: borderRadius.md,
-  },
-  aboutCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  aboutEyebrow: {
-    fontSize: rf(10),
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  aboutTitle: {
-    fontSize: rf(16),
-    fontWeight: "800",
-  },
-  aboutDescription: {
-    fontSize: rf(12),
-    lineHeight: rf(18),
-    fontWeight: "600",
-  },
-  versionBadge: {
-    borderWidth: 1,
-    borderRadius: borderRadius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  versionBadgeText: {
-    fontSize: rf(11),
-    fontWeight: "800",
-  },
-  sectionCard: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: rf(17),
-    fontWeight: "800",
-  },
-  sectionSubtitle: {
-    fontSize: rf(13),
-    lineHeight: rf(19),
-  },
   listWrap: { gap: spacing.sm },
-  row: {
-    borderWidth: 1,
-    borderRadius: borderRadius.xl,
-    padding: spacing.md,
-    gap: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  iconBadge: {
-    width: rf(42),
-    height: rf(42),
-    borderRadius: borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowCopy: { flex: 1, gap: spacing.xs },
-  rowTopMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  rowEyebrow: {
-    fontSize: rf(10),
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  stateBadge: {
-    borderWidth: 1,
-    borderRadius: borderRadius.pill,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.sm,
-  },
-  stateBadgeText: {
-    fontSize: rf(10),
-    fontWeight: "800",
-  },
-  rowTitle: { fontSize: rf(15), fontWeight: "800" },
-  rowSubtitle: { fontSize: rf(12), lineHeight: rf(18) },
-  actionList: {
-    gap: spacing.sm,
-  },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderBottomWidth: 1,
-    gap: spacing.md,
-  },
-  actionCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  actionLabel: { fontSize: rf(14), fontWeight: "700" },
-  actionMeta: {
-    fontSize: rf(12),
-    lineHeight: rf(17),
-  },
 });

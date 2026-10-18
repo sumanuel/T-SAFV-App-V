@@ -4,92 +4,54 @@
  * Adaptado desde T-SAFV-App/src/lib/tsafv-sdk.js manteniendo la misma
  * estructura de respuesta { status, data } para compatibilidad directa.
  */
-import { API_BASE_URL } from "./apiClient";
+import { API_BASE_URL } from "./config";
 import { notifySessionExpired } from "../auth/sessionExpiry";
+import { recoverFromUnauthorized } from "../auth/sessionRefresh";
 
-function checkSessionExpired(status) {
-  if (status === 401) notifySessionExpired();
-}
+const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH"]);
 
-async function apiGet(path, token) {
+async function attempt(method, path, body, token) {
   const headers = {};
+  if (METHODS_WITH_BODY.has(method)) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
+
+  const options = { method, headers };
+  if (METHODS_WITH_BODY.has(method)) options.body = JSON.stringify(body);
+
+  const res = await fetch(`${API_BASE_URL}${path}`, options);
+  const data = await res.json().catch(() => null);
+  return { status: res.status, data };
+}
+
+// Ante un 401 intenta renovar la sesion con el refresh token y repite la
+// peticion una vez. Solo se considera vencida si la renovacion falla de forma
+// definitiva (no por falta de red).
+async function request(method, path, body, token) {
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, { headers });
-    const data = await res.json().catch(() => null);
-    checkSessionExpired(res.status);
-    return { status: res.status, data };
+    let result = await attempt(method, path, body, token);
+
+    if (result.status === 401) {
+      const { token: freshToken, expired } = token
+        ? await recoverFromUnauthorized(token)
+        : { token: null, expired: true };
+
+      if (freshToken) result = await attempt(method, path, body, freshToken);
+
+      if (result.status === 401 && (freshToken || expired)) {
+        notifySessionExpired();
+      }
+    }
+    return result;
   } catch (error) {
     return { status: 0, data: null, error };
   }
 }
 
-async function apiPost(path, body, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => null);
-    checkSessionExpired(res.status);
-    return { status: res.status, data };
-  } catch (error) {
-    return { status: 0, data: null, error };
-  }
-}
-
-async function apiPut(path, body, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => null);
-    checkSessionExpired(res.status);
-    return { status: res.status, data };
-  } catch (error) {
-    return { status: 0, data: null, error };
-  }
-}
-
-async function apiPatch(path, body, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(body),
-    });
-    const data = await res.json().catch(() => null);
-    checkSessionExpired(res.status);
-    return { status: res.status, data };
-  } catch (error) {
-    return { status: 0, data: null, error };
-  }
-}
-
-async function apiDelete(path, token) {
-  const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "DELETE",
-      headers,
-    });
-    const data = await res.json().catch(() => null);
-    checkSessionExpired(res.status);
-    return { status: res.status, data };
-  } catch (error) {
-    return { status: 0, data: null, error };
-  }
-}
+const apiGet = (path, token) => request("GET", path, undefined, token);
+const apiPost = (path, body, token) => request("POST", path, body, token);
+const apiPut = (path, body, token) => request("PUT", path, body, token);
+const apiPatch = (path, body, token) => request("PATCH", path, body, token);
+const apiDelete = (path, token) => request("DELETE", path, undefined, token);
 
 function buildQueryString(params) {
   const entries = Object.entries(params || {}).filter(

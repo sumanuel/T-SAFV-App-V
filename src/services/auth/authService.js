@@ -26,6 +26,16 @@ export async function apiLogin({ email, password }) {
   }
 }
 
+// Revoca el refresh token en el servidor; si falla no importa (la sesion local
+// ya se cierra igual).
+export async function apiLogout(refreshToken) {
+  try {
+    await apiClient.post("/api/auth/logout", { refresh_token: refreshToken });
+  } catch {
+    // best-effort
+  }
+}
+
 export async function apiRegister({
   nombre,
   apellido,

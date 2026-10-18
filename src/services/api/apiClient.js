@@ -1,20 +1,15 @@
 /**
  * apiClient.js
  * Axios client apuntando a T-SAFV-API.
- * Para Android Emulator usa 10.0.2.2:3000
- * Para dispositivo físico en la misma red, cambia a la IP de tu máquina.
+ * La URL base vive en ./config.js.
  */
 import axios from "axios";
 import { notifySessionExpired } from "../auth/sessionExpiry";
+import { recoverFromUnauthorized } from "../auth/sessionRefresh";
 import { getToken } from "../auth/tokenStorage";
+import { API_BASE_URL } from "./config";
 
-// Ajusta según tu entorno:
-//  - Emulador Android:  http://10.0.2.2:3000
-//  - Dispositivo real:  http://<IP_LOCAL>:3000
-//  - iOS Simulator:     http://localhost:3000
-//  - local:     http://192.168.1.2:3000
-//  - Entorno de producción:     "https://t-safv.system-meek.com"
-export const API_BASE_URL = "https://t-safv.system-meek.com";
+export { API_BASE_URL };
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -37,12 +32,31 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Interceptor: si el token fue rechazado (401), la sesion se considera vencida
+// Interceptor: ante un 401 intenta renovar la sesion con el refresh token y
+// repite la peticion una vez; solo si no se puede renovar la sesion se
+// considera vencida.
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
-      notifySessionExpired();
+  async (error) => {
+    const original = error?.config;
+    const isAuthRoute = String(original?.url || "").startsWith("/api/auth/");
+
+    if (error?.response?.status === 401 && original && !isAuthRoute) {
+      if (!original._retried) {
+        original._retried = true;
+        const staleToken = String(original.headers?.Authorization || "").replace(
+          /^Bearer /,
+          "",
+        );
+        const { token, expired } = await recoverFromUnauthorized(staleToken);
+        if (token) {
+          original.headers.Authorization = `Bearer ${token}`;
+          return apiClient(original);
+        }
+        if (expired) notifySessionExpired();
+      } else {
+        notifySessionExpired();
+      }
     }
     return Promise.reject(error);
   },

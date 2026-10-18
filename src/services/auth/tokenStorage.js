@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { logger } from "../../utils/logger";
 
-// SecureStore no admite "@" en las claves, por eso difiere de la clave legada.
-const TOKEN_KEY = "auth_token";
-const LEGACY_TOKEN_KEY = "@auth_token";
+// SecureStore no admite "@" en las claves, por eso difieren de las legadas.
+const ACCESS = { secure: "auth_token", fallback: "@auth_token" };
+const REFRESH = { secure: "refresh_token", fallback: "@refresh_token" };
 
 let secureStorePromise = null;
 
@@ -12,44 +12,55 @@ let secureStorePromise = null;
 // AsyncStorage en lugar de romper la app al abrirla.
 function loadSecureStore() {
   if (!secureStorePromise) {
-    secureStorePromise = import("expo-secure-store")
-      .then(async (SecureStore) => ((await SecureStore.isAvailableAsync()) ? SecureStore : null))
-      .catch((error) => {
+    secureStorePromise = (async () => {
+      try {
+        const SecureStore = require("expo-secure-store");
+        return (await SecureStore.isAvailableAsync()) ? SecureStore : null;
+      } catch (error) {
         logger.warn("[tokenStorage] SecureStore no disponible:", error?.message);
         return null;
-      });
+      }
+    })();
   }
   return secureStorePromise;
 }
 
-export async function getToken() {
+async function read(keys) {
   const SecureStore = await loadSecureStore();
-  if (!SecureStore) return AsyncStorage.getItem(LEGACY_TOKEN_KEY);
+  if (!SecureStore) return AsyncStorage.getItem(keys.fallback);
 
-  const secureToken = await SecureStore.getItemAsync(TOKEN_KEY);
-  if (secureToken) return secureToken;
+  const secureValue = await SecureStore.getItemAsync(keys.secure);
+  if (secureValue) return secureValue;
 
-  // Migracion: sesiones guardadas antes de usar SecureStore.
-  const legacyToken = await AsyncStorage.getItem(LEGACY_TOKEN_KEY);
-  if (legacyToken) {
-    await SecureStore.setItemAsync(TOKEN_KEY, legacyToken);
-    await AsyncStorage.removeItem(LEGACY_TOKEN_KEY);
+  // Migracion: valores guardados antes de usar SecureStore.
+  const legacyValue = await AsyncStorage.getItem(keys.fallback);
+  if (legacyValue) {
+    await SecureStore.setItemAsync(keys.secure, legacyValue);
+    await AsyncStorage.removeItem(keys.fallback);
   }
-  return legacyToken;
+  return legacyValue;
 }
 
-export async function setToken(token) {
+async function write(keys, value) {
   const SecureStore = await loadSecureStore();
   if (!SecureStore) {
-    await AsyncStorage.setItem(LEGACY_TOKEN_KEY, token);
+    await AsyncStorage.setItem(keys.fallback, value);
     return;
   }
-  await SecureStore.setItemAsync(TOKEN_KEY, token);
-  await AsyncStorage.removeItem(LEGACY_TOKEN_KEY);
+  await SecureStore.setItemAsync(keys.secure, value);
+  await AsyncStorage.removeItem(keys.fallback);
 }
 
-export async function removeToken() {
+async function remove(keys) {
   const SecureStore = await loadSecureStore();
-  if (SecureStore) await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await AsyncStorage.removeItem(LEGACY_TOKEN_KEY);
+  if (SecureStore) await SecureStore.deleteItemAsync(keys.secure);
+  await AsyncStorage.removeItem(keys.fallback);
 }
+
+export const getToken = () => read(ACCESS);
+export const setToken = (token) => write(ACCESS, token);
+export const removeToken = () => remove(ACCESS);
+
+export const getRefreshToken = () => read(REFRESH);
+export const setRefreshToken = (token) => write(REFRESH, token);
+export const removeRefreshToken = () => remove(REFRESH);

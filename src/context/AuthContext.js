@@ -19,14 +19,22 @@ import {
   apiGetAssociationCreationAccess,
   apiGetMyInvitations,
   apiLogin,
+  apiLogout,
   apiRegister,
   apiRegisterPushToken,
 } from "../services/auth/authService";
 import { getMyAssociations } from "../services/associations/associationService";
 import { setSessionExpiredHandler } from "../services/auth/sessionExpiry";
 import {
+  resetSessionRefresh,
+  setSessionRefreshedHandler,
+} from "../services/auth/sessionRefresh";
+import {
+  getRefreshToken,
   getToken as getStoredToken,
+  removeRefreshToken,
   removeToken as removeStoredToken,
+  setRefreshToken,
   setToken as saveStoredToken,
 } from "../services/auth/tokenStorage";
 import { registerForPushNotificationsAsync } from "../services/notifications/pushNotificationService";
@@ -223,6 +231,18 @@ export function AuthProvider({ children }) {
     return () => setSessionExpiredHandler(null);
   }, []);
 
+  // Cuando la sesion se renueva en segundo plano (refresh token), se actualiza
+  // el token en memoria y el usuario persistido; el resto del estado no cambia.
+  useEffect(() => {
+    setSessionRefreshedHandler(({ token: freshToken, user }) => {
+      setToken(freshToken);
+      if (user) {
+        AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)).catch(() => {});
+      }
+    });
+    return () => setSessionRefreshedHandler(null);
+  }, []);
+
   // Restaurar sesion desde AsyncStorage
   useEffect(() => {
     const restoreSession = async () => {
@@ -253,9 +273,15 @@ export function AuthProvider({ children }) {
   const signIn = async ({ email, password }) => {
     setAuthBusy(true);
     try {
-      const { token: jwt, user } = await apiLogin({ email, password });
+      const {
+        token: jwt,
+        refresh_token: refreshJwt,
+        user,
+      } = await apiLogin({ email, password });
+      resetSessionRefresh();
       await Promise.all([
         saveStoredToken(jwt),
+        refreshJwt ? setRefreshToken(refreshJwt) : removeRefreshToken(),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
       setToken(jwt);
@@ -283,9 +309,15 @@ export function AuthProvider({ children }) {
         telefono: phone || "",
       });
 
-      const { token: jwt, user } = await apiLogin({ email, password });
+      const {
+        token: jwt,
+        refresh_token: refreshJwt,
+        user,
+      } = await apiLogin({ email, password });
+      resetSessionRefresh();
       await Promise.all([
         saveStoredToken(jwt),
+        refreshJwt ? setRefreshToken(refreshJwt) : removeRefreshToken(),
         AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(user)),
       ]);
       setToken(jwt);
@@ -310,8 +342,12 @@ export function AuthProvider({ children }) {
   const signOutUser = async () => {
     setAuthBusy(true);
     try {
+      const refreshJwt = await getRefreshToken().catch(() => null);
+      if (refreshJwt) apiLogout(refreshJwt);
+      resetSessionRefresh();
       await Promise.all([
         removeStoredToken(),
+        removeRefreshToken(),
         AsyncStorage.removeItem(AUTH_USER_KEY),
         AsyncStorage.removeItem(ACTIVE_ASSOC_KEY),
       ]);

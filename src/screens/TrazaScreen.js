@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  FlatList,
   ScrollView,
   Share,
   StyleSheet,
@@ -218,382 +219,398 @@ export default function TrazaScreen({
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <WorkshopScreenHeader
-          onBack={onBack}
-          section="Trazabilidad"
-          title="Traza"
-          subtitle={
-            activeAssociation?.nombre || "Registro de movimientos operativos"
-          }
-          rightAction={{
-            icon: "share-outline",
-            label: "Exportar traza",
-            onPress: exportTraza,
-          }}
-        />
-
-        <View
-          style={[
-            styles.filtersCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          {selectedUnitId ? (
-            <View
-              style={[
-                styles.chip,
-                {
-                  alignSelf: "flex-start",
-                  backgroundColor: colors.cardMuted,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.chipText, { color: colors.text }]}>
-                Unidad filtrada:{" "}
-                {initialUnit?.numero_unidad ||
-                  initialUnit?.placa ||
-                  selectedUnitId}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.dateRow}>
-            <View style={styles.dateField}>
-              <Text
-                style={[styles.inputLabel, { color: colors.textSecondary }]}
-              >
-                Desde
-              </Text>
-              <Pressable
-                onPress={() => setShowStartPicker(true)}
-                style={[
-                  styles.dateSelector,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dateSelectorText,
-                    { color: startDate ? colors.text : colors.textTertiary },
-                  ]}
-                >
-                  {startDate || "AAAA-MM-DD"}
-                </Text>
-                <Ionicons
-                  name="calendar-outline"
-                  size={rf(18)}
-                  color={colors.textSecondary}
-                />
-              </Pressable>
-            </View>
-            <View style={styles.dateField}>
-              <Text
-                style={[styles.inputLabel, { color: colors.textSecondary }]}
-              >
-                Hasta
-              </Text>
-              <Pressable
-                onPress={() => setShowEndPicker(true)}
-                style={[
-                  styles.dateSelector,
-                  {
-                    backgroundColor: colors.inputBackground,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dateSelectorText,
-                    { color: endDate ? colors.text : colors.textTertiary },
-                  ]}
-                >
-                  {endDate || "AAAA-MM-DD"}
-                </Text>
-                <Ionicons
-                  name="calendar-outline"
-                  size={rf(18)}
-                  color={colors.textSecondary}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          {showStartPicker ? (
-            <DateTimePicker
-              mode="date"
-              value={new Date(startDate || today)}
-              onChange={(_, selectedDate) => {
-                setShowStartPicker(false);
-                if (selectedDate) {
-                  setStartDate(formatInputDate(selectedDate));
-                }
+      <FlatList
+        data={loading ? [] : filtered}
+        keyExtractor={(item, idx) => String(item.id ?? idx)}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={10}
+        windowSize={7}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <WorkshopScreenHeader
+              onBack={onBack}
+              section="Trazabilidad"
+              title="Traza"
+              subtitle={
+                activeAssociation?.nombre ||
+                "Registro de movimientos operativos"
+              }
+              rightAction={{
+                icon: "share-outline",
+                label: "Exportar traza",
+                onPress: exportTraza,
               }}
             />
-          ) : null}
 
-          {showEndPicker ? (
-            <DateTimePicker
-              mode="date"
-              value={new Date(endDate || today)}
-              onChange={(_, selectedDate) => {
-                setShowEndPicker(false);
-                if (selectedDate) {
-                  setEndDate(formatInputDate(selectedDate));
-                }
-              }}
-            />
-          ) : null}
-
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Buscar por placa, unidad, chofer o destino"
-            placeholderTextColor={colors.textTertiary}
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.inputBackground,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-          />
-
-          {fiscalOptions.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.filterChips}
-            >
-              <Pressable
-                onPress={() => setSelectedFiscalId("ALL")}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor:
-                      selectedFiscalId === "ALL"
-                        ? colors.primary
-                        : colors.cardMuted,
-                    borderColor:
-                      selectedFiscalId === "ALL"
-                        ? colors.primary
-                        : colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    {
-                      color:
-                        selectedFiscalId === "ALL" ? colors.white : colors.text,
-                    },
-                  ]}
-                >
-                  Todos
-                </Text>
-              </Pressable>
-              {fiscalOptions.map((f) => (
-                <Pressable
-                  key={f.id}
-                  onPress={() =>
-                    setSelectedFiscalId(
-                      String(f.id) === String(selectedFiscalId) ? "ALL" : f.id,
-                    )
-                  }
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor:
-                        String(f.id) === String(selectedFiscalId)
-                          ? colors.accent
-                          : colors.cardMuted,
-                      borderColor:
-                        String(f.id) === String(selectedFiscalId)
-                          ? colors.accent
-                          : colors.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      {
-                        color:
-                          String(f.id) === String(selectedFiscalId)
-                            ? colors.white
-                            : colors.text,
-                      },
-                    ]}
-                  >
-                    {f.nombre}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
-
-          <View
-            style={[
-              styles.countBadge,
-              { backgroundColor: colors.cardMuted, borderColor: colors.border },
-            ]}
-          >
-            <Text style={[styles.countText, { color: colors.primary }]}>
-              {totalPasajeros}{" "}
-              {totalPasajeros === 1 ? "pasajero" : "pasajeros"}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Actualizar traza"
-              onPress={refreshData}
-              style={styles.refreshBtn}
-            >
-              <Ionicons
-                name="refresh-outline"
-                size={rf(14)}
-                color={colors.textSecondary}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        {loading ? (
-          <ActivityIndicator
-            color={colors.primary}
-            style={{ marginTop: spacing.lg }}
-          />
-        ) : filtered.length ? (
-          filtered.map((item, idx) => (
             <View
-              key={item.id || idx}
               style={[
-                styles.traceRow,
+                styles.filtersCard,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.border,
                 },
               ]}
             >
-              <View style={styles.traceTop}>
+              {selectedUnitId ? (
                 <View
                   style={[
-                    styles.unitBadge,
-                    { backgroundColor: colors.backgroundAccent },
+                    styles.chip,
+                    {
+                      alignSelf: "flex-start",
+                      backgroundColor: colors.cardMuted,
+                      borderColor: colors.border,
+                    },
                   ]}
                 >
-                  <Text style={[styles.unitText, { color: colors.primary }]}>
-                    {item.numero_unidad || item.placa || "—"}
+                  <Text style={[styles.chipText, { color: colors.text }]}>
+                    Unidad filtrada:{" "}
+                    {initialUnit?.numero_unidad ||
+                      initialUnit?.placa ||
+                      selectedUnitId}
                   </Text>
                 </View>
-                <Text
-                  style={[styles.traceDate, { color: colors.textTertiary }]}
-                >
-                  {formatDateTime(item.fecha_hora_registro)}
-                </Text>
+              ) : null}
+
+              <View style={styles.dateRow}>
+                <View style={styles.dateField}>
+                  <Text
+                    style={[styles.inputLabel, { color: colors.textSecondary }]}
+                  >
+                    Desde
+                  </Text>
+                  <Pressable
+                    onPress={() => setShowStartPicker(true)}
+                    style={[
+                      styles.dateSelector,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.dateSelectorText,
+                        {
+                          color: startDate ? colors.text : colors.textTertiary,
+                        },
+                      ]}
+                    >
+                      {startDate || "AAAA-MM-DD"}
+                    </Text>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={rf(18)}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
+                </View>
+                <View style={styles.dateField}>
+                  <Text
+                    style={[styles.inputLabel, { color: colors.textSecondary }]}
+                  >
+                    Hasta
+                  </Text>
+                  <Pressable
+                    onPress={() => setShowEndPicker(true)}
+                    style={[
+                      styles.dateSelector,
+                      {
+                        backgroundColor: colors.inputBackground,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.dateSelectorText,
+                        { color: endDate ? colors.text : colors.textTertiary },
+                      ]}
+                    >
+                      {endDate || "AAAA-MM-DD"}
+                    </Text>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={rf(18)}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
+                </View>
               </View>
 
-              <View style={styles.traceMeta}>
-                {item.fiscal_nombre ? (
-                  <Text
+              {showStartPicker ? (
+                <DateTimePicker
+                  mode="date"
+                  value={new Date(startDate || today)}
+                  onChange={(_, selectedDate) => {
+                    setShowStartPicker(false);
+                    if (selectedDate) {
+                      setStartDate(formatInputDate(selectedDate));
+                    }
+                  }}
+                />
+              ) : null}
+
+              {showEndPicker ? (
+                <DateTimePicker
+                  mode="date"
+                  value={new Date(endDate || today)}
+                  onChange={(_, selectedDate) => {
+                    setShowEndPicker(false);
+                    if (selectedDate) {
+                      setEndDate(formatInputDate(selectedDate));
+                    }
+                  }}
+                />
+              ) : null}
+
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Buscar por placa, unidad, chofer o destino"
+                placeholderTextColor={colors.textTertiary}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.inputBackground,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+              />
+
+              {fiscalOptions.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.filterChips}
+                >
+                  <Pressable
+                    onPress={() => setSelectedFiscalId("ALL")}
                     style={[
-                      styles.traceMetaText,
-                      { color: colors.textSecondary },
+                      styles.chip,
+                      {
+                        backgroundColor:
+                          selectedFiscalId === "ALL"
+                            ? colors.primary
+                            : colors.cardMuted,
+                        borderColor:
+                          selectedFiscalId === "ALL"
+                            ? colors.primary
+                            : colors.border,
+                      },
                     ]}
                   >
-                    <Text style={{ fontWeight: "700" }}>Fiscal: </Text>
-                    {[item.fiscal_nombre, item.fiscal_apellido]
-                      .filter(Boolean)
-                      .join(" ") || item.fiscal_nombre}
-                  </Text>
-                ) : null}
-                {item.punto_control ? (
-                  <Text
-                    style={[
-                      styles.traceMetaText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    <Text style={{ fontWeight: "700" }}>
-                      Punto de control:{" "}
+                    <Text
+                      style={[
+                        styles.chipText,
+                        {
+                          color:
+                            selectedFiscalId === "ALL"
+                              ? colors.white
+                              : colors.text,
+                        },
+                      ]}
+                    >
+                      Todos
                     </Text>
-                    {item.punto_control}
-                  </Text>
-                ) : null}
-                {item.chofer ? (
-                  <Text
-                    style={[
-                      styles.traceMetaText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    <Text style={{ fontWeight: "700" }}>Chofer: </Text>
-                    {item.chofer}
-                  </Text>
-                ) : null}
-                {item.origen || item.destino ? (
-                  <Text
-                    style={[
-                      styles.traceMetaText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    {[item.origen, item.destino].filter(Boolean).join(" → ")}
-                  </Text>
-                ) : null}
-                {item.pasajeros !== undefined && item.pasajeros !== null ? (
-                  <Text
-                    style={[
-                      styles.traceMetaText,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    <Text style={{ fontWeight: "700" }}>Pasajeros: </Text>
-                    {item.pasajeros}
-                  </Text>
-                ) : null}
+                  </Pressable>
+                  {fiscalOptions.map((f) => (
+                    <Pressable
+                      key={f.id}
+                      onPress={() =>
+                        setSelectedFiscalId(
+                          String(f.id) === String(selectedFiscalId)
+                            ? "ALL"
+                            : f.id,
+                        )
+                      }
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor:
+                            String(f.id) === String(selectedFiscalId)
+                              ? colors.accent
+                              : colors.cardMuted,
+                          borderColor:
+                            String(f.id) === String(selectedFiscalId)
+                              ? colors.accent
+                              : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          {
+                            color:
+                              String(f.id) === String(selectedFiscalId)
+                                ? colors.white
+                                : colors.text,
+                          },
+                        ]}
+                      >
+                        {f.nombre}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+
+              <View
+                style={[
+                  styles.countBadge,
+                  {
+                    backgroundColor: colors.cardMuted,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.countText, { color: colors.primary }]}>
+                  {totalPasajeros}{" "}
+                  {totalPasajeros === 1 ? "pasajero" : "pasajeros"}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Actualizar traza"
+                  onPress={refreshData}
+                  style={styles.refreshBtn}
+                >
+                  <Ionicons
+                    name="refresh-outline"
+                    size={rf(14)}
+                    color={colors.textSecondary}
+                  />
+                </Pressable>
               </View>
             </View>
-          ))
-        ) : (
+          </View>
+        }
+        renderItem={({ item }) => (
           <View
             style={[
-              styles.emptyBlock,
+              styles.traceRow,
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.border,
               },
             ]}
           >
-            <Ionicons
-              name="git-merge-outline"
-              size={rf(32)}
-              color={colors.textTertiary}
-            />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              Sin registros
-            </Text>
-            <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
-              No hay trazas que coincidan con los filtros aplicados.
-            </Text>
+            <View style={styles.traceTop}>
+              <View
+                style={[
+                  styles.unitBadge,
+                  { backgroundColor: colors.backgroundAccent },
+                ]}
+              >
+                <Text style={[styles.unitText, { color: colors.primary }]}>
+                  {item.numero_unidad || item.placa || "—"}
+                </Text>
+              </View>
+              <Text style={[styles.traceDate, { color: colors.textTertiary }]}>
+                {formatDateTime(item.fecha_hora_registro)}
+              </Text>
+            </View>
+
+            <View style={styles.traceMeta}>
+              {item.fiscal_nombre ? (
+                <Text
+                  style={[
+                    styles.traceMetaText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  <Text style={{ fontWeight: "700" }}>Fiscal: </Text>
+                  {[item.fiscal_nombre, item.fiscal_apellido]
+                    .filter(Boolean)
+                    .join(" ") || item.fiscal_nombre}
+                </Text>
+              ) : null}
+              {item.punto_control ? (
+                <Text
+                  style={[
+                    styles.traceMetaText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  <Text style={{ fontWeight: "700" }}>Punto de control: </Text>
+                  {item.punto_control}
+                </Text>
+              ) : null}
+              {item.chofer ? (
+                <Text
+                  style={[
+                    styles.traceMetaText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  <Text style={{ fontWeight: "700" }}>Chofer: </Text>
+                  {item.chofer}
+                </Text>
+              ) : null}
+              {item.origen || item.destino ? (
+                <Text
+                  style={[
+                    styles.traceMetaText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {[item.origen, item.destino].filter(Boolean).join(" → ")}
+                </Text>
+              ) : null}
+              {item.pasajeros !== undefined && item.pasajeros !== null ? (
+                <Text
+                  style={[
+                    styles.traceMetaText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  <Text style={{ fontWeight: "700" }}>Pasajeros: </Text>
+                  {item.pasajeros}
+                </Text>
+              ) : null}
+            </View>
           </View>
         )}
-      </ScrollView>
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator
+              color={colors.primary}
+              style={{ marginTop: spacing.lg }}
+            />
+          ) : (
+            <View
+              style={[
+                styles.emptyBlock,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Ionicons
+                name="git-merge-outline"
+                size={rf(32)}
+                color={colors.textTertiary}
+              />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                Sin registros
+              </Text>
+              <Text style={[styles.emptyMsg, { color: colors.textSecondary }]}>
+                No hay trazas que coincidan con los filtros aplicados.
+              </Text>
+            </View>
+          )
+        }
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+  listHeader: { gap: spacing.md },
   container: {
     padding: spacing.md,
     gap: spacing.md,

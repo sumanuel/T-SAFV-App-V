@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ShortcutRow from "../components/common/ShortcutRow";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -33,6 +34,7 @@ const ADMIN_ITEMS = [
 export default function WorkshopMoreScreen({
   onBack,
   onOpenCollaborators,
+  onOpenIncidencias,
   onOpenOnboarding,
   onOpenWorkshopSettings,
   onSignOut,
@@ -71,6 +73,20 @@ export default function WorkshopMoreScreen({
           associationCount={associations.length}
           hasActiveAssociation={Boolean(activeAssociationId)}
         />
+
+        {onOpenIncidencias ? (
+          <SectionCard
+            title="Operación"
+            subtitle="Registro de eventos de la operación diaria."
+          >
+            <ShortcutRow
+              icon="alert-circle-outline"
+              title="Incidencias"
+              subtitle="Infracciones y eventos fuera de una fiscalización, con fotos."
+              onPress={onOpenIncidencias}
+            />
+          </SectionCard>
+        ) : null}
 
         {visibleAdminItems.length ? (
           <SectionCard

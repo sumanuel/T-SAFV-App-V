@@ -27,6 +27,8 @@ function iconForType(tipo) {
   switch (tipo) {
     case "fiscalizacion":
       return "shield-checkmark-outline";
+    case "incidencia":
+      return "alert-circle-outline";
     case "trial_activo":
     case "pago_confirmado":
       return "card-outline";

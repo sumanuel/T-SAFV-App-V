@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ShortcutRow from "../components/common/ShortcutRow";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -38,6 +39,7 @@ const HEADER_SUBTITLE =
 
 export default function WorkshopHomeScreen({
   onOpenFiscalRecord,
+  onOpenIncidencias,
   onOpenNotifications,
   currentRole,
   userProfile,
@@ -221,6 +223,14 @@ export default function WorkshopHomeScreen({
               association={activeAssociation}
               userProfile={userProfile}
             />
+            {onOpenIncidencias ? (
+              <ShortcutRow
+                icon="alert-circle-outline"
+                title="Incidencias"
+                subtitle="Infracciones y eventos fuera de una fiscalización, con fotos."
+                onPress={onOpenIncidencias}
+              />
+            ) : null}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Unidades activas
             </Text>

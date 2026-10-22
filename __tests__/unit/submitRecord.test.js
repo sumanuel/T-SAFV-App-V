@@ -23,11 +23,12 @@ const { submitRecord } = require("../../src/services/offline/submitRecord");
 
 const reply = (status, data = {}) => ({ status, data });
 const WHEN = "2026-10-18T10:00:00.000Z";
-const photo = {
-  path: "file:///docs/pending-photos/p.jpg",
+const photo = (name) => ({
+  path: `file:///docs/pending-photos/${name}.jpg`,
   width: 1280,
   height: 960,
-};
+});
+const [p1, p2, p3] = [photo("p1"), photo("p2"), photo("p3")];
 
 const submit = (overrides = {}) =>
   submitRecord({
@@ -40,16 +41,23 @@ const submit = (overrides = {}) =>
     ...overrides,
   });
 
+const sent = (photosUploaded = 0, photosRejected = 0) => ({
+  outcome: "sent",
+  photosUploaded,
+  photosRejected,
+});
+
 beforeEach(async () => {
   jest.clearAllMocks();
+  files.photoExists.mockReturnValue(true);
   await AsyncStorage.clear();
 });
 
-describe("submitRecord: sin foto", () => {
+describe("submitRecord: sin fotos", () => {
   it("enviado en linea: no toca la bandeja", async () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
 
-    expect(await submit()).toEqual({ outcome: "sent", photo: "none" });
+    expect(await submit()).toEqual(sent());
     expect(sdk.createFiscalRecord).toHaveBeenCalledWith("tok", {
       unidad_id: 3,
       asociacion_id: 1,
@@ -96,49 +104,28 @@ describe("submitRecord: sin foto", () => {
   });
 });
 
-describe("submitRecord: con foto", () => {
+describe("submitRecord: con una foto", () => {
   it("registro y foto en linea: sube con el id devuelto y borra el archivo local", async () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
     sdk.uploadAttachment.mockResolvedValue(reply(201, { id: 900 }));
 
-    expect(await submit({ photo })).toEqual({
-      outcome: "sent",
-      photo: "uploaded",
-    });
+    expect(await submit({ photos: [p1] })).toEqual(sent(1));
     expect(sdk.uploadAttachment).toHaveBeenCalledWith(
       "tok",
       "REGISTRO",
       55,
       expect.any(Uint8Array),
     );
-    expect(files.deletePhoto).toHaveBeenCalledWith(photo.path);
+    expect(files.deletePhoto).toHaveBeenCalledWith(p1.path);
     expect(await outbox.getQueue()).toEqual([]);
-  });
-
-  it("las incidencias adjuntan a INCIDENCIA", async () => {
-    sdk.createIncidencia.mockResolvedValue(reply(201, { id: 9 }));
-    sdk.uploadAttachment.mockResolvedValue(reply(201));
-
-    const result = await submit({
-      kind: outbox.KINDS.INCIDENCIA,
-      payload: { asociacion_id: 1, tipo: "OTRO", descripcion: "Bloqueo" },
-      photo,
-    });
-
-    expect(result).toEqual({ outcome: "sent", photo: "uploaded" });
-    expect(sdk.createFiscalRecord).not.toHaveBeenCalled();
-    expect(sdk.uploadAttachment.mock.calls[0].slice(1, 3)).toEqual([
-      "INCIDENCIA",
-      9,
-    ]);
   });
 
   it("sin conexion antes de crear: todo (registro y foto) queda en la bandeja", async () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(0));
 
-    expect(await submit({ photo })).toEqual({ outcome: "queued" });
+    expect(await submit({ photos: [p1] })).toEqual({ outcome: "queued" });
     const [item] = await outbox.getQueue();
-    expect(item.photos).toEqual([{ path: photo.path }]);
+    expect(item.photos).toEqual([{ path: p1.path }]);
     expect(files.deletePhoto).not.toHaveBeenCalled();
     expect(sdk.uploadAttachment).not.toHaveBeenCalled();
   });
@@ -147,17 +134,22 @@ describe("submitRecord: con foto", () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
     sdk.uploadAttachment.mockResolvedValue(reply(0));
 
-    expect(await submit({ photo })).toEqual({ outcome: "photo_queued" });
+    expect(await submit({ photos: [p1] })).toEqual({
+      outcome: "photo_queued",
+      photosUploaded: 0,
+      photosRejected: 0,
+      photosQueued: 1,
+    });
     const [item] = await outbox.getQueue();
     expect(item).toMatchObject({ id: "req-1", status: "pending" });
-    expect(item.photos).toEqual([{ path: photo.path }]);
+    expect(item.photos).toEqual([{ path: p1.path }]);
     expect(files.deletePhoto).not.toHaveBeenCalled();
   });
 
   it("al reenviar desde la bandeja no se duplica el registro (la API lo reconoce) y se sube la foto", async () => {
     sdk.createFiscalRecord.mockResolvedValueOnce(reply(201, { id: 55 }));
     sdk.uploadAttachment.mockResolvedValueOnce(reply(503));
-    await submit({ photo });
+    await submit({ photos: [p1] });
 
     sdk.createFiscalRecord.mockResolvedValue(reply(200, { id: 55 })); // idempotente
     sdk.uploadAttachment.mockResolvedValue(reply(201));
@@ -174,7 +166,7 @@ describe("submitRecord: con foto", () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
     sdk.uploadAttachment.mockResolvedValue({ status: 404, data: null });
 
-    expect(await submit({ photo })).toEqual({ outcome: "photo_queued" });
+    expect((await submit({ photos: [p1] })).outcome).toBe("photo_queued");
   });
 
   it("un 409 (ya tenia foto) cuenta como subida", async () => {
@@ -183,10 +175,7 @@ describe("submitRecord: con foto", () => {
       reply(409, { message: "ya tiene foto" }),
     );
 
-    expect(await submit({ photo })).toEqual({
-      outcome: "sent",
-      photo: "uploaded",
-    });
+    expect(await submit({ photos: [p1] })).toEqual(sent(1));
   });
 
   it.each([413, 415, 403])(
@@ -195,33 +184,107 @@ describe("submitRecord: con foto", () => {
       sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
       sdk.uploadAttachment.mockResolvedValue(reply(status, { message: "no" }));
 
-      expect(await submit({ photo })).toEqual({
-        outcome: "sent",
-        photo: "rejected",
-      });
-      expect(files.deletePhoto).toHaveBeenCalledWith(photo.path);
+      expect(await submit({ photos: [p1] })).toEqual(sent(0, 1));
+      expect(files.deletePhoto).toHaveBeenCalledWith(p1.path);
       expect(await outbox.getQueue()).toEqual([]);
     },
   );
 
-  it("si la API no devuelve el id no se puede adjuntar: foto descartada, registro enviado", async () => {
+  it("si la API no devuelve el id no se puede adjuntar: fotos descartadas, registro enviado", async () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(201, {}));
 
-    expect(await submit({ photo })).toEqual({
-      outcome: "sent",
-      photo: "rejected",
-    });
+    expect(await submit({ photos: [p1, p2] })).toEqual(sent(0, 2));
     expect(sdk.uploadAttachment).not.toHaveBeenCalled();
+    expect(files.deletePhoto).toHaveBeenCalledTimes(2);
   });
 
-  it("si el registro es rechazado, la foto se conserva para poder reintentar", async () => {
+  it("si el registro es rechazado, las fotos se conservan para poder reintentar", async () => {
     sdk.createFiscalRecord.mockResolvedValue(reply(400, { message: "mal" }));
 
-    expect(await submit({ photo })).toEqual({
+    expect(await submit({ photos: [p1] })).toEqual({
       outcome: "rejected",
       message: "mal",
     });
     expect(files.deletePhoto).not.toHaveBeenCalled();
     expect(await outbox.getQueue()).toEqual([]);
+  });
+
+  it("una foto cuyo archivo ya no existe se cuenta como rechazada sin llamar a la API", async () => {
+    sdk.createFiscalRecord.mockResolvedValue(reply(201, { id: 55 }));
+    files.photoExists.mockReturnValue(false);
+
+    expect(await submit({ photos: [p1] })).toEqual(sent(0, 1));
+    expect(sdk.uploadAttachment).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitRecord: incidencias con varias fotos", () => {
+  const incidencia = (overrides = {}) =>
+    submit({
+      kind: outbox.KINDS.INCIDENCIA,
+      payload: { asociacion_id: 1, tipo: "OTRO", descripcion: "Bloqueo" },
+      ...overrides,
+    });
+
+  it("crea la incidencia y sube las tres fotos a INCIDENCIA", async () => {
+    sdk.createIncidencia.mockResolvedValue(reply(201, { id: 9 }));
+    sdk.uploadAttachment.mockResolvedValue(reply(201));
+
+    expect(await incidencia({ photos: [p1, p2, p3] })).toEqual(sent(3));
+    expect(sdk.createFiscalRecord).not.toHaveBeenCalled();
+    expect(sdk.createIncidencia).toHaveBeenCalledWith("tok", {
+      asociacion_id: 1,
+      tipo: "OTRO",
+      descripcion: "Bloqueo",
+      client_request_id: "req-1",
+      fecha_hora_evento: WHEN,
+    });
+    expect(
+      sdk.uploadAttachment.mock.calls.map((call) => call.slice(1, 3)),
+    ).toEqual([
+      ["INCIDENCIA", 9],
+      ["INCIDENCIA", 9],
+      ["INCIDENCIA", 9],
+    ]);
+    expect(files.deletePhoto).toHaveBeenCalledTimes(3);
+  });
+
+  it("si la segunda foto falla por red, solo las pendientes pasan a la bandeja (la primera no se repite)", async () => {
+    sdk.createIncidencia.mockResolvedValue(reply(201, { id: 9 }));
+    sdk.uploadAttachment
+      .mockResolvedValueOnce(reply(201))
+      .mockResolvedValueOnce(reply(0));
+
+    expect(await incidencia({ photos: [p1, p2, p3] })).toEqual({
+      outcome: "photo_queued",
+      photosUploaded: 1,
+      photosRejected: 0,
+      photosQueued: 2,
+    });
+    expect(sdk.uploadAttachment).toHaveBeenCalledTimes(2); // la tercera no se intenta
+    const [item] = await outbox.getQueue();
+    expect(item.kind).toBe("incidencia");
+    expect(item.photos).toEqual([{ path: p2.path }, { path: p3.path }]);
+    expect(files.deletePhoto).toHaveBeenCalledWith(p1.path);
+    expect(files.deletePhoto).not.toHaveBeenCalledWith(p2.path);
+  });
+
+  it("una foto rechazada no impide subir las demas", async () => {
+    sdk.createIncidencia.mockResolvedValue(reply(201, { id: 9 }));
+    sdk.uploadAttachment
+      .mockResolvedValueOnce(reply(415, { message: "formato" }))
+      .mockResolvedValueOnce(reply(201));
+
+    expect(await incidencia({ photos: [p1, p2] })).toEqual(sent(1, 1));
+  });
+
+  it("sin conexion todas las fotos quedan en la bandeja junto a la incidencia", async () => {
+    sdk.createIncidencia.mockResolvedValue(reply(0));
+
+    expect(await incidencia({ photos: [p1, p2] })).toEqual({
+      outcome: "queued",
+    });
+    const [item] = await outbox.getQueue();
+    expect(item.photos).toHaveLength(2);
   });
 });

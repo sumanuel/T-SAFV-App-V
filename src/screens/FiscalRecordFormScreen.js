@@ -149,7 +149,6 @@ export default function FiscalRecordFormScreen({
       const requestId = newRequestId();
       const capturedAt = new Date().toISOString();
 
-      const photo = photos[0];
       // La foto pasa a ser responsabilidad del envio (o de la bandeja de salida).
       handedOffRef.current = true;
       const result = await submitRecord({
@@ -159,7 +158,7 @@ export default function FiscalRecordFormScreen({
         id: requestId,
         payload,
         capturedAt,
-        photo,
+        photos,
         fallbackMessage: "No se pudo guardar la fiscalización.",
       });
 
@@ -169,7 +168,7 @@ export default function FiscalRecordFormScreen({
       } else if (result.outcome === "sent") {
         Alert.alert(
           "Fiscalización registrada",
-          result.photo === "rejected"
+          result.photosRejected > 0
             ? "La fiscalización fue guardada, pero el servidor no aceptó la foto."
             : "La traza operativa fue guardada correctamente.",
         );

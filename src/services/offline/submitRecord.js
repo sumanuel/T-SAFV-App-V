@@ -1,18 +1,22 @@
 /**
  * submitRecord.js
- * Envia una fiscalizacion o incidencia (con foto opcional) intentando primero en
- * linea y, si no se puede por red/servidor/sesion, la deja en la bandeja de
+ * Envia una fiscalizacion o incidencia (con fotos opcionales) intentando primero
+ * en linea y, si no se puede por red/servidor/sesion, la deja en la bandeja de
  * salida para reenviarla sola. Es la misma logica para ambos tipos.
  *
  * Resultados:
- *   { outcome: "sent", photo }       enviado; photo: "none" | "uploaded" | "rejected"
- *   { outcome: "photo_queued" }      registro enviado; la foto quedo en la bandeja
- *   { outcome: "queued" }            todo quedo en la bandeja (sin conexion)
- *   { outcome: "rejected", message } el servidor lo rechazo (no se reintenta);
- *                                    la foto sigue en el telefono
+ *   { outcome: "sent", photosUploaded, photosRejected }
+ *       enviado; las fotos que el servidor no acepto (formato/tamano) se descartan
+ *   { outcome: "photo_queued", photosUploaded, photosRejected, photosQueued }
+ *       el registro llego, pero a partir de una foto hubo un fallo temporal: esas
+ *       fotos quedaron en la bandeja (las ya subidas no se repiten)
+ *   { outcome: "queued" }
+ *       todo quedo en la bandeja (sin conexion)
+ *   { outcome: "rejected", message }
+ *       el servidor lo rechazo (no se reintenta); las fotos siguen en el telefono
  */
 import sdk from "../api/sdk";
-import { deletePhoto, readPhotoBytes } from "../media/photoFiles";
+import { deletePhoto, photoExists, readPhotoBytes } from "../media/photoFiles";
 import {
   createRemoteRecord,
   enqueue,
@@ -37,64 +41,83 @@ export async function submitRecord({
   id,
   payload,
   capturedAt,
-  photo,
+  photos = [],
   fallbackMessage = "No se pudo guardar el registro.",
 }) {
-  const item = { id, kind, payload, capturedAt };
-  const queueAll = async () => {
-    await enqueue({
+  const queue = (queuedPhotos) =>
+    enqueue({
       id,
       kind,
       userId,
       payload,
       capturedAt,
-      photos: photo ? [{ path: photo.path }] : [],
+      photos: queuedPhotos.map((photo) => ({ path: photo.path })),
     });
-  };
 
-  const res = await createRemoteRecord(token, item);
+  const res = await createRemoteRecord(token, {
+    id,
+    kind,
+    payload,
+    capturedAt,
+  });
 
   if (res.status !== 200 && res.status !== 201) {
     if (isRetryableStatus(res.status)) {
-      await queueAll();
+      await queue(photos);
       return { outcome: "queued" };
     }
-    // La foto no se borra: quien llama puede corregir los datos y reintentar.
+    // Las fotos no se borran: quien llama puede corregir los datos y reintentar.
     return {
       outcome: "rejected",
       message: rejectionMessage(res, fallbackMessage),
     };
   }
 
-  if (!photo) return { outcome: "sent", photo: "none" };
+  const summary = { outcome: "sent", photosUploaded: 0, photosRejected: 0 };
+  if (!photos.length) return summary;
 
   const remoteId = res.data?.id;
   if (remoteId == null) {
-    // Sin id no se puede asociar la foto.
-    deletePhoto(photo.path);
-    return { outcome: "sent", photo: "rejected" };
+    // Sin id no se puede asociar ninguna foto.
+    photos.forEach((photo) => deletePhoto(photo.path));
+    return { ...summary, photosRejected: photos.length };
   }
 
-  const upload = await sdk.uploadAttachment(
-    token,
-    photoEntityFor(kind),
-    remoteId,
-    await readPhotoBytes(photo.path),
-  );
+  const entity = photoEntityFor(kind);
+  for (let index = 0; index < photos.length; index += 1) {
+    const photo = photos[index];
 
-  // 409: el servidor ya tiene la foto.
-  if (upload.status === 201 || upload.status === 409) {
-    deletePhoto(photo.path);
-    return { outcome: "sent", photo: "uploaded" };
+    if (!photoExists(photo.path)) {
+      summary.photosRejected += 1;
+      continue;
+    }
+
+    const upload = await sdk.uploadAttachment(
+      token,
+      entity,
+      remoteId,
+      await readPhotoBytes(photo.path),
+    );
+
+    // 409: el servidor ya tiene la foto (o se alcanzo el limite).
+    if (upload.status === 201 || upload.status === 409) {
+      deletePhoto(photo.path);
+      summary.photosUploaded += 1;
+    } else if (isRetryableStatus(upload.status) || isMissingRoute(upload)) {
+      // El registro ya existe: al reenviar, la API devuelve el original
+      // (idempotente) y la bandeja solo sube las fotos que faltan.
+      const remaining = photos.slice(index);
+      await queue(remaining);
+      return {
+        ...summary,
+        outcome: "photo_queued",
+        photosQueued: remaining.length,
+      };
+    } else {
+      deletePhoto(photo.path);
+      summary.photosRejected += 1;
+    }
   }
 
-  if (isRetryableStatus(upload.status) || isMissingRoute(upload)) {
-    // El registro ya existe: al reenviar, la API devuelve el original (idempotente)
-    // y la bandeja solo sube la foto.
-    await queueAll();
-    return { outcome: "photo_queued" };
-  }
-
-  deletePhoto(photo.path);
-  return { outcome: "sent", photo: "rejected" };
+  return summary;
 }

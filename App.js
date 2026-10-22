@@ -45,6 +45,11 @@ import FiscalFormScreen from "./src/screens/FiscalFormScreen";
 // Traza
 import TrazaScreen from "./src/screens/TrazaScreen";
 
+// Incidencias
+import IncidenciasScreen from "./src/screens/IncidenciasScreen";
+import IncidenciaFormScreen from "./src/screens/IncidenciaFormScreen";
+import IncidenciaDetailScreen from "./src/screens/IncidenciaDetailScreen";
+
 import AssociationSettingsScreen from "./src/screens/AssociationSettingsScreen";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 
@@ -58,6 +63,9 @@ const APP_SCREENS = {
   FISCALES: "fiscales",
   FISCAL_FORM: "fiscal-form",
   TRAZA: "traza",
+  INCIDENCIAS: "incidencias",
+  INCIDENCIA_FORM: "incidencia-form",
+  INCIDENCIA_DETAIL: "incidencia-detail",
   WORKSHOP_SETTINGS: "workshop-settings",
   NOTIFICATIONS: "notifications",
   MORE: "more",
@@ -116,6 +124,11 @@ function AppContent() {
   });
   const [fiscalFormContext, setFiscalFormContext] = useState({ fiscal: null });
   const [trazaViewState, setTrazaViewState] = useState({ unit: null });
+  // Desde donde se abrio Incidencias (Inicio o Mas opciones), para volver ahi.
+  const [incidenciasOrigin, setIncidenciasOrigin] = useState(APP_SCREENS.HOME);
+  const [incidenciaContext, setIncidenciaContext] = useState({
+    incidencia: null,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -174,6 +187,8 @@ function AppContent() {
     setMemberInvitationContext({ role: "TODOS", memberId: null });
     setFiscalFormContext({ fiscal: null });
     setTrazaViewState({ unit: null });
+    setIncidenciasOrigin(APP_SCREENS.HOME);
+    setIncidenciaContext({ incidencia: null });
   }, [authUser?.id]);
 
   const activeTab = useMemo(() => {
@@ -190,8 +205,16 @@ function AppContent() {
       return APP_SCREENS.MORE;
     if (activeScreen === APP_SCREENS.FISCAL_FORM) return APP_SCREENS.FISCALES;
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) return APP_SCREENS.MORE;
+    if (
+      [
+        APP_SCREENS.INCIDENCIAS,
+        APP_SCREENS.INCIDENCIA_FORM,
+        APP_SCREENS.INCIDENCIA_DETAIL,
+      ].includes(activeScreen)
+    )
+      return incidenciasOrigin;
     return APP_SCREENS.HOME;
-  }, [activeScreen]);
+  }, [activeScreen, incidenciasOrigin]);
 
   const profileStatus = userProfile?.status;
   const currentRole = userProfile?.role || "";
@@ -243,6 +266,17 @@ function AppContent() {
           setActiveScreen(APP_SCREENS.HOME);
           return true;
         }
+        if (
+          activeScreen === APP_SCREENS.INCIDENCIA_FORM ||
+          activeScreen === APP_SCREENS.INCIDENCIA_DETAIL
+        ) {
+          setActiveScreen(APP_SCREENS.INCIDENCIAS);
+          return true;
+        }
+        if (activeScreen === APP_SCREENS.INCIDENCIAS) {
+          setActiveScreen(incidenciasOrigin);
+          return true;
+        }
         if (activeScreen === APP_SCREENS.NOTIFICATIONS) {
           setActiveScreen(APP_SCREENS.HOME);
           return true;
@@ -268,7 +302,14 @@ function AppContent() {
     );
 
     return () => subscription.remove();
-  }, [activeScreen, authReady, authUser, profileStatus, userProfile]);
+  }, [
+    activeScreen,
+    authReady,
+    authUser,
+    incidenciasOrigin,
+    profileStatus,
+    userProfile,
+  ]);
 
   // Fiscalizaciones e incidencias guardadas sin conexion (con su foto): se
   // reenvian solas y se avisa si quedan pendientes. Las registran fiscales y
@@ -402,6 +443,11 @@ function AppContent() {
     setActiveScreen(APP_SCREENS.MORE);
   };
 
+  const openIncidencias = (origin) => {
+    setIncidenciasOrigin(origin);
+    setActiveScreen(APP_SCREENS.INCIDENCIAS);
+  };
+
   const renderScreen = () => {
     if (activeScreen === APP_SCREENS.HOME) {
       return (
@@ -416,6 +462,7 @@ function AppContent() {
             setActiveScreen(APP_SCREENS.TRAZA);
           }}
           onOpenNotifications={() => setActiveScreen(APP_SCREENS.NOTIFICATIONS)}
+          onOpenIncidencias={() => openIncidencias(APP_SCREENS.HOME)}
           onSignOut={signOutUser}
           currentRole={currentRole}
           userProfile={userProfile}
@@ -576,6 +623,42 @@ function AppContent() {
       );
     }
 
+    if (activeScreen === APP_SCREENS.INCIDENCIAS) {
+      return (
+        <IncidenciasScreen
+          onBack={() => setActiveScreen(incidenciasOrigin)}
+          onOpenForm={() => setActiveScreen(APP_SCREENS.INCIDENCIA_FORM)}
+          onOpenDetail={(incidencia) => {
+            setIncidenciaContext({ incidencia });
+            setActiveScreen(APP_SCREENS.INCIDENCIA_DETAIL);
+          }}
+          currentRole={currentRole}
+        />
+      );
+    }
+
+    if (activeScreen === APP_SCREENS.INCIDENCIA_FORM) {
+      return (
+        <IncidenciaFormScreen
+          onBack={() => setActiveScreen(APP_SCREENS.INCIDENCIAS)}
+          onSaved={() => setActiveScreen(APP_SCREENS.INCIDENCIAS)}
+        />
+      );
+    }
+
+    if (
+      activeScreen === APP_SCREENS.INCIDENCIA_DETAIL &&
+      incidenciaContext.incidencia
+    ) {
+      return (
+        <IncidenciaDetailScreen
+          incidencia={incidenciaContext.incidencia}
+          onBack={() => setActiveScreen(APP_SCREENS.INCIDENCIAS)}
+          currentRole={currentRole}
+        />
+      );
+    }
+
     if (activeScreen === APP_SCREENS.WORKSHOP_SETTINGS) {
       return (
         <AssociationSettingsScreen
@@ -593,6 +676,7 @@ function AppContent() {
             setMemberInvitationContext({ role: "TODOS", memberId: null });
             setActiveScreen(APP_SCREENS.MEMBER_INVITATIONS);
           }}
+          onOpenIncidencias={() => openIncidencias(APP_SCREENS.MORE)}
           onOpenOnboarding={() => setShowOnboarding(true)}
           onOpenWorkshopSettings={() =>
             setActiveScreen(APP_SCREENS.WORKSHOP_SETTINGS)

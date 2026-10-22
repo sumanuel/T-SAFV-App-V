@@ -19,6 +19,7 @@ export const ROLE_PERMISSIONS = {
     "fiscales.view",
     "dashboard.view",
     "traza.view",
+    "incidents.view",
   ],
   [USER_ROLES.ADMINISTRATOR]: [
     "users.manage",
@@ -30,6 +31,9 @@ export const ROLE_PERMISSIONS = {
     "owners.manage",
     "fiscales.manage",
     "traza.view",
+    "incidents.view",
+    "incidents.create",
+    "incidents.manage",
   ],
   [USER_ROLES.FISCAL]: [
     "fiscalRecords.manage",
@@ -37,6 +41,8 @@ export const ROLE_PERMISSIONS = {
     "fiscales.view",
     "dashboard.view",
     "traza.view",
+    "incidents.view",
+    "incidents.create",
   ],
 };
 

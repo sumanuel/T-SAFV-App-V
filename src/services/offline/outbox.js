@@ -61,8 +61,18 @@ export function isRetryableStatus(status) {
 
 // Un 404 sin cuerpo JSON es la ruta inexistente (API aun sin actualizar), no un
 // "registro no encontrado": se reintenta en vez de descartar la foto.
-function isMissingRoute(res) {
+export function isMissingRoute(res) {
   return res.status === 404 && !res.data;
+}
+
+// Crea el registro/incidencia en el servidor (idempotente por client_request_id).
+export function createRemoteRecord(token, item) {
+  return KIND_CONFIG[item.kind].create(token, item);
+}
+
+// Tipo de entidad al que se adjuntan las fotos de cada clase de elemento.
+export function photoEntityFor(kind) {
+  return KIND_CONFIG[kind].entity;
 }
 
 export function newRequestId() {

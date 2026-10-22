@@ -13,16 +13,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import PhotoAttachment from "../components/common/PhotoAttachment";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import sdk from "../services/api/sdk";
-import {
-  KINDS,
-  enqueue,
-  isRetryableStatus,
-  newRequestId,
-} from "../services/offline/outbox";
+import { deletePhoto } from "../services/media/photoFiles";
+import { KINDS, newRequestId } from "../services/offline/outbox";
+import { submitRecord } from "../services/offline/submitRecord";
 import { listVehiclesWithCache } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
@@ -52,6 +49,9 @@ export default function FiscalRecordFormScreen({
   const [origen, setOrigen] = useState("");
   const [destino, setDestino] = useState("");
   const [pasajeros, setPasajeros] = useState("");
+  const [photos, setPhotos] = useState([]);
+  const photosRef = useRef(photos);
+  const handedOffRef = useRef(false);
   const scrollRef = useRef(null);
   const choferRef = useRef(null);
   const origenRef = useRef(null);
@@ -65,6 +65,20 @@ export default function FiscalRecordFormScreen({
     });
     ref?.current?.focus?.();
   };
+
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+
+  // Si el usuario sale sin guardar, la foto preparada no debe quedar huerfana.
+  useEffect(
+    () => () => {
+      if (!handedOffRef.current) {
+        photosRef.current.forEach((photo) => deletePhoto(photo.path));
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!asociacionId) {
@@ -135,40 +149,42 @@ export default function FiscalRecordFormScreen({
       const requestId = newRequestId();
       const capturedAt = new Date().toISOString();
 
-      const res = await sdk.createFiscalRecord(token, {
-        ...payload,
-        client_request_id: requestId,
-        fecha_hora_registro: capturedAt,
+      const photo = photos[0];
+      // La foto pasa a ser responsabilidad del envio (o de la bandeja de salida).
+      handedOffRef.current = true;
+      const result = await submitRecord({
+        kind: KINDS.FISCALIZACION,
+        token,
+        userId: authUser?.id,
+        id: requestId,
+        payload,
+        capturedAt,
+        photo,
+        fallbackMessage: "No se pudo guardar la fiscalización.",
       });
 
-      if (res.status === 201 || res.status === 200) {
+      if (result.outcome === "rejected") {
+        handedOffRef.current = false;
+        Alert.alert("Error", result.message);
+      } else if (result.outcome === "sent") {
         Alert.alert(
           "Fiscalización registrada",
-          "La traza operativa fue guardada correctamente.",
-        );
-        onSaved?.();
-      } else if (isRetryableStatus(res.status)) {
-        await enqueue({
-          id: requestId,
-          kind: KINDS.FISCALIZACION,
-          userId: authUser?.id,
-          payload,
-          capturedAt,
-        });
-        Alert.alert(
-          "Guardada en el teléfono",
-          "No se pudo enviar ahora. La fiscalización quedó guardada y se enviará automáticamente cuando haya conexión.",
+          result.photo === "rejected"
+            ? "La fiscalización fue guardada, pero el servidor no aceptó la foto."
+            : "La traza operativa fue guardada correctamente.",
         );
         onSaved?.();
       } else {
         Alert.alert(
-          "Error",
-          res.data?.message ||
-            res.data?.error ||
-            "No se pudo guardar la fiscalización.",
+          "Guardada en el teléfono",
+          result.outcome === "photo_queued"
+            ? "La fiscalización se envió, pero la foto quedó guardada y se subirá automáticamente cuando haya conexión."
+            : "No se pudo enviar ahora. La fiscalización quedó guardada y se enviará automáticamente cuando haya conexión.",
         );
+        onSaved?.();
       }
     } catch (error) {
+      handedOffRef.current = false;
       Alert.alert(
         "Error",
         error?.message || "No se pudo guardar la fiscalización.",
@@ -381,6 +397,25 @@ export default function FiscalRecordFormScreen({
               onFocus={() =>
                 scrollRef.current?.scrollTo({ y: 660, animated: true })
               }
+            />
+          </View>
+
+          <View
+            style={[
+              styles.formCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <PhotoAttachment
+              photos={photos}
+              onChange={setPhotos}
+              max={1}
+              label="Foto de los pasajeros"
+              hint="Toma o elige una foto. Se reduce de tamaño antes de enviarse."
+              disabled={submitting}
             />
           </View>
 

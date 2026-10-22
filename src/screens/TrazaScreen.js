@@ -10,10 +10,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import PhotoViewerModal from "../components/common/PhotoViewerModal";
 import WorkshopScreenHeader from "../components/common/WorkshopScreenHeader";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useTraza } from "../hooks/useTraza";
+import { useTrazaPhotos } from "../hooks/useTrazaPhotos";
+import sdk from "../services/api/sdk";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 import {
   buildTrazaCsv,
@@ -34,6 +37,7 @@ export default function TrazaScreen({ initialUnit, onBack, currentRole }) {
   const [endDate, setEndDate] = useState(today);
   const [selectedFiscalId, setSelectedFiscalId] = useState("ALL");
   const [selectedUnitId, setSelectedUnitId] = useState(initialUnit?.id || null);
+  const [viewerPhotoId, setViewerPhotoId] = useState(null);
 
   const asociacionId = activeAssociation?.id;
   const { items, loading, refresh } = useTraza({
@@ -44,6 +48,8 @@ export default function TrazaScreen({ initialUnit, onBack, currentRole }) {
     startDate,
     endDate,
   });
+
+  const photoMap = useTrazaPhotos({ token, items });
 
   useEffect(() => {
     setSelectedUnitId(initialUnit?.id || null);
@@ -160,7 +166,19 @@ export default function TrazaScreen({ initialUnit, onBack, currentRole }) {
             />
           </View>
         }
-        renderItem={({ item }) => <TrazaRow item={item} />}
+        extraData={photoMap}
+        renderItem={({ item }) => {
+          const photoId = photoMap[String(item.id)];
+          return (
+            <TrazaRow
+              item={item}
+              photoSource={
+                photoId ? sdk.getAttachmentSource(token, photoId) : null
+              }
+              onOpenPhoto={() => setViewerPhotoId(photoId)}
+            />
+          );
+        }}
         ListEmptyComponent={
           loading ? (
             <ActivityIndicator
@@ -191,6 +209,12 @@ export default function TrazaScreen({ initialUnit, onBack, currentRole }) {
             </View>
           )
         }
+      />
+      <PhotoViewerModal
+        source={
+          viewerPhotoId ? sdk.getAttachmentSource(token, viewerPhotoId) : null
+        }
+        onClose={() => setViewerPhotoId(null)}
       />
     </SafeAreaView>
   );

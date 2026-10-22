@@ -1,9 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { formatDateTime } from "../../utils/traza";
 import { borderRadius, rf, spacing } from "../../utils/responsive";
 
-export default function TrazaRow({ item }) {
+// photoSource: origen autenticado de la foto (si la fiscalizacion tiene una).
+export default function TrazaRow({ item, photoSource, onOpenPhoto }) {
   const { colors } = useTheme();
   const metaStyle = [styles.traceMetaText, { color: colors.textSecondary }];
 
@@ -33,37 +34,51 @@ export default function TrazaRow({ item }) {
         </Text>
       </View>
 
-      <View style={styles.traceMeta}>
-        {item.fiscal_nombre ? (
-          <Text style={metaStyle}>
-            <Text style={styles.strong}>Fiscal: </Text>
-            {[item.fiscal_nombre, item.fiscal_apellido]
-              .filter(Boolean)
-              .join(" ") || item.fiscal_nombre}
-          </Text>
-        ) : null}
-        {item.punto_control ? (
-          <Text style={metaStyle}>
-            <Text style={styles.strong}>Punto de control: </Text>
-            {item.punto_control}
-          </Text>
-        ) : null}
-        {item.chofer ? (
-          <Text style={metaStyle}>
-            <Text style={styles.strong}>Chofer: </Text>
-            {item.chofer}
-          </Text>
-        ) : null}
-        {item.origen || item.destino ? (
-          <Text style={metaStyle}>
-            {[item.origen, item.destino].filter(Boolean).join(" → ")}
-          </Text>
-        ) : null}
-        {item.pasajeros !== undefined && item.pasajeros !== null ? (
-          <Text style={metaStyle}>
-            <Text style={styles.strong}>Pasajeros: </Text>
-            {item.pasajeros}
-          </Text>
+      <View style={styles.traceBody}>
+        <View style={styles.traceMeta}>
+          {item.fiscal_nombre ? (
+            <Text style={metaStyle}>
+              <Text style={styles.strong}>Fiscal: </Text>
+              {[item.fiscal_nombre, item.fiscal_apellido]
+                .filter(Boolean)
+                .join(" ") || item.fiscal_nombre}
+            </Text>
+          ) : null}
+          {item.punto_control ? (
+            <Text style={metaStyle}>
+              <Text style={styles.strong}>Punto de control: </Text>
+              {item.punto_control}
+            </Text>
+          ) : null}
+          {item.chofer ? (
+            <Text style={metaStyle}>
+              <Text style={styles.strong}>Chofer: </Text>
+              {item.chofer}
+            </Text>
+          ) : null}
+          {item.origen || item.destino ? (
+            <Text style={metaStyle}>
+              {[item.origen, item.destino].filter(Boolean).join(" → ")}
+            </Text>
+          ) : null}
+          {item.pasajeros !== undefined && item.pasajeros !== null ? (
+            <Text style={metaStyle}>
+              <Text style={styles.strong}>Pasajeros: </Text>
+              {item.pasajeros}
+            </Text>
+          ) : null}
+        </View>
+        {photoSource ? (
+          <Pressable
+            onPress={onOpenPhoto}
+            accessibilityRole="button"
+            accessibilityLabel="Ver foto de los pasajeros"
+          >
+            <Image
+              source={photoSource}
+              style={[styles.thumb, { borderColor: colors.border }]}
+            />
+          </Pressable>
         ) : null}
       </View>
     </View>
@@ -90,7 +105,19 @@ const styles = StyleSheet.create({
   },
   unitText: { fontSize: rf(14), fontWeight: "800" },
   traceDate: { fontSize: rf(11) },
-  traceMeta: { gap: spacing.xs / 2 },
+  traceBody: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  traceMeta: { flex: 1, gap: spacing.xs / 2 },
+  thumb: {
+    width: rf(64),
+    height: rf(64),
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
   traceMetaText: { fontSize: rf(12), lineHeight: rf(17) },
   strong: { fontWeight: "700" },
 });

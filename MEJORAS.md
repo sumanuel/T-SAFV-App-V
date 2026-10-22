@@ -62,7 +62,10 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
 Plan completo en [docs/plans/PLAN-002-incidencias-y-fotos.md](docs/plans/PLAN-002-incidencias-y-fotos.md).
 
 - [ ] **6.0 Confirmar tipos de incidencia y permisos** (Fase 0 del plan). Hay valores por defecto propuestos.
-- [ ] **6.1 API: adjuntos e incidencias** (API, L). Migraciones, modelos, rutas, pruebas y script de retención apagado.
+- [x] **6.1 API: adjuntos e incidencias** (API, L). Migraciones, modelos, rutas, pruebas y script de retención apagado.
+  - Hecho en T-SAFV-API (rama `feature/adjuntos-e-incidencias`, 112 pruebas unitarias): migraciones 0011 y 0012, `/api/adjuntos`, `/api/incidencias` y `scripts/purgar_adjuntos.js`.
+  - **Pendiente de verificar:** el SQL de las migraciones y los modelos no se probó contra un PostgreSQL real (no hay uno local y no se ejecuta DDL en la base compartida). Aplicar primero `npm run migrate` en una base de pruebas.
+  - Decisiones que salieron al implementar: la API lee la foto antes de autenticar (si respondiera 401 con el cuerpo sin leer, la conexión se reinicia y la app no renovaría la sesión); el resumen de miniaturas es un endpoint aparte para no acoplar las consultas de Traza a la migración 0011.
 - [ ] **6.2 App: servicios, compresión y bandeja de salida con fotos** (App, L). Requiere `eas build` (`expo-image-manipulator`, permiso de cámara).
 - [ ] **6.3 Foto opcional en la fiscalización y vista en Traza** (App, M).
 - [ ] **6.4 Módulo Incidencias** (App, L). Lista, formulario, detalle y notificación al propietario.

@@ -57,6 +57,17 @@ Leyenda: **App** = este repo · **API** = `../T-SAFV-API` · esfuerzo: S (horas)
   - `.github/workflows/ci.yml`. No se pudo ejecutar localmente: la primera corrida en GitHub confirmará que `expo export` funciona sin `google-services.json`.
 - [x] **5.4 Documentación al día** (App, S). `AGENTS.md` aún dice Expo SDK 54 / RN 0.81 (ahora 57 / 0.86).
 
+## Fase 6 — Fotos e incidencias (nuevo)
+
+Plan completo en [docs/plans/PLAN-002-incidencias-y-fotos.md](docs/plans/PLAN-002-incidencias-y-fotos.md).
+
+- [ ] **6.0 Confirmar tipos de incidencia y permisos** (Fase 0 del plan). Hay valores por defecto propuestos.
+- [ ] **6.1 API: adjuntos e incidencias** (API, L). Migraciones, modelos, rutas, pruebas y script de retención apagado.
+- [ ] **6.2 App: servicios, compresión y bandeja de salida con fotos** (App, L). Requiere `eas build` (`expo-image-manipulator`, permiso de cámara).
+- [ ] **6.3 Foto opcional en la fiscalización y vista en Traza** (App, M).
+- [ ] **6.4 Módulo Incidencias** (App, L). Lista, formulario, detalle y notificación al propietario.
+- [ ] **6.5 Definir la conservación de fotos** (negocio). **PENDIENTE**: sin definir; mientras tanto no se borra nada. Recomendación: 90 días para fotos de pasajeros y 12 meses tras el cierre para fotos de incidencias (ver §6 del plan).
+
 ## Hallazgos pendientes (surgidos durante la ejecución)
 
 - [x] El tile **"Asociaciones · Gestionar"** de `WorkshopMoreScreen` no hace nada (navega a la misma pantalla). Eliminarlo o conectarlo a un destino real.

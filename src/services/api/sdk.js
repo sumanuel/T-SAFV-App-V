@@ -12,18 +12,26 @@ const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH"]);
 
 // Cubre tambien la subida de imagenes en base64 (hasta 12 MB) en redes lentas.
 const REQUEST_TIMEOUT_MS = 30000;
+// Una foto (~200 KB) en una red movil mala puede tardar mas que un JSON.
+const UPLOAD_TIMEOUT_MS = 60000;
 
-async function attempt(method, path, body, token) {
+// `binary` = { bytes, contentType } envia el cuerpo tal cual (fotos) en vez de JSON.
+async function attempt(method, path, body, token, binary) {
   const headers = {};
-  if (METHODS_WITH_BODY.has(method))
+  if (binary) headers["Content-Type"] = binary.contentType;
+  else if (METHODS_WITH_BODY.has(method))
     headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const options = { method, headers };
-  if (METHODS_WITH_BODY.has(method)) options.body = JSON.stringify(body);
+  if (binary) options.body = binary.bytes;
+  else if (METHODS_WITH_BODY.has(method)) options.body = JSON.stringify(body);
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(
+    () => controller.abort(),
+    binary ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS,
+  );
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
@@ -45,17 +53,18 @@ export async function request(
   path,
   body,
   token,
-  { authRecovery = true } = {},
+  { authRecovery = true, binary } = {},
 ) {
   try {
-    let result = await attempt(method, path, body, token);
+    let result = await attempt(method, path, body, token, binary);
 
     if (result.status === 401 && authRecovery) {
       const { token: freshToken, expired } = token
         ? await recoverFromUnauthorized(token)
         : { token: null, expired: true };
 
-      if (freshToken) result = await attempt(method, path, body, freshToken);
+      if (freshToken)
+        result = await attempt(method, path, body, freshToken, binary);
 
       if (result.status === 401 && (freshToken || expired)) {
         notifySessionExpired();
@@ -265,6 +274,59 @@ export function createFiscalRecord(token, payload) {
   return apiPost("/api/fiscal/registros", payload, token);
 }
 
+// ─── Incidencias ──────────────────────────────────────────────────────────────
+
+export function createIncidencia(token, payload) {
+  return apiPost("/api/incidencias", payload, token);
+}
+
+export function getAssociationIncidencias(token, asociacionId, filters) {
+  const query = buildQueryString(filters || {});
+  return apiGet(`/api/incidencias/asociaciones/${asociacionId}${query}`, token);
+}
+
+export function getIncidencia(token, incidenciaId) {
+  return apiGet(`/api/incidencias/${incidenciaId}`, token);
+}
+
+export function updateIncidenciaEstado(token, incidenciaId, estado) {
+  return apiPatch(`/api/incidencias/${incidenciaId}/estado`, { estado }, token);
+}
+
+// ─── Fotos adjuntas ───────────────────────────────────────────────────────────
+
+// entidadTipo: "REGISTRO" (fiscalizacion) o "INCIDENCIA". `bytes` es el JPEG
+// ya comprimido; viaja como cuerpo binario.
+export function uploadAttachment(
+  token,
+  entidadTipo,
+  entidadId,
+  bytes,
+  contentType = "image/jpeg",
+) {
+  return request(
+    "POST",
+    `/api/adjuntos/${entidadTipo}/${entidadId}`,
+    undefined,
+    token,
+    { binary: { bytes, contentType } },
+  );
+}
+
+// { entidad_id, adjunto_id } de las fiscalizaciones que tienen foto.
+export function getAttachmentSummary(token, registroIds) {
+  const query = buildQueryString({ ids: (registroIds || []).join(",") });
+  return apiGet(`/api/adjuntos/resumen/registros${query}`, token);
+}
+
+// Origen para <Image source={...}>: la foto requiere autenticacion.
+export function getAttachmentSource(token, adjuntoId) {
+  return {
+    uri: `${API_BASE_URL}/api/adjuntos/${adjuntoId}`,
+    headers: { Authorization: `Bearer ${token}` },
+  };
+}
+
 // ─── Notificaciones ───────────────────────────────────────────────────────────
 
 export function updatePushToken(token, pushToken) {
@@ -320,6 +382,13 @@ export default {
   getOwnerUnitTraceability,
   getAssociationTraceability,
   createFiscalRecord,
+  createIncidencia,
+  getAssociationIncidencias,
+  getIncidencia,
+  updateIncidenciaEstado,
+  uploadAttachment,
+  getAttachmentSummary,
+  getAttachmentSource,
   updatePushToken,
   getMyNotifications,
   markNotificationRead,

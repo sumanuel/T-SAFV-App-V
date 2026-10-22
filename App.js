@@ -8,7 +8,7 @@ import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { getBiometricLockEnabled } from "./src/services/security/biometricAuthService";
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
 import PendingSyncBanner from "./src/components/common/PendingSyncBanner";
-import { useFiscalQueue } from "./src/hooks/useFiscalQueue";
+import { useOutbox } from "./src/hooks/useOutbox";
 
 // Pantallas de autenticacion y navegacion
 import AccessStatusScreen from "./src/screens/AccessStatusScreen";
@@ -270,13 +270,15 @@ function AppContent() {
     return () => subscription.remove();
   }, [activeScreen, authReady, authUser, profileStatus, userProfile]);
 
-  // Fiscalizaciones guardadas sin conexion: se reenvian solas y se avisa si
-  // quedan pendientes.
-  const fiscalQueue = useFiscalQueue({
+  // Fiscalizaciones e incidencias guardadas sin conexion (con su foto): se
+  // reenvian solas y se avisa si quedan pendientes. Las registran fiscales y
+  // administradores.
+  const canUseOutbox = isFiscalUser || currentRole === "administrator";
+  const outbox = useOutbox({
     token,
     userId: authUser?.id,
     enabled: Boolean(
-      authUser && token && isFiscalUser && profileStatus === "active",
+      authUser && token && canUseOutbox && profileStatus === "active",
     ),
   });
 
@@ -624,13 +626,13 @@ function AppContent() {
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View style={styles.shell}>
         <View style={styles.content}>{renderScreen()}</View>
-        {isFiscalUser ? (
+        {canUseOutbox ? (
           <PendingSyncBanner
-            pending={fiscalQueue.pending}
-            failed={fiscalQueue.failed}
-            syncing={fiscalQueue.syncing}
-            onRetry={fiscalQueue.flush}
-            onDiscard={fiscalQueue.discard}
+            pending={outbox.pending}
+            failed={outbox.failed}
+            syncing={outbox.syncing}
+            onRetry={outbox.flush}
+            onDiscard={outbox.discard}
           />
         ) : null}
         <WorkshopTabBar

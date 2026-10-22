@@ -18,10 +18,11 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import sdk from "../services/api/sdk";
 import {
-  enqueueFiscalRecord,
+  KINDS,
+  enqueue,
   isRetryableStatus,
   newRequestId,
-} from "../services/offline/fiscalQueue";
+} from "../services/offline/outbox";
 import { listVehiclesWithCache } from "../services/vehicles/vehicleService";
 import { borderRadius, rf, spacing } from "../utils/responsive";
 
@@ -147,8 +148,9 @@ export default function FiscalRecordFormScreen({
         );
         onSaved?.();
       } else if (isRetryableStatus(res.status)) {
-        await enqueueFiscalRecord({
+        await enqueue({
           id: requestId,
+          kind: KINDS.FISCALIZACION,
           userId: authUser?.id,
           payload,
           capturedAt,

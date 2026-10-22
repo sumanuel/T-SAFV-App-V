@@ -7,7 +7,10 @@ module.exports = {
   expo: {
     name: "T-SAFV",
     slug: "T-SAFV-App-V",
-    version: "1.0.0",
+    // 1.1.0: modulos nativos nuevos (SecureStore, expo-updates, camara y
+    // compresion de imagenes). Con runtimeVersion por appVersion, las OTA de la
+    // 1.0.0 no llegan a este build.
+    version: "1.1.0",
     orientation: "default",
     icon: "./assets/icon.png",
     userInterfaceStyle: "automatic",
@@ -45,6 +48,16 @@ module.exports = {
         {
           icon: "./assets/icon.png",
           color: "#0f5fd2",
+        },
+      ],
+      [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "T-SAFV necesita acceder a tus fotos para adjuntar imágenes a las fiscalizaciones e incidencias y para elegir el logo de la asociación.",
+          cameraPermission:
+            "T-SAFV necesita la cámara para tomar la foto de los pasajeros o la evidencia de una incidencia.",
+          microphonePermission: false,
         },
       ],
       "expo-sharing",

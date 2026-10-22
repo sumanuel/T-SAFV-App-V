@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState } from "react-native";
+import { Alert, AppState } from "react-native";
 import {
-  discardFiscalRecord,
-  flushFiscalQueue,
+  discardItem,
+  flushOutbox,
   getQueue,
   subscribe,
-} from "../services/offline/fiscalQueue";
+} from "../services/offline/outbox";
 
 const RETRY_INTERVAL_MS = 45 * 1000;
 
-// Estado de la cola del usuario + envio automatico: al abrir la app, al
-// volver a primer plano y cada 45 s mientras haya pendientes.
-export function useFiscalQueue({ token, userId, enabled }) {
+// Estado de la bandeja de salida del usuario (fiscalizaciones e incidencias) +
+// envio automatico: al abrir la app, al volver a primer plano y cada 45 s
+// mientras haya pendientes.
+export function useOutbox({ token, userId, enabled }) {
   const [items, setItems] = useState([]);
   const [syncing, setSyncing] = useState(false);
   const mounted = useRef(true);
@@ -47,7 +48,14 @@ export function useFiscalQueue({ token, userId, enabled }) {
     if (!enabled || !token) return null;
     setSyncing(true);
     try {
-      return await flushFiscalQueue({ token, userId });
+      const summary = await flushOutbox({ token, userId });
+      if (summary?.photosDropped > 0) {
+        Alert.alert(
+          "Foto no adjuntada",
+          "El registro se guardó, pero no se pudo adjuntar la foto (formato o tamaño no aceptado).",
+        );
+      }
+      return summary;
     } finally {
       if (mounted.current) setSyncing(false);
     }
@@ -77,6 +85,6 @@ export function useFiscalQueue({ token, userId, enabled }) {
     failed,
     syncing,
     flush,
-    discard: discardFiscalRecord,
+    discard: discardItem,
   };
 }

@@ -8,12 +8,13 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { KIND_LABELS } from "../../services/offline/outbox";
 import { borderRadius, rf, spacing } from "../../utils/responsive";
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-// Aviso de fiscalizaciones guardadas en el telefono que aun no llegaron al
-// servidor (pendientes) o que el servidor rechazo (fallidas).
+// Aviso de fiscalizaciones e incidencias guardadas en el telefono que aun no
+// llegaron al servidor (pendientes) o que el servidor rechazo (fallidas).
 export default function PendingSyncBanner({
   pending,
   failed,
@@ -27,7 +28,7 @@ export default function PendingSyncBanner({
 
   const confirmDiscard = (item) => {
     Alert.alert(
-      "Descartar fiscalización",
+      `Descartar ${KIND_LABELS[item.kind] || "registro"}`,
       `No se pudo enviar: ${item.lastError || "error desconocido"}.\n\n¿Descartarla definitivamente?`,
       [
         { text: "Conservar", style: "cancel" },
@@ -61,8 +62,8 @@ export default function PendingSyncBanner({
           <Text style={[styles.text, { color: colors.text }]}>
             {plural(
               pending.length,
-              "fiscalización pendiente",
-              "fiscalizaciones pendientes",
+              "registro pendiente",
+              "registros pendientes",
             )}{" "}
             de envío
           </Text>
@@ -106,13 +107,13 @@ export default function PendingSyncBanner({
           <Text style={[styles.text, { color: colors.text }]}>
             {plural(
               failed.length,
-              "fiscalización fue rechazada",
-              "fiscalizaciones fueron rechazadas",
+              "registro fue rechazado",
+              "registros fueron rechazados",
             )}
           </Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Revisar fiscalizaciones rechazadas"
+            accessibilityLabel="Revisar registros rechazados"
             onPress={() => confirmDiscard(failed[0])}
             style={[styles.action, { backgroundColor: colors.danger }]}
           >

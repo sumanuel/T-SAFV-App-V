@@ -103,10 +103,11 @@ Si no se indica otra cosa, se implementa con estos valores por defecto:
 
 ## 6. Conservación de fotos — recomendación y nota pendiente
 
-> **PENDIENTE (a definir por el negocio):** cuánto tiempo se guardan las fotos. Hasta entonces **no se borra nada**
-> y el script de retención queda apagado.
+> **PENDIENTE (a definir por el negocio):** cuánto tiempo se guardan las fotos. Mientras tanto la API usa **como
+> valores provisionales los de la tabla de abajo** (90 días y 12 meses tras el cierre). Aun así **no se borra nada
+> automáticamente**: el script solo informa y borra únicamente si el cron del hosting lo ejecuta con `--aplicar`.
 
-Recomendación mientras se decide:
+Valores provisionales (los que usa la API por defecto):
 
 | Contenido                                         | Conservar                                       | Motivo                                                                      |
 | ------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
@@ -115,7 +116,7 @@ Recomendación mientras se decide:
 | Fotos de una incidencia **cerrada**               | **12 meses** desde el cierre (24 si hay infracciones con reclamo) | Cubre reclamos y auditorías razonables.                      |
 | Datos del registro/incidencia (texto)             | Sin límite                                      | Pesan poco y son la trazabilidad.                                           |
 
-Implementación prevista: variables de entorno `RETENCION_DIAS_FOTO_REGISTRO` y `RETENCION_MESES_FOTO_INCIDENCIA`
-(vacías = no se borra). Script `scripts/purgar_adjuntos.js` que por defecto **solo informa** qué borraría
+Implementación: variables de entorno `RETENCION_DIAS_FOTO_REGISTRO` (90 por defecto) y `RETENCION_MESES_FOTO_INCIDENCIA`
+(12 por defecto); con `0` se desactiva esa retención. Script `scripts/purgar_adjuntos.js` que por defecto **solo informa** qué borraría
 (`--aplicar` para borrar), pensado para correr desde el cron del hosting. Se borra el archivo y se deja la fila con
 `purgado_at`, para que la app muestre "foto eliminada" en vez de un error.
